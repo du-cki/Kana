@@ -4,7 +4,7 @@ from discord.ext import commands
 from discord.ext.commands.core import has_permissions
 
 
-class Ping(commands.Cog):
+class Events(commands.Cog):
 
     def __init__(self, client):
         self.client = client
@@ -45,7 +45,7 @@ class Ping(commands.Cog):
 
         with open("prefixes.json", "w") as f:
             json.dump(prefixes, f, indent=4)
-        await ctx.channel.send(f'The prefix is now `{prefix}`')
+        await ctx.send(f'The prefix is now `{prefix}`')
 
     @prefix.error
     async def prefix_error(error, ctx):
@@ -54,4 +54,4 @@ class Ping(commands.Cog):
 
 
 def setup(client):
-    client.add_cog(Ping(client))
+    client.add_cog(Events(client))

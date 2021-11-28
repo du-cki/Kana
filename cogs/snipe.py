@@ -44,7 +44,7 @@ class Ping(commands.Cog):
             embed.set_author(name=f'{del_msg[ctx.channel.id][0].author.name}#{del_msg[ctx.channel.id][0].author.discriminator}',
                              icon_url=del_msg[ctx.channel.id][0].author.avatar_url)
 
-            await ctx.channel.send(embed=embed)
+            await ctx.send(embed=embed)
         except:
             await ctx.send("There is nothing for me to snipe here")
 
@@ -56,7 +56,7 @@ class Ping(commands.Cog):
             embed.set_author(name=f'{edit_msg[ctx.channel.id][0].author.name}#{edit_msg[ctx.channel.id][0].author.discriminator}',
                              icon_url=edit_msg[ctx.channel.id][0].author.avatar_url)
 
-            await ctx.channel.send(embed=embed)
+            await ctx.send(embed=embed)
         except:
             await ctx.send("There is nothing for me to esnipe here")
 
