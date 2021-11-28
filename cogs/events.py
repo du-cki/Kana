@@ -37,7 +37,7 @@ class Ping(commands.Cog):
 
     @commands.command()
     @has_permissions(administrator=True)
-    async def prefix(ctx, prefix):
+    async def prefix(self, ctx, prefix):
         with open("prefixes.json", "r") as f:
             prefixes = json.load(f)
 
@@ -48,7 +48,7 @@ class Ping(commands.Cog):
         await ctx.channel.send(f'The prefix is now `{prefix}`')
 
     @prefix.error
-    async def kick_error(error, ctx):
+    async def prefix_error(error, ctx):
         if isinstance(error, discord.MissingPermissions):
             await ctx.send("You don't have permission to do that!")
 
