@@ -6,7 +6,6 @@ from datetime import datetime as dt
 del_msg = {}
 edit_msg = {}
 
-
 class Ping(commands.Cog):
 
     def __init__(self, client):
@@ -39,10 +38,8 @@ class Ping(commands.Cog):
     @commands.command(name='snipe')
     async def snipe(self, ctx):
         try:
-            embed = discord.Embed(color=discord.Color.from_rgb(
-                54, 57, 63), description=del_msg[ctx.channel.id][0].content, timestamp=del_msg[ctx.channel.id][1])
-            embed.set_author(name=f'{del_msg[ctx.channel.id][0].author.name}#{del_msg[ctx.channel.id][0].author.discriminator}',
-                             icon_url=del_msg[ctx.channel.id][0].author.avatar_url)
+            embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), description=del_msg[ctx.channel.id][0].content, timestamp=del_msg[ctx.channel.id][1])
+            embed.set_author(name=f'{del_msg[ctx.channel.id][0].author.name}#{del_msg[ctx.channel.id][0].author.discriminator}', icon_url=del_msg[ctx.channel.id][0].author.avatar_url)
 
             await ctx.send(embed=embed)
         except:
@@ -51,10 +48,8 @@ class Ping(commands.Cog):
     @commands.command()
     async def esnipe(self, ctx):
         try:
-            embed = discord.Embed(color=discord.Color.from_rgb(
-                54, 57, 63), description=edit_msg[ctx.channel.id][0].content, timestamp=edit_msg[ctx.channel.id][1])
-            embed.set_author(name=f'{edit_msg[ctx.channel.id][0].author.name}#{edit_msg[ctx.channel.id][0].author.discriminator}',
-                             icon_url=edit_msg[ctx.channel.id][0].author.avatar_url)
+            embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), description=edit_msg[ctx.channel.id][0].content, timestamp=edit_msg[ctx.channel.id][1])
+            embed.set_author(name=f'{edit_msg[ctx.channel.id][0].author.name}#{edit_msg[ctx.channel.id][0].author.discriminator}', icon_url=edit_msg[ctx.channel.id][0].author.avatar_url)
 
             await ctx.send(embed=embed)
         except:
