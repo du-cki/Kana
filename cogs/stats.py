@@ -49,7 +49,7 @@ class Stats(commands.Cog):
 
         await ctx.send(embed=embed)
     
-    @commands.command()
+    @commands.command() 
     async def source(self, ctx, *, command: str = None):
         source_url = "https://github.com/duckist/Kanapy"
         if command is None:    return await ctx.send(source_url)
