@@ -21,7 +21,7 @@ class Admin(commands.Cog):
     @commands.command(name="eval")
     @commands.is_owner()
     async def _eval(self, ctx, *, body: str):
-        """ From https://github.com/Rapptz/RoboDanny/blob/f37e3b536fec0c5b70954c0be6850027010b77d5/cogs/admin.py#L220-L265 thanks danny <3 """
+
         env = {
             'client': self.client,
             'ctx': ctx,
@@ -57,12 +57,19 @@ class Admin(commands.Cog):
             except:
                 pass
 
-            if ret is None:
-                if value:
-                    await ctx.send(f'```py\n{value}\n```')
-            else:
-                self._last_result = ret
-                await ctx.send(f'```py\n{value}{ret}\n```')
+            try:
+              if ret is None:
+                  if value:
+                      await ctx.send(f'```py\n{value}\n```')
+              else:
+                  self._last_result = ret
+                  await ctx.send(f'```py\n{value}{ret}\n```')
+            except discord.errors.HTTPException:
+              
+              if len(value) == 0:   return await ctx.send("No output")
+
+              buffer = io.BytesIO(value.encode('utf-8'))
+              await ctx.send(file=discord.File(buffer, filename='output.txt'))
 
 def setup(client):
     client.add_cog(Admin(client))
