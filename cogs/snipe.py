@@ -25,7 +25,7 @@ class Ping(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
-        if not before.author.bot and not before.attachments and before.content != after.content and len(after.content) < 3:
+        if not before.author.bot and not before.attachments and before.content != after.content:
             global edit_msg
             edit_msg[before.channel.id] = [before, dt.utcnow()]
 
