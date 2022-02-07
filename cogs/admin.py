@@ -21,7 +21,7 @@ class Admin(commands.Cog):
     @commands.command(name="eval")
     @commands.is_owner()
     async def _eval(self, ctx, *, body: str):
-
+        """ From https://github.com/Rapptz/RoboDanny/blob/f37e3b536fec0c5b70954c0be6850027010b77d5/cogs/admin.py#L220-L265 thanks danny <3 """
         env = {
             'client': self.client,
             'ctx': ctx,
