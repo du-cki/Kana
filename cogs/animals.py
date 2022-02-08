@@ -15,7 +15,7 @@ class Animals(commands.Cog):
             url = res["file"]
         embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), title="Meow 🐈")
         embed.set_image(url=url)
-        embed.set_footer(text=ctx.message.author, icon_url=ctx.message.author.avatar_url)
+        embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar.url)
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["quack", "qwuak"])
@@ -25,7 +25,7 @@ class Animals(commands.Cog):
             url = res["url"]
         embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), title="Quack Quack 🦆")
         embed.set_image(url=url)
-        embed.set_footer(text=ctx.message.author, icon_url=ctx.message.author.avatar_url)
+        embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar.url)
         await ctx.send(embed=embed)
 
 def setup(client):
