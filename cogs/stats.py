@@ -5,7 +5,6 @@ import inspect
 import os 
 
 import psutil
-import aiohttp
 from datetime import datetime
 
 from platform import python_version
@@ -25,15 +24,14 @@ class Stats(commands.Cog):
         await ctx.send(self._get_uptime())
 
     async def _get_commits(self, count=3):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url='https://api.github.com/repos/duckist/Kanapy/commits', params={"per_page": 3}) as res:
-                res = await res.json()
-                arr = []
-                for i in res:
-                    url = i["html_url"]
-                    if len(i['commit']['message']) > 50:    arr.append(f"[`{i['sha'][0:6]}`]({url}) {i['commit']['message'][:50]}...")
-                    else:   arr.append(f"[`{i['sha'][0:6]}`]({url}) {i['commit']['message']}")
-                return "\n".join(arr)
+        async with self.bot.session.get(url='https://api.github.com/repos/duckist/Kanapy/commits', params={"per_page": 3}) as resp:
+            resp = await resp.json()
+            arr = []
+            for i in resp:
+                url = i["html_url"]
+                if len(i['commit']['message']) > 50:    arr.append(f"[`{i['sha'][0:6]}`]({url}) {i['commit']['message'][:50]}...")
+                else:   arr.append(f"[`{i['sha'][0:6]}`]({url}) {i['commit']['message']}")
+            return "\n".join(arr)
 
     @commands.command()
     async def about(self, ctx):
