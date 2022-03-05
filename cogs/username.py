@@ -12,8 +12,8 @@ db = db.MongoConnnection(environ["USER_MONGO"], "main", "r.py")
 
 class Username(commands.Cog):
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.group(aliases=["users", "user", "usernames"], invoke_without_command=True)
     async def username(self, ctx):
@@ -66,5 +66,5 @@ class Username(commands.Cog):
 
         await ctx.send(f"Removed `{username}`")
     
-def setup(client):
-    client.add_cog(Username(client))
+def setup(bot):
+    bot.add_cog(Username(bot))

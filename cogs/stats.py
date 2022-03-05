@@ -14,11 +14,11 @@ from time import time
 from .utils import time as timeutil
 
 class Stats(commands.Cog):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
 
     def _get_uptime(self, breif=False):
-        return timeutil.deltaconv(int(time()) - int(self.client._uptime), breif)
+        return timeutil.deltaconv(int(time()) - int(self.bot._uptime), breif)
 
     @commands.command()
     async def uptime(self, ctx):
@@ -37,7 +37,7 @@ class Stats(commands.Cog):
 
     @commands.command()
     async def about(self, ctx):
-        owner = await self.client.get_guild(659189385085845515).fetch_member(651454696208465941)
+        owner = await self.bot.get_guild(659189385085845515).fetch_member(651454696208465941)
 
         mem = psutil.Process().memory_full_info().uss / 1024**2
         cpu = psutil.Process().cpu_percent() / psutil.cpu_count()
@@ -50,12 +50,12 @@ class Stats(commands.Cog):
 
         await ctx.send(embed=embed)
     
-    @commands.command() 
+    @commands.command(aliases=["src"]) 
     async def source(self, ctx, *, command: str = None):
         source_url = "https://github.com/duckist/Kanapy"
         if command is None:    return await ctx.send(source_url)
 
-        obj = self.client.get_command(command.replace(".", ""))
+        obj = self.bot.get_command(command.replace(".", ""))
         if obj is None:    return await ctx.send("Could not find command")
 
         src = obj.callback.__code__
@@ -69,5 +69,5 @@ class Stats(commands.Cog):
 
         await ctx.send(f'<{source_url}/blob/main/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>')
 
-def setup(client):
-    client.add_cog(Stats(client))
+def setup(bot):
+    bot.add_cog(Stats(bot))

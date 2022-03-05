@@ -6,8 +6,8 @@ import re
 
 class Misc(commands.Cog):
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
         self.session = aiohttp.ClientSession()
 
     @commands.command(aliases=["yt", "ytube", "yout"])
@@ -21,5 +21,5 @@ class Misc(commands.Cog):
 
 
 
-def setup(client):
-    client.add_cog(Misc(client))
+def setup(bot):
+    bot.add_cog(Misc(bot))

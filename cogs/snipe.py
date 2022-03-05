@@ -8,8 +8,8 @@ edit_msg = {}
 
 class Snipe(commands.Cog):
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
@@ -56,5 +56,5 @@ class Snipe(commands.Cog):
             await ctx.send("There is nothing for me to esnipe here")
 
 
-def setup(client):
-    client.add_cog(Snipe(client))
+def setup(bot):
+    bot.add_cog(Snipe(bot))

@@ -4,16 +4,16 @@ from discord.ext import commands
 
 class Admin(commands.Cog):
 
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
         self._last_result = None
 
     @commands.command(aliases=['re'])
     @commands.is_owner()
     async def reload(self, ctx, extension):
         try:
-            self.client.unload_extension(f'cogs.{extension}')
-            self.client.load_extension(f'cogs.{extension}')
+            self.bot.unload_extension(f'cogs.{extension}')
+            self.bot.load_extension(f'cogs.{extension}')
             await ctx.channel.send(f'Reloaded `{extension}`')
         except:
             await ctx.channel.send(f'`{extension}` does not exist')
@@ -36,7 +36,7 @@ class Admin(commands.Cog):
     async def _eval(self, ctx, *, body: str):
 
         env = {
-            'client': self.client,
+            'bot': self.bot,
             'ctx': ctx,
             'channel': ctx.channel,
             'author': ctx.author,
@@ -84,5 +84,5 @@ class Admin(commands.Cog):
               buffer = io.BytesIO(value.encode('utf-8'))
               await ctx.send(file=discord.File(buffer, filename='output.txt'))
 
-def setup(client):
-    client.add_cog(Admin(client))
+def setup(bot):
+    bot.add_cog(Admin(bot))

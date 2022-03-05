@@ -5,12 +5,12 @@ from discord.ext.commands.core import has_permissions
 import json
 
 class Events(commands.Cog):
-    def __init__(self, client):
-        self.client = client
+    def __init__(self, bot):
+        self.bot = bot
 
     @commands.Cog.listener()
     async def on_ready(self):
-        print(f'{str(self.client.user)} is online, on d.py - {str(discord.__version__)}')
+        print(f'{str(self.bot.user)} is online, on d.py - {str(discord.__version__)}')
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild):
@@ -84,5 +84,5 @@ class Events(commands.Cog):
         await ctx.send(f'The prefix is now `{prefix}`')
 
 
-def setup(client):
-    client.add_cog(Events(client))
+def setup(bot):
+    bot.add_cog(Events(bot))
