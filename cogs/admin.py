@@ -18,6 +18,19 @@ class Admin(commands.Cog):
         except:
             await ctx.channel.send(f'`{extension}` does not exist')
 
+    @commands.command(aliases=["wp"])
+    @commands.has_permissions(manage_messages=True)
+    async def waifupurge(self, ctx, amount=30):
+        if amount > 50: return await ctx.reply("Please enter a smaller number")
+
+        def check(m):
+            return (m.author.id == 432610292342587392 or m.content.startswith("$"))
+        await ctx.channel.purge(limit=amount, check=check)
+        try:
+            await ctx.message.add_reaction('\u2705')
+        except:
+            pass
+
     @commands.command(name="eval")
     @commands.is_owner()
     async def _eval(self, ctx, *, body: str):
