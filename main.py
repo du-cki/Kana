@@ -12,7 +12,7 @@ def getPrefix(client, message):
     with open("prefixes.json", "r") as f:
         prefixes = json.load(f)
 
-    return prefixes[str(message.guild.id)]
+    return prefixes.get(str(message.guild.id), "?")
 
 client = commands.Bot(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all())
 client._uptime = time()
