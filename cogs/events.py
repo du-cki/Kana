@@ -10,7 +10,6 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_ready(self):
-        await self.client.change_presence(status=discord.Status.dnd, activity=discord.Activity(type=discord.ActivityType.listening, name="my daddy"))
         print(f'{str(self.client.user)} is online, on d.py - {str(discord.__version__)}')
 
     @commands.Cog.listener()
