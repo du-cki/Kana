@@ -35,7 +35,7 @@ class YoutubeView(discord.ui.View):
         await self.response.edit(view=None)
 
 
-class Misc(commands.Cog):
+class Youtube(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -52,9 +52,9 @@ class Misc(commands.Cog):
             parsed_queries[item["channel"]] = [item["title"], "https://youtube.com" + str(item["url_suffix"])]
         
         view = YoutubeView(ctx.author.id, parsed_queries)
-        mes = await ctx.send("https://youtube.com" + str(item["url_suffix"]), view=view)
+        mes = await ctx.send(list(parsed_queries.values())[0][1], view=view)
         view.response = mes
 
 
 def setup(bot):
-    bot.add_cog(Misc(bot))
+    bot.add_cog(Youtube(bot))
