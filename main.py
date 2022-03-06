@@ -31,6 +31,6 @@ for filename in _listdir('cogs'):
 async def start():
     # bot.pool  = await asyncpg.create_pool(database="postgres", user=environ["USER"], password=environ["PASSWORD"], host=environ["HOST"])
     bot.session = ClientSession()
-    await bot.start(environ["TOKEN"])
+    await bot.start(environ["TOKEN"], reconnect=True)
 
 asyncio.run(start())
