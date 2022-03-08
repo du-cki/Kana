@@ -40,7 +40,7 @@ class Snipe(commands.Cog):
             return await ctx.send("There is nothing for me to snipe here")
 
         embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), description=msg[0].content, timestamp=msg[1])
-        embed.set_author(name=f'{msg[0].author.name}#{msg[0].author.discriminator}', icon_url=msg[0].author.avatar.url)
+        embed.set_author(name=str(msg[0].author), icon_url=msg[0].author.avatar.url)
         await ctx.send(embed=embed)
 
 
@@ -51,7 +51,7 @@ class Snipe(commands.Cog):
             return await ctx.send("There is nothing for me to esnipe here")
 
         embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), description=msg[0].content, timestamp=msg[1])
-        embed.set_author(name=f'{msg[0].author.name}#{msg[0].author.discriminator}', icon_url=msg[0].author.avatar.url)
+        embed.set_author(name=str(msg[0].author), icon_url=msg[0].author.avatar.url)
         await ctx.send(embed=embed)
 
 
