@@ -35,7 +35,8 @@ class Stats(commands.Cog):
 
     @commands.command()
     async def about(self, ctx):
-        owner = await self.bot.get_guild(659189385085845515).fetch_member(651454696208465941)
+        guild = self.bot.get_guild(659189385085845515)
+        owner = guild.get_member(651454696208465941) or await guild.fetch_member(651454696208465941)
 
         mem = psutil.Process().memory_full_info().uss / 1024**2
         cpu = psutil.Process().cpu_percent() / psutil.cpu_count()
