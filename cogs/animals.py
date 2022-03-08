@@ -12,7 +12,7 @@ class Animals(commands.Cog):
             resp = await resp.json()
             url = resp["file"]
         
-        embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63))
+        embed = discord.Embed(color=0x2F3136 )
         embed.set_image(url=url)
         embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar.url)
         await ctx.send(embed=embed)
@@ -23,7 +23,7 @@ class Animals(commands.Cog):
             resp = await resp.json()
             url = resp["url"]
         
-        embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63))
+        embed = discord.Embed(color=d0x2F3136)
         embed.set_image(url=url)
         embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar.url)
         await ctx.send(embed=embed)
