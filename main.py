@@ -20,7 +20,7 @@ def getPrefix(bot, message):
     
     return commands.when_mentioned_or(prefixes.get(str(message.guild.id), "?"))(bot, message)
 
-bot = commands.Bot(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all())
+bot = commands.Bot(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all(), strip_after_prefix=True)
 bot._uptime = time()
 
 
