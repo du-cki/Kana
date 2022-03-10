@@ -37,6 +37,9 @@ class Events(commands.Cog):
         if isinstance(error, commands.CommandNotFound):
             return
 
+        if isinstance(error, commands.CommandInvokeError):
+            error = error.original
+
         if isinstance(error, commands.BotMissingPermissions):
             missing = [
                 perm.replace('_', ' ').replace('guild', 'server').title()
