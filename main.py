@@ -1,12 +1,11 @@
 import discord
 from discord.ext import commands
 
-# import asyncpg
+import asyncpg
 import asyncio
 from aiohttp import ClientSession
 
-from os import listdir as _listdir
-from os import environ
+from os import environ, listdir
 from json import load as _load
 
 from time import time
@@ -14,23 +13,53 @@ from time import time
 from dotenv import load_dotenv
 load_dotenv()
 
-def getPrefix(bot, message):
-    with open("prefixes.json", "r") as f:
-        prefixes = _load(f)
+
+async def getPrefix(bot, message):
+    q = await bot.pool.fetch("""
+    SELECT * FROM prefixes WHERE id = $1;
+    """, message.guild.id)
+
+    if q:   return commands.when_mentioned_or(q[0].get("prefix"))(bot, message)
+
+    await bot.pool.execute("""
+    INSERT INTO prefixes VALUES ($1, $2);
+    """, message.guild.id, ".")
     
-    return commands.when_mentioned_or(prefixes.get(str(message.guild.id), "?"))(bot, message)
+    return commands.when_mentioned_or(".")(bot, message)
 
-bot = commands.Bot(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all(), strip_after_prefix=True)
-bot._uptime = time()
-
-
-for filename in _listdir('cogs'):
-    if filename.endswith('.py'):
-        bot.load_extension(f'cogs.{filename[:-3]}')
 
 async def start():
-    # bot.pool  = await asyncpg.create_pool(database="postgres", user=environ["USER"], password=environ["PASSWORD"], host=environ["HOST"])
+    bot = commands.Bot(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all(), strip_after_prefix=True)
+    bot._uptime = time()
     bot.session = ClientSession()
+    bot.pool  = await asyncpg.create_pool(database=environ["DATABASE"], user=environ["USER"], password=environ["PASSWORD"], host=environ["HOST"])
+
+
+    for filename in listdir('cogs'):
+        if filename.endswith('.py'):
+            bot.load_extension(f'cogs.{filename[:-3]}')
+    
+    
+    await bot.pool.execute("""
+        CREATE TABLE IF NOT EXISTS prefixes (
+        id BIGINT PRIMARY KEY,
+        prefix TEXT NOT NULL
+        );
+
+        CREATE TABLE IF NOT EXISTS users (
+        id BIGINT,
+        unix_time BIGINT,
+        name TEXT
+        );
+
+        CREATE TABLE IF NOT EXISTS avatars (
+        id BIGINT,
+        unix_time BIGINT,
+        avatar BYTEA
+        );
+
+    """)
     await bot.start(environ["TOKEN"], reconnect=True)
 
+    
 asyncio.run(start())
