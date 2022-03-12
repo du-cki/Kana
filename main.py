@@ -32,7 +32,7 @@ async def start():
     bot = commands.Bot(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all(), strip_after_prefix=True)
     bot._uptime = time()
     bot.session = ClientSession()
-    bot.pool  = await asyncpg.create_pool(database=environ["DATABASE"], user=environ["USER"], password=environ["PASSWORD"], host=environ["HOST"])
+    bot.pool  = await asyncpg.create_pool(database=environ["PSQL_DATABASE"], user=environ["PSQL_USER"], password=environ["PSQL_PASSWORD"], host=environ["PSQL_HOST"])
 
 
     for filename in listdir('cogs'):
