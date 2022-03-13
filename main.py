@@ -59,7 +59,12 @@ async def start(): # because im too lazy to subclass
         );
 
     """)
-    await bot.start(environ["TOKEN"], reconnect=True)
+    
+    try:
+        await bot.start(environ["TOKEN"], reconnect=True)
+    except KeyboardInterrupt:
+      await bot.logout()
+
 
     
 asyncio.run(start())

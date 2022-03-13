@@ -25,16 +25,15 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
+        error = getattr(error, 'original', error)
+
         if isinstance(error, commands.CommandNotFound):
             return
-
-        if isinstance(error, commands.CommandInvokeError):
-            error = error.original
 
         if isinstance(error, commands.BotMissingPermissions):
             missing = [
                 perm.replace('_', ' ').replace('guild', 'server').title()
-                for perm in error.missing_perms
+                for perm in error.missing_permissions
             ]
             if len(missing) > 2:
                 fmt = '{}, and {}'.format("**, **".join(missing[:-1]), missing[-1])
@@ -46,7 +45,7 @@ class Events(commands.Cog):
         if isinstance(error, commands.MissingPermissions):
             missing = [
                 perm.replace('_', ' ').replace('guild', 'server').title()
-                for perm in error.missing_perms
+                for perm in error.missing_permissions
             ]
             if len(missing) > 2:
                 fmt = '{}, and {}'.format("**, **".join(missing[:-1]), missing[-1])
