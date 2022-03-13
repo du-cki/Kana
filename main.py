@@ -42,10 +42,8 @@ class Kana(commands.Bot):
         print("Successfully sync'd tree")
 
 
-
     async def setup_hook(self):
         print(f'{str(self.user)} is online, on d.py - {str(discord.__version__)}')
-
 
         self.session = ClientSession()
         self.pool  = await asyncpg.create_pool(database=environ["PSQL_DATABASE"], user=environ["PSQL_USER"], password=environ["PSQL_PASSWORD"], host=environ["PSQL_HOST"])
@@ -69,11 +67,13 @@ class Kana(commands.Bot):
                 );
             """)
 
+
 bot = Kana(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all(), strip_after_prefix=True)
 
 
 for filename in listdir('cogs'):
     if filename.endswith('.py'):
         bot.load_extension(f'cogs.{filename[:-3]}')
+
 
 bot.run(environ["TOKEN"], reconnect=True)
