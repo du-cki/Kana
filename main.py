@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord import app_commands
 
 import asyncpg
 import asyncio
@@ -28,43 +29,51 @@ async def getPrefix(bot, message):
     return commands.when_mentioned_or(".")(bot, message)
 
 
-async def start(): # because im too lazy to subclass
-    bot = commands.Bot(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all(), strip_after_prefix=True)
-    bot._uptime = time()
-    bot.session = ClientSession()
-    bot.pool  = await asyncpg.create_pool(database=environ["PSQL_DATABASE"], user=environ["PSQL_USER"], password=environ["PSQL_PASSWORD"], host=environ["PSQL_HOST"])
+class Kana(commands.Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._uptime = time()
+        self.session = None
+        self.pool = None
 
 
-    for filename in listdir('cogs'):
-        if filename.endswith('.py'):
-            bot.load_extension(f'cogs.{filename[:-3]}')
-    
-    
-    await bot.pool.execute("""
-        CREATE TABLE IF NOT EXISTS prefixes (
-        id BIGINT PRIMARY KEY,
-        prefix TEXT NOT NULL
-        );
-
-        CREATE TABLE IF NOT EXISTS users (
-        id BIGINT,
-        unix_time BIGINT,
-        name TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS avatars (
-        id BIGINT,
-        unix_time BIGINT,
-        avatar BYTEA
-        );
-
-    """)
-    
-    try:
-        await bot.start(environ["TOKEN"], reconnect=True)
-    except KeyboardInterrupt:
-      await bot.logout()
+    async def on_ready(self):
+        await self.tree.sync()
+        print("Successfully sync'd tree")
 
 
-    
-asyncio.run(start())
+
+    async def setup_hook(self):
+        print(f'{str(self.user)} is online, on d.py - {str(discord.__version__)}')
+
+
+        self.session = ClientSession()
+        self.pool  = await asyncpg.create_pool(database=environ["PSQL_DATABASE"], user=environ["PSQL_USER"], password=environ["PSQL_PASSWORD"], host=environ["PSQL_HOST"])
+
+        await bot.pool.execute("""
+                CREATE TABLE IF NOT EXISTS prefixes (
+                id BIGINT PRIMARY KEY,
+                prefix TEXT NOT NULL
+                );
+
+                CREATE TABLE IF NOT EXISTS users (
+                id BIGINT,
+                unix_time BIGINT,
+                name TEXT
+                );
+
+                CREATE TABLE IF NOT EXISTS avatars (
+                id BIGINT,
+                unix_time BIGINT,
+                avatar BYTEA
+                );
+            """)
+
+bot = Kana(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all(), strip_after_prefix=True)
+
+
+for filename in listdir('cogs'):
+    if filename.endswith('.py'):
+        bot.load_extension(f'cogs.{filename[:-3]}')
+
+bot.run(environ["TOKEN"], reconnect=True)

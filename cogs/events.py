@@ -8,10 +8,6 @@ class Events(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_ready(self):
-        print(f'{str(self.bot.user)} is online, on d.py - {str(discord.__version__)}')
-
-    @commands.Cog.listener()
     async def on_guild_remove(self, guild):
         q = await self.bot.pool.execute("""
         DELETE FROM prefixes WHERE id = $1

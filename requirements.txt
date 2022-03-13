@@ -5,7 +5,7 @@ attrs==21.4.0
 certifi==2021.10.8
 chardet==4.0.0
 charset-normalizer==2.0.10
-git+https://github.com/Rapptz/discord.py@45d498c
+git+https://github.com/Rapptz/discord.py@g45d498c
 dnspython==2.1.0
 idna==3.3
 multidict==5.2.0
