@@ -16,7 +16,7 @@ load_dotenv()
 
 async def getPrefix(bot, message):
     q = await bot.pool.fetch("""
-    SELECT * FROM prefixes WHERE id = $1;
+    SELECT prefix FROM prefixes WHERE id = $1;
     """, message.guild.id)
 
     if q:   return commands.when_mentioned_or(q[0].get("prefix"))(bot, message)
@@ -28,7 +28,7 @@ async def getPrefix(bot, message):
     return commands.when_mentioned_or(".")(bot, message)
 
 
-async def start():
+async def start(): # because im too lazy to subclass
     bot = commands.Bot(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all(), strip_after_prefix=True)
     bot._uptime = time()
     bot.session = ClientSession()

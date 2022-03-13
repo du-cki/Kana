@@ -18,6 +18,12 @@ class Events(commands.Cog):
         """, guild.id)
 
     @commands.Cog.listener()
+    async def on_message_edit(self, before, after):
+        if before.content != after.content:
+            ctx = await self.bot.get_context(after)
+            await self.bot.invoke(ctx)
+
+    @commands.Cog.listener()
     async def on_command_error(self, ctx, error):
         if isinstance(error, commands.CommandNotFound):
             return
@@ -51,7 +57,8 @@ class Events(commands.Cog):
 
         if isinstance(error, commands.CheckFailure):
             return await ctx.send("You do not have permission to use this command.")
-        print(error)
+        
+        raise error
 
     @commands.command()
     @has_permissions(administrator=True)
