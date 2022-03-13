@@ -16,6 +16,8 @@ load_dotenv()
 
 
 async def getPrefix(bot, message):
+    if isinstance(message.channel, discord.DMChannel):   return commands.when_mentioned_or(".")(bot, message)
+
     q = await bot.pool.fetch("""
     SELECT prefix FROM prefixes WHERE id = $1;
     """, message.guild.id)
