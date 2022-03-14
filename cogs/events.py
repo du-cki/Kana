@@ -53,7 +53,7 @@ class Events(commands.Cog):
         if isinstance(error, commands.CheckFailure):
             return await ctx.send("You do not have permission to use this command.")
         
-        raise error
+        print(error)
 
     @commands.command()
     @has_permissions(administrator=True)
