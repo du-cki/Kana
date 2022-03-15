@@ -26,7 +26,7 @@ class Admin(commands.Cog):
     @commands.command()
     @commands.is_owner()
     async def sync(self, ctx):
-        await self.tree.sync()
+        await self.bot.tree.sync()
         await ctx.send("Sync'd tree")
 
     @commands.command(name="eval")
