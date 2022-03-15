@@ -28,5 +28,5 @@ class Animals(commands.Cog):
         embed.set_footer(text=ctx.author, icon_url=ctx.author.avatar.url)
         await ctx.send(embed=embed)
 
-def setup(bot):
-    bot.add_cog(Animals(bot))
+async def setup(bot):
+    await bot.add_cog(Animals(bot))

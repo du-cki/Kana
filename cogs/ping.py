@@ -15,5 +15,5 @@ class Ping(commands.Cog):
     async def _ping(self, interaction: discord.Interaction):
         await interaction.response.send_message(f"Pong! `{round(self.bot.latency * 1000)}ms`")
 
-def setup(bot):
-    bot.add_cog(Ping(bot))
+async def setup(bot):
+    await bot.add_cog(Ping(bot))

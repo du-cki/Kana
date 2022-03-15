@@ -66,5 +66,5 @@ class Username(commands.Cog):
 
         await ctx.send(f"Removed `{username}`")
     
-def setup(bot):
-    bot.add_cog(Username(bot))
+async def setup(bot):
+    await bot.add_cog(Username(bot))

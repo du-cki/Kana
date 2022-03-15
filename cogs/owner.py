@@ -1,6 +1,11 @@
-import discord, traceback, textwrap, io, subprocess, os
-from contextlib import redirect_stdout
+import discord
 from discord.ext import commands
+from discord import app_commands
+
+from contextlib import redirect_stdout
+import traceback, textwrap, io, subprocess, os
+
+from typing import Literal
 
 class Admin(commands.Cog):
 
@@ -12,24 +17,17 @@ class Admin(commands.Cog):
     @commands.is_owner()
     async def reload(self, ctx, extension):
         try:
-            self.bot.unload_extension(f'cogs.{extension}')
-            self.bot.load_extension(f'cogs.{extension}')
+            await self.bot.unload_extension(f'cogs.{extension}')
+            await self.bot.load_extension(f'cogs.{extension}')
             await ctx.channel.send(f'Reloaded `{extension}`')
-        except:
+        except discord.ext.commands.errors.ExtensionNotLoaded:
             await ctx.channel.send(f'`{extension}` does not exist')
 
-    @commands.command(aliases=["wp"])
-    @commands.has_permissions(manage_messages=True)
-    async def waifupurge(self, ctx, amount=30):
-        if amount > 50: return await ctx.reply("Please enter a smaller number")
-
-        def check(m):
-            return (m.author.id == 432610292342587392 or m.content.startswith("$"))
-        await ctx.channel.purge(limit=amount, check=check)
-        try:
-            await ctx.message.add_reaction('\u2705')
-        except:
-            pass
+    @commands.command()
+    @commands.is_owner()
+    async def sync(self, ctx):
+        await self.tree.sync()
+        await ctx.send("Sync'd tree")
 
     @commands.command(name="eval")
     @commands.is_owner()
@@ -84,5 +82,5 @@ class Admin(commands.Cog):
               buffer = io.BytesIO(value.encode('utf-8'))
               await ctx.send(file=discord.File(buffer, filename='output.txt'))
 
-def setup(bot):
-    bot.add_cog(Admin(bot))
+async def setup(bot):
+    await bot.add_cog(Admin(bot))

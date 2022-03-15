@@ -72,5 +72,5 @@ class Events(commands.Cog):
         await ctx.send(f'The prefix is now `{prefix}`')
 
 
-def setup(bot):
-    bot.add_cog(Events(bot))
+async def setup(bot):
+    await bot.add_cog(Events(bot))

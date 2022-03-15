@@ -33,5 +33,5 @@ class Yoink(commands.Cog):
         await ctx.send(f"` {', '.join([query.get('name') for query in q])} `")
 
 
-def setup(bot):
-    bot.add_cog(Yoink(bot))
+async def setup(bot):
+    await bot.add_cog(Yoink(bot))
