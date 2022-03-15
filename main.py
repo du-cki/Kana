@@ -67,6 +67,11 @@ class Kana(commands.Bot):
         for filename in listdir('cogs'):
             if filename.endswith('.py'):
                 await self.load_extension(f'cogs.{filename[:-3]}')
+    
+    async def close(self):
+        await super().close()
+        await self.pool.close()
+        await self.session.close()
 
 
 
