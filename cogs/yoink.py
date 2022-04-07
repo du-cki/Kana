@@ -1,7 +1,6 @@
 import discord
 from discord.ext import commands
 
-from time import time as _time
 
 class Yoink(commands.Cog):
 
@@ -15,7 +14,7 @@ class Yoink(commands.Cog):
         if before.name != after.name:
             await self.bot.pool.execute("""
             INSERT INTO users VALUES ($1, $2, $3)
-            """, before.id, _time(), before.name)
+            """, before.id, discord.utils.utcnow().timestamp(), before.name)
 
         if before.avatar != after.avatar:
             ... # will complete later

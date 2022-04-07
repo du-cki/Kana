@@ -4,20 +4,18 @@ from discord.ext import commands
 import inspect
 import os 
 
-import psutil
-from datetime import datetime
+from .utils import time as timeutil
 
+import psutil
 from platform import python_version
 
-from time import time
-from .utils import time as timeutil
 
 class Stats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     def _get_uptime(self, breif=False):
-        return timeutil.deltaconv(int(time()) - int(self.bot._uptime), breif)
+        return timeutil.deltaconv(int(discord.utils.utcnow().timestamp()) - int(self.bot._uptime), breif)
 
     @commands.command()
     async def uptime(self, ctx):
@@ -41,7 +39,7 @@ class Stats(commands.Cog):
         mem = psutil.Process().memory_full_info().uss / 1024**2
         cpu = psutil.Process().cpu_percent() / psutil.cpu_count()
 
-        embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), description='Latest Changes:\n' + await self._get_commits(), timestamp=datetime.utcnow())
+        embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), description='Latest Changes:\n' + await self._get_commits(), timestamp=discord.utils.utcnow())
         embed.set_author(name=str(owner), icon_url=owner.avatar.url, url="https://github.com/duckist")
         embed.add_field(name="Version", value=f"python-{python_version()}\ndiscord.py-{discord.__version__}", inline=True)
         embed.add_field(name="Uptime", value=self._get_uptime(breif=True), inline=True)

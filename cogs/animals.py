@@ -9,7 +9,7 @@ class Animals(commands.Cog):
     @commands.command(aliases=["meow", "kitty"])
     async def cat(self, ctx):
         async with self.bot.session.get(url="https://aws.random.cat/meow") as resp:
-            resp = await resp.json()
+            resp = await resp.json(content_type="application/json")
             url = resp["file"]
         
         embed = discord.Embed(color=0x2F3136)
@@ -20,7 +20,7 @@ class Animals(commands.Cog):
     @commands.command(aliases=["quack", "qwuak"])
     async def duck(self, ctx):
         async with self.bot.session.get(url="https://random-d.uk/api/random") as resp:
-            resp = await resp.json()
+            resp = await resp.json(content_type="application/json")
             url = resp["url"]
         
         embed = discord.Embed(color=0x2F3136)
