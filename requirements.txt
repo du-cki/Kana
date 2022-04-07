@@ -6,6 +6,7 @@ certifi==2021.10.8
 chardet==4.0.0
 charset-normalizer==2.0.10
 git+https://github.com/Rapptz/discord.py@26457b6
+git+https://github.com/Gorialis/jishaku@8bc4ed4
 dnspython==2.1.0
 idna==3.3
 multidict==5.2.0

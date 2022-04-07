@@ -58,6 +58,12 @@ class Kana(commands.Bot):
                 );
             """)
 
+        await self.load_extension("jishaku")
+
+        environ["JISHAKU_NO_UNDERSCORE"] = "True"
+        environ["JISHAKU_NO_DM_TRACEBACK"] = "True" 
+        environ["JISHAKU_HIDE"] = "True"
+
         for filename in listdir('cogs'):
             if filename.endswith('.py'):
                 await self.load_extension(f'cogs.{filename[:-3]}')

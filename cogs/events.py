@@ -1,15 +1,15 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands.core import has_permissions
 
 
 class Events(commands.Cog):
+
     def __init__(self, bot):
         self.bot = bot
 
     @commands.Cog.listener()
     async def on_guild_remove(self, guild):
-        q = await self.bot.pool.execute("""
+        await self.bot.pool.execute("""
         DELETE FROM prefixes WHERE id = $1
         """, guild.id)
 
@@ -54,22 +54,6 @@ class Events(commands.Cog):
             return await ctx.send("You do not have permission to use this command.")
         
         print(error)
-
-    @commands.command()
-    @has_permissions(administrator=True)
-    async def prefix(self, ctx, prefix=None):
-        if prefix is None:
-            q = await self.bot.pool.fetch(f"""
-            SELECT * FROM prefixes WHERE id = $1;
-            """, ctx.guild.id)
-            
-            return await ctx.send(f"The current prefix for this server is: `{q[0].get('prefix', '?')}`")
-
-        q = await self.bot.pool.execute("""
-        UPDATE prefixes SET prefix = $1 WHERE id = $2;
-        """, prefix, ctx.guild.id)
-
-        await ctx.send(f'The prefix is now `{prefix}`')
 
 
 async def setup(bot):
