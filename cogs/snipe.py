@@ -1,8 +1,8 @@
 import discord
 from discord.ext import commands
-from asyncio import sleep
-from datetime import datetime as dt
 
+from asyncio import sleep
+from contextlib import suppress
 
 class Snipe(commands.Cog):
 
@@ -14,23 +14,22 @@ class Snipe(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message_delete(self, message):
-        if not message.author.bot and not message.attachments and message.content != ".snipe":
-            self.del_msg[message.channel.id] = [message, dt.utcnow()]
+        if not message.author.bot and not message.attachments:
+            self.del_msg[message.channel.id] = [message, discord.utils.utcnow()]
 
             await sleep(120)
-            try:
+            with suppress(KeyError):
                 del self.del_msg[message.channel.id]
-            except:    pass
+
 
     @commands.Cog.listener()
     async def on_message_edit(self, before, after):
         if not before.author.bot and not before.attachments and before.content != after.content:
-            self.edit_msg[before.channel.id] = [before, dt.utcnow()]
+            self.edit_msg[before.channel.id] = [before, discord.utils.utcnow()]
 
             await sleep(120)
-            try:
+            with suppress(KeyError):
                 del self.edit_msg[before.channel.id]
-            except:    pass
 
 
     @commands.command()
@@ -39,7 +38,7 @@ class Snipe(commands.Cog):
         if not msg:
             return await ctx.send("There is nothing for me to snipe here")
 
-        embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), description=msg[0].content, timestamp=msg[1])
+        embed = discord.Embed(color=0x2F3136, description=msg[0].content, timestamp=msg[1])
         embed.set_author(name=str(msg[0].author), icon_url=msg[0].author.avatar.url)
         await ctx.send(embed=embed)
 
@@ -50,7 +49,7 @@ class Snipe(commands.Cog):
         if not msg:
             return await ctx.send("There is nothing for me to esnipe here")
 
-        embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), description=msg[0].content, timestamp=msg[1])
+        embed = discord.Embed(color=0x2F3136, description=msg[0].content, timestamp=msg[1])
         embed.set_author(name=str(msg[0].author), icon_url=msg[0].author.avatar.url)
         await ctx.send(embed=embed)
 
