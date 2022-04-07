@@ -43,7 +43,7 @@ class Kana(commands.Bot):
         print(f'{str(self.user)} is online, on d.py - {str(discord.__version__)}')
 
         self.session = ClientSession()
-        self.pool  = await asyncpg.create_pool(database=environ["PSQL_DATABASE"], user=environ["PSQL_USER"], password=environ["PSQL_PASSWORD"], host=environ["PSQL_HOST"])
+        self.pool  = await asyncpg.create_pool(environ["PSQL_URI"])
 
         await self.pool.execute("""
                 CREATE TABLE IF NOT EXISTS prefixes (
