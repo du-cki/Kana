@@ -1,22 +1,16 @@
 import discord
 from discord.ext import commands
-from discord import app_commands
 
 import asyncpg
-import asyncio
 from aiohttp import ClientSession
 
 from os import environ, listdir
-from json import load as _load
-
-from time import time
-
 from dotenv import load_dotenv
 load_dotenv()
 
 
 async def getPrefix(bot, message):
-    if isinstance(message.channel, discord.DMChannel):   return commands.when_mentioned_or(".")(bot, message)
+    if isinstance(message.channel, discord.DMChannel):   return commands.when_mentioned_or("uwu")(bot, message)
 
     q = await bot.pool.fetch("""
     SELECT prefix FROM prefixes WHERE id = $1;
@@ -26,15 +20,15 @@ async def getPrefix(bot, message):
 
     await bot.pool.execute("""
     INSERT INTO prefixes VALUES ($1, $2);
-    """, message.guild.id, ".")
+    """, message.guild.id, "uwu")
     
-    return commands.when_mentioned_or(".")(bot, message)
+    return commands.when_mentioned_or("uwu")(bot, message)
 
 
 class Kana(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._uptime = time()
+        self._uptime = discord.utils.utcnow().timestamp()
         self.session = None
         self.pool = None
 
