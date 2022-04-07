@@ -2,7 +2,7 @@ import discord
 from discord.ext import commands
 from .utils import db
 
-import aiohttp
+from contextlib import suppress
 
 from os import environ
 from dotenv import load_dotenv
@@ -34,7 +34,7 @@ class Username(commands.Cog):
 
         q = db.get({"_id": ctx.author.id})
         if q is not None: # if author is already in the database, run this
-            if len(q['robloxUser']) > 5:    return await ctx.send("You have reached your max limit for usernames (5)")
+            if len(q['robloxUser']) >= 5:    return await ctx.send("You have reached your max limit for usernames (5)")
 
             db.update({"_id": ctx.author.id}, {"$push": {"robloxUser": _user}})
             db.update({"_id": ctx.author.id}, {"$set": {"username": str(ctx.author)}})
@@ -44,16 +44,12 @@ class Username(commands.Cog):
         await ctx.send(f"Added `{_user}` to my database")
 
     async def _checkUser(self, username):
-        async with aiohttp.ClientSession() as session:
-            async with session.get(url='https://users.roblox.com/v1/users/search', params={"keyword": username}) as res:
-                r = await res.json()
-                try:
-                    return r["data"][0]["name"]
-                except KeyError:
-                    return None
-                except Exception as e:
-                    print(e)
-
+        async with self.bot.session.get(url='https://users.roblox.com/v1/users/search', params={"keyword": username}) as res:
+            res = await res.json()
+            with suppress(KeyError):
+                return res["data"][0]["name"]
+            return None
+    
     @username.command(aliases=["delete", "del", "rem"])
     async def remove(self, ctx, username):
         q = db.get({"_id": ctx.author.id, "robloxUser": username})
