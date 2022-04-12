@@ -17,6 +17,14 @@ class Username(commands.Cog):
 
     @commands.group(aliases=["users", "user", "usernames"], invoke_without_command=True)
     async def username(self, ctx):
+        """
+        Gets all usernames in the database.
+
+        Parameters
+        ----------
+        None
+        """
+
         query = db.get({"_id": ctx.author.id})
         if query is None:
             return await ctx.send("I have no usernames recorded from you")
@@ -24,7 +32,16 @@ class Username(commands.Cog):
         await ctx.channel.send(f'Your username(s): `{", ".join(_users[2])}`')
 
     @username.command()
-    async def add(self, ctx, username: str):
+    async def add(self, ctx : commands.Context, username : str):
+        """
+        Adds a username to the database.
+        
+        Parameters
+        ----------
+        username : str
+            The username to add.
+        """
+
         if any(c in "!@#$%^&*()-+?=,<>/" for c in username):    return await ctx.send("There are no special characters in usernames dummy") # returns when string has special characters
 
         _user = await self._checkUser(username)
@@ -43,7 +60,7 @@ class Username(commands.Cog):
         db.insert({"_id": ctx.author.id, "username": str(ctx.author), "robloxUser": [_user]})
         await ctx.send(f"Added `{_user}` to my database")
 
-    async def _checkUser(self, username):
+    async def _checkUser(self, username : str) -> str:
         async with self.bot.session.get(url='https://users.roblox.com/v1/users/search', params={"keyword": username}) as res:
             res = await res.json()
             with suppress(KeyError):
@@ -51,7 +68,16 @@ class Username(commands.Cog):
             return None
     
     @username.command(aliases=["delete", "del", "rem"])
-    async def remove(self, ctx, username):
+    async def remove(self, ctx : commands.Context, username : str):
+        """
+        Remove a username from the database.
+
+        Parameters
+        ----------
+        username : str
+            The username to remove.
+        """
+
         q = db.get({"_id": ctx.author.id, "robloxUser": username})
         if q is None:
             return await ctx.send(f"You don't have any entries named `{username}`")

@@ -14,14 +14,21 @@ class Stats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
-    def _get_uptime(self, breif=False):
+    def _get_uptime(self, breif : bool = False) -> str:
         return timeutil.deltaconv(int(discord.utils.utcnow().timestamp()) - int(self.bot._uptime), breif)
 
     @commands.command()
-    async def uptime(self, ctx):
+    async def uptime(self, ctx : commands.Context):
+        """
+        Gets the bot's uptime.
+
+        Parameters
+        ----------
+        None
+        """
         await ctx.send(self._get_uptime())
 
-    async def _get_commits(self, count=3):
+    async def _get_commits(self, count : int = 3) -> str:
         async with self.bot.session.get(url='https://api.github.com/repos/duckist/Kanapy/commits', params={"per_page": 3}) as resp:
             resp = await resp.json()
             arr = []
@@ -31,8 +38,17 @@ class Stats(commands.Cog):
                 else:   arr.append(f"[`{i['sha'][0:6]}`]({url}) {i['commit']['message']}")
             return "\n".join(arr)
 
+
     @commands.command()
-    async def about(self, ctx):
+    async def about(self, ctx : commands.Context):
+        """
+        Gets the current status of the bot.
+
+        Parameters
+        ----------
+        None
+        """
+
         guild = self.bot.get_guild(659189385085845515)
         owner = guild.get_member(651454696208465941) or await guild.fetch_member(651454696208465941)
 
@@ -46,9 +62,20 @@ class Stats(commands.Cog):
         embed.add_field(name="Process", value=f'{mem: .2f} MiB\n{cpu:.2f}% CPU', inline=True)
 
         await ctx.send(embed=embed)
-    
+
+
     @commands.command(aliases=["src"]) 
-    async def source(self, ctx, *, command: str = None):
+    async def source(self, ctx : commands.Context, *, command : str = None):
+        """
+        Gets the source code of a command, 
+        this was from danny's implementation of the command (https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/meta.py#L397-L435), 
+        thank you danny and thank you for coming back.
+
+        Parameters
+        ----------
+        command : str
+            The command to get the source code of.
+        """
         source_url = "https://github.com/duckist/Kanapy"
         if command is None:    return await ctx.send(source_url)
 

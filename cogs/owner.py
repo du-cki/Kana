@@ -9,7 +9,16 @@ class Admin(commands.Cog):
 
     @commands.command(aliases=['re'])
     @commands.is_owner()
-    async def reload(self, ctx, extension):
+    async def reload(self, ctx: commands.Context, extension : str):
+        """
+        Reloads the specified extension.
+
+        Parameters
+        ----------
+        extension : str
+            The extension to reload.
+        """
+
         try:
             await self.bot.unload_extension(f'cogs.{extension}')
             await self.bot.load_extension(f'cogs.{extension}')

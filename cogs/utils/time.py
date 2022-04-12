@@ -1,11 +1,11 @@
-def sing(amount, unit, breif):
+def sing(amount : int, unit : str, breif : bool) -> str:
     """singularizer(?) - returns a string containing the amount 
     and type of something. The type/unit of item will be pluralized
     if the amount is greater than one."""
     if breif:   return f"{amount}{amount == 1 and f'{unit}' or f'{unit}'}"
     return f"{amount} {amount == 1 and f'{unit}' or f'{unit}s'}"
 
-def deltaconv(seconds, breif):
+def deltaconv(seconds : int, breif : bool) -> str:
     """Converts a timedelta's total_seconds() to a humanized string."""
     mins, secs = divmod(seconds, 60)
     hrs, mins = divmod(mins, 60)

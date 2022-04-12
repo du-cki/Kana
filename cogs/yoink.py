@@ -8,7 +8,7 @@ class Yoink(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_user_update(self, before, after):
+    async def on_user_update(self, before : discord.Member, after : discord.Member):
         if before.bot:  return
         
         if before.name != after.name:
@@ -21,7 +21,16 @@ class Yoink(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def avy(self, ctx, target: discord.Member = None):
+    async def avy(self, ctx : commands.Context, target: discord.Member = None):
+        """
+        Get's the name history of a user.
+
+        Parameters
+        ----------
+        target : discord.Member
+            The user to get the name history of.
+        """
+        
         target = target or ctx.author
 
         q = await self.bot.pool.fetch("""

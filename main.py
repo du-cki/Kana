@@ -34,7 +34,7 @@ class Kana(commands.Bot):
 
 
     async def setup_hook(self):
-        print(f'{str(self.user)} is online, on d.py - {str(discord.__version__)}')
+        print(f'{str(self.user)} is online, on discord.py - {str(discord.__version__)}')
 
         self.session = ClientSession()
         self.pool  = await asyncpg.create_pool(environ["PSQL_URI"])
@@ -75,7 +75,13 @@ class Kana(commands.Bot):
 
 
 
-bot = Kana(command_prefix=getPrefix, help_command=None, case_insensitive=True, intents=discord.Intents().all(), strip_after_prefix=True)
+bot = Kana(
+    command_prefix=getPrefix, 
+    help_command=None, # i'm too lazy to subclass so i'll just disable it
+    case_insensitive=True, 
+    intents=discord.Intents().all(), 
+    strip_after_prefix=True
+)
 
 
 bot.run(environ["TOKEN"], reconnect=True)

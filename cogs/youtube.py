@@ -5,7 +5,7 @@ from youtube_search import YoutubeSearch
 
 
 class YoutubeDropdown(discord.ui.Select):
-    def __init__(self, queries):
+    def __init__(self, queries : dict):
         self.queries = queries
 
         options = []
@@ -19,7 +19,7 @@ class YoutubeDropdown(discord.ui.Select):
 
 
 class YoutubeView(discord.ui.View):
-    def __init__(self, author_id, queries):
+    def __init__(self, author_id : int, queries : dict):
         super().__init__(timeout=60)
         self.add_item(YoutubeDropdown(queries))
         self.author_id = author_id
@@ -41,14 +41,23 @@ class Youtube(commands.Cog):
 
 
     @commands.command(aliases=["yt", "ytube", "yout"])
-    async def youtube(self, ctx, *, arg):
-        query = YoutubeSearch(arg, max_results=10).to_dict()
+    async def youtube(self, ctx : commands.Context, *, query : str):
+        """
+        Searches YouTube for a video.
 
-        if not query:
+        Parameters
+        ----------
+        query : str
+            The query to search YouTube for.
+        """
+
+        q = YoutubeSearch(query, max_results=10).to_dict()
+
+        if not q:
             return await ctx.send("No results found")
         
-        parsed_queries = dict()
-        for item in query:
+        parsed_queries = {}
+        for item in q:
             parsed_queries[item["channel"]] = [item["title"], "https://youtube.com" + str(item["url_suffix"])]
         
         view = YoutubeView(ctx.author.id, parsed_queries)

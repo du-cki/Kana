@@ -13,7 +13,7 @@ class Snipe(commands.Cog):
 
 
     @commands.Cog.listener()
-    async def on_message_delete(self, message):
+    async def on_message_delete(self, message : discord.Message):
         if not message.author.bot and not message.attachments:
             self.del_msg[message.channel.id] = [message, discord.utils.utcnow()]
 
@@ -23,7 +23,7 @@ class Snipe(commands.Cog):
 
 
     @commands.Cog.listener()
-    async def on_message_edit(self, before, after):
+    async def on_message_edit(self, before : discord.Message, after : discord.Message):
         if not before.author.bot and not before.attachments and before.content != after.content:
             self.edit_msg[before.channel.id] = [before, discord.utils.utcnow()]
 
@@ -34,6 +34,14 @@ class Snipe(commands.Cog):
 
     @commands.command()
     async def snipe(self, ctx):
+        """
+        Snipes the last message from the channel that was deleted 2 minutes ago.
+
+        Parameters
+        ----------
+        None
+        """
+
         msg = self.del_msg.get(ctx.channel.id, None)
         if not msg:
             return await ctx.send("There is nothing for me to snipe here")
@@ -45,6 +53,14 @@ class Snipe(commands.Cog):
 
     @commands.command()
     async def esnipe(self, ctx):
+        """
+        eSnipes the last message from the channel that was edited 2 minutes ago.
+
+        Parameters
+        ----------
+        None
+        """
+
         msg = self.edit_msg.get(ctx.channel.id, None)
         if not msg:
             return await ctx.send("There is nothing for me to esnipe here")

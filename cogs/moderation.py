@@ -10,7 +10,16 @@ class Moderation(commands.Cog):
 
     @commands.command(aliases=["wp"])
     @commands.has_permissions(manage_messages=True)
-    async def waifupurge(self, ctx, amount=30):
+    async def waifupurge(self, ctx : commands.Context, amount : int = 30):
+        """
+        Purges all of mudae's waifu posts.
+
+        Parameters
+        ----------
+        amount : int
+            The amount of waifus to purge.
+        """
+
         if amount > 50: return await ctx.reply("Please enter a smaller number")
 
         def check(m):
@@ -21,7 +30,16 @@ class Moderation(commands.Cog):
             await ctx.message.add_reaction('\u2705')
 
     @commands.command()
-    async def prefix(self, ctx, prefix=None):
+    async def prefix(self, ctx : commands.Context, prefix : str = None):
+        """
+        Changes the guild specific prefix.
+
+        Parameters
+        ----------
+        prefix : str
+            The new prefix.
+        """
+
         if prefix is None:
             q = await self.bot.pool.fetch(f"""
             SELECT * FROM prefixes WHERE id = $1;

@@ -7,7 +7,15 @@ class Animals(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=["meow", "kitty"])
-    async def cat(self, ctx):
+    async def cat(self, ctx : commands.Context):
+        """
+        Gets a random cat from the aws.random.cat API
+
+        Parameters
+        ----------
+        None
+        """
+
         async with self.bot.session.get(url="https://aws.random.cat/meow") as resp:
             resp = await resp.json(content_type="application/json")
             url = resp["file"]
@@ -18,7 +26,14 @@ class Animals(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["quack", "qwuak"])
-    async def duck(self, ctx):
+    async def duck(self, ctx : commands.Context):
+        """
+        Gets a random duck from the random-d.uk API
+
+        Parameters
+        ----------
+        None
+        """
         async with self.bot.session.get(url="https://random-d.uk/api/random") as resp:
             resp = await resp.json(content_type="application/json")
             url = resp["url"]

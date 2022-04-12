@@ -8,19 +8,19 @@ class Events(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_guild_remove(self, guild):
+    async def on_guild_remove(self, guild : discord.Guild):
         await self.bot.pool.execute("""
         DELETE FROM prefixes WHERE id = $1
         """, guild.id)
 
     @commands.Cog.listener()
-    async def on_message_edit(self, before, after):
+    async def on_message_edit(self, before : discord.Message, after : discord.Message):
         if before.content != after.content:
             ctx = await self.bot.get_context(after)
             await self.bot.invoke(ctx)
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx, error):
+    async def on_command_error(self, ctx : commands.Context, error):
         error = getattr(error, 'original', error)
 
         if isinstance(error, commands.CommandNotFound):
