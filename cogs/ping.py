@@ -51,8 +51,26 @@ class Ping(commands.Cog):
         ----------
         None
         """
+
+        start = time.perf_counter()
+        await interaction.response.send_message("Ping")
+        end = time.perf_counter()
+        interaction_ping = self._format_ping((end - start) * 1000)
+
+        websocket = self._format_ping(self.bot.latency * 1000)
+
+        start = time.perf_counter()
+        await self.bot.pool.fetch("SELECT 1")
+        end = time.perf_counter()
+        postgres_ping = self._format_ping((end - start) * 1000)
+
+        em = discord.Embed(color=0x2F3136) \
+                    .add_field(name="<a:websocket:963608475982774282> Websocket", value=websocket, inline=True) \
+                        .add_field(name="<:message:963608317370974240> Interaction", value=interaction_ping, inline=True) \
+                            .add_field(name="<:postgresql:963608621017608294> Database", value=postgres_ping, inline=False) \
+
+        await interaction.edit_original_message(content=None, embed=em)
         
-        await interaction.response.send_message(f"Pong! `{round(self.bot.latency * 1000)}ms`")
 
 async def setup(bot):
     await bot.add_cog(Ping(bot))
