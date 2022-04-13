@@ -34,6 +34,7 @@ class Animals(commands.Cog):
         ----------
         None
         """
+        
         async with self.bot.session.get(url="https://random-d.uk/api/random") as resp:
             resp = await resp.json(content_type="application/json")
             url = resp["url"]

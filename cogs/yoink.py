@@ -36,7 +36,9 @@ class Yoink(commands.Cog):
         q = await self.bot.pool.fetch("""
         SELECT name FROM users WHERE id = $1 ORDER BY unix_time DESC;
         """, target.id)
-        if not q:   return await ctx.send("No records")
+
+        if not q:
+            return await ctx.send("No records")
         
         await ctx.send(f"` {', '.join([query.get('name') for query in q])} `")
 

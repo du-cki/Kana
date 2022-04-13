@@ -10,13 +10,15 @@ load_dotenv()
 
 
 async def getPrefix(bot, message):
-    if isinstance(message.channel, discord.DMChannel):   return commands.when_mentioned_or("uwu")(bot, message)
+    if isinstance(message.channel, discord.DMChannel):
+        return commands.when_mentioned_or("uwu")(bot, message)
 
     q = await bot.pool.fetch("""
     SELECT prefix FROM prefixes WHERE id = $1;
     """, message.guild.id)
 
-    if q:   return commands.when_mentioned_or(q[0].get("prefix"))(bot, message)
+    if q:
+        return commands.when_mentioned_or(q[0].get("prefix"))(bot, message)
 
     await bot.pool.execute("""
     INSERT INTO prefixes VALUES ($1, $2);
@@ -79,7 +81,7 @@ class Kana(commands.Bot):
 
 bot = Kana(
     command_prefix=getPrefix, 
-    help_command=None, # i'm too lazy to subclass so i'll just disable it
+    help_command=None, # i'm too lazy to subclass help so i'll just disable it for the time being
     case_insensitive=True, 
     intents=discord.Intents().all(), 
     strip_after_prefix=True

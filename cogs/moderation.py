@@ -20,7 +20,8 @@ class Moderation(commands.Cog):
             The amount of waifus to purge.
         """
 
-        if amount > 50: return await ctx.reply("Please enter a smaller number")
+        if amount > 50:
+            return await ctx.reply("Please enter a smaller number")
 
         def check(m):
             return (m.author.id == 432610292342587392 or m.content.startswith("$"))

@@ -11,6 +11,7 @@ from platform import python_version
 
 
 class Stats(commands.Cog):
+
     def __init__(self, bot):
         self.bot = bot
 
@@ -26,6 +27,7 @@ class Stats(commands.Cog):
         ----------
         None
         """
+
         await ctx.send(self._get_uptime())
 
     async def _get_commits(self, count : int = 3) -> str:
