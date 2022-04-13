@@ -51,7 +51,6 @@ class Youtube(commands.Cog):
             The query to search YouTube for.
         """
 
-        # check if "query" is None, if it is then return and send a link to youtube
         if query is None:
             return await ctx.send("https://www.youtube.com/")
 
