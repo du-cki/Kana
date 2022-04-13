@@ -33,9 +33,11 @@ class Kana(commands.Bot):
         self.pool = None
 
 
-    async def setup_hook(self):
+    async def on_ready(self):
         print(f'{str(self.user)} is online, on discord.py - {str(discord.__version__)}')
 
+
+    async def setup_hook(self):
         self.session = ClientSession()
         self.pool  = await asyncpg.create_pool(environ["PSQL_URI"])
 
