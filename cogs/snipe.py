@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands
 
-from asyncio import sleep
-from contextlib import suppress
 
 class Snipe(commands.Cog):
 
@@ -17,19 +15,11 @@ class Snipe(commands.Cog):
         if not message.author.bot and not message.attachments:
             self.del_msg[message.channel.id] = [message, discord.utils.utcnow()]
 
-            await sleep(120)
-            with suppress(KeyError):
-                del self.del_msg[message.channel.id]
-
 
     @commands.Cog.listener()
     async def on_message_edit(self, before : discord.Message, after : discord.Message):
         if not before.author.bot and not before.attachments and before.content != after.content:
             self.edit_msg[before.channel.id] = [before, discord.utils.utcnow()]
-
-            await sleep(120)
-            with suppress(KeyError):
-                del self.edit_msg[before.channel.id]
 
 
     @commands.command()
