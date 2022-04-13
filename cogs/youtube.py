@@ -41,15 +41,19 @@ class Youtube(commands.Cog):
 
 
     @commands.command(aliases=["yt", "ytube", "yout"])
-    async def youtube(self, ctx : commands.Context, *, query : str):
+    async def youtube(self, ctx : commands.Context, *, query : str  = None):
         """
-        Searches YouTube for a video.
+        Searches YouTube for a video, if no query is given, it will send a link to youtube.
 
         Parameters
         ----------
         query : str
             The query to search YouTube for.
         """
+
+        # check if "query" is None, if it is then return and send a link to youtube
+        if query is None:
+            return await ctx.send("https://www.youtube.com/")
 
         q = YoutubeSearch(query, max_results=10).to_dict()
 
