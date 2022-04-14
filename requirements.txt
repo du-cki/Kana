@@ -11,6 +11,7 @@ dnspython==2.1.0
 idna==3.3
 multidict==5.2.0
 psutil==5.9.0
+pygit2==1.9.1
 pymongo==4.0.1
 python-dotenv==0.19.2
 typing_extensions==4.0.1

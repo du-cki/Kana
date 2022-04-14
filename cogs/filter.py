@@ -18,7 +18,7 @@ class Filter(commands.Cog):
     def _volumeCheck(self, message : str) -> bool:
         splitMsg = message.replace(" ", "")
         upCase = self.UP_REGEX.findall(splitMsg)
-        return  len(upCase) / len(splitMsg) >= 0.6
+        return len(upCase) / len(splitMsg) >= 0.6
 
     def _dadcheck(self, message : str) -> bool:
         return message.author.id == 503720029456695306

@@ -9,11 +9,13 @@ from .utils import time as timeutil
 import psutil
 from platform import python_version
 
+import pygit2
 
 class Stats(commands.Cog):
 
     def __init__(self, bot):
         self.bot = bot
+        self.repo = pygit2.Repository('.git')
 
     def _get_uptime(self, breif : bool = False) -> str:
         return timeutil.deltaconv(int(discord.utils.utcnow().timestamp()) - int(self.bot._uptime), breif)
@@ -31,15 +33,14 @@ class Stats(commands.Cog):
         await ctx.send(self._get_uptime())
 
     async def _get_commits(self, count : int = 3) -> str:
-        async with self.bot.session.get(url='https://api.github.com/repos/duckist/Kanapy/commits', params={"per_page": 3}) as resp:
-            resp = await resp.json()
-            arr = []
-            for i in resp:
-                url = i["html_url"]
-                if len(i['commit']['message']) > 50:    arr.append(f"[`{i['sha'][0:6]}`]({url}) {i['commit']['message'][:50]}...")
-                else:   arr.append(f"[`{i['sha'][0:6]}`]({url}) {i['commit']['message']}")
-            return "\n".join(arr)
-
+        ESCAPE = "\n"
+        commits = [commit for commit in self.repo.walk(self.repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL)][:count]
+        return "\n".join(
+            [
+                f"[`{commit.hex[:6]}`](https://github.com/duckist/Kanapy/commit/{commit.hex}) {commit.message[:52] + '...' if len(commit.message) > 50 else commit.message.replace(ESCAPE, '')}" 
+                for commit in commits
+            ]
+        )
 
     @commands.command()
     async def about(self, ctx : commands.Context):
