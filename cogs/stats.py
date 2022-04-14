@@ -37,7 +37,7 @@ class Stats(commands.Cog):
         commits = [commit for commit in self.repo.walk(self.repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL)][:count]
         return "\n".join(
             [
-                f"[`{commit.hex[:6]}`](https://github.com/duckist/Kanapy/commit/{commit.hex}) {commit.message[:52] + '...' if len(commit.message) > 50 else commit.message.replace(ESCAPE, '')}" 
+                f"[`{commit.hex[:6]}`](https://github.com/duckist/Kanapy/commit/{commit.hex}) {commit.message[:52] + '...' if len(commit.message) > 50 else commit.message.replace(ESCAPE, '').ljust(50)}" 
                 for commit in commits
             ]
         )
