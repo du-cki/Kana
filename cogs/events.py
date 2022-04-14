@@ -53,6 +53,9 @@ class Events(commands.Cog):
         if isinstance(error, commands.CheckFailure):
             return await ctx.send("You do not have permission to use this command.")
         
+        if isinstance(error, commands.CommandOnCooldown):
+            return await ctx.reply(f"you are on cooldown for {error.retry_after:.2f} seconds", mention_author=False)
+
         print(error)
 
 
