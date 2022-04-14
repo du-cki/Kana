@@ -29,14 +29,14 @@ class Filter(commands.Cog):
             return
 
         cnt = message.content.lower()
-        if not message.content == "" and any(
+        if not message.content == "" and (
             self._volumeCheck(message.content) \
             or self.IM_REGEX.findall(cnt) \
             or self.PLAY_REGEX.findall(cnt) \
             or self.SHUTUP_REGEX.findall(cnt) \
             or self.GOODBYE_REGEX.findall(cnt) \
             or self.KYS_REGEX.findall(cnt) \
-            or self.TY_REGEX.findall(cnt)
+            or self.TY_REGEX.findall(cnt) \
         ):
             try:
                 dmessage = await self.bot.wait_for(
