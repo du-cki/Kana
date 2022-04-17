@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 
+from .utils import time
 
 class Events(commands.Cog):
 
@@ -54,7 +55,7 @@ class Events(commands.Cog):
             return await ctx.send("You do not have permission to use this command.")
         
         if isinstance(error, commands.CommandOnCooldown):
-            return await ctx.reply(f"you are on cooldown for {error.retry_after:.2f} seconds", mention_author=False)
+            return await ctx.reply(f"You're on cooldown for `{time.deltaconv(int(error.retry_after))}`", mention_author=False)
 
         print(error)
 

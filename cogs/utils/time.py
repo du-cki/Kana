@@ -5,7 +5,7 @@ def sing(amount : int, unit : str, breif : bool) -> str:
     if breif:   return f"{amount}{amount == 1 and f'{unit}' or f'{unit}'}"
     return f"{amount} {amount == 1 and f'{unit}' or f'{unit}s'}"
 
-def deltaconv(seconds : int, breif : bool) -> str:
+def deltaconv(seconds : int, breif : bool = False) -> str:
     """Converts a timedelta's total_seconds() to a humanized string."""
     mins, secs = divmod(seconds, 60)
     hrs, mins = divmod(mins, 60)
