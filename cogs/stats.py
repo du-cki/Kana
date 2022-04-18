@@ -16,6 +16,8 @@ class Stats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.repo = pygit2.Repository('.git')
+        self.ESCAPE = "\n"
+        self.INVIS = "\u2800"
 
     def _get_uptime(self, breif : bool = False) -> str:
         return timeutil.deltaconv(int(discord.utils.utcnow().timestamp()) - int(self.bot._uptime), breif)
@@ -33,11 +35,10 @@ class Stats(commands.Cog):
         await ctx.send(self._get_uptime())
 
     async def _get_commits(self, count : int = 3) -> str:
-        ESCAPE = "\n"
         commits = [commit for commit in self.repo.walk(self.repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL)][:count]
         return "\n".join(
             [
-                f"[`{commit.hex[:6]}`](https://github.com/duckist/Kanapy/commit/{commit.hex}) {commit.message[:52] + '...' if len(commit.message) > 50 else commit.message.replace(ESCAPE, '').ljust(50)}" 
+                f"[`{commit.hex[:6]}`](https://github.com/duckist/Kanapy/commit/{commit.hex}) {commit.message[:42] + '...' if len(commit.message) > 40 else commit.message.replace(self.ESCAPE, '').ljust(40, self.INVIS)}" 
                 for commit in commits
             ]
         )
@@ -58,7 +59,7 @@ class Stats(commands.Cog):
         mem = psutil.Process().memory_full_info().uss / 1024**2
         cpu = psutil.Process().cpu_percent() / psutil.cpu_count()
 
-        embed = discord.Embed(color=discord.Color.from_rgb(54, 57, 63), description='Latest Changes:\n' + await self._get_commits(), timestamp=discord.utils.utcnow())
+        embed = discord.Embed(color=0x2F3136, description='Latest Changes:\n' + await self._get_commits(), timestamp=discord.utils.utcnow())
         embed.set_author(name=str(owner), icon_url=owner.avatar.url, url="https://github.com/duckist")
         embed.add_field(name="Version", value=f"python-{python_version()}\ndiscord.py-{discord.__version__}", inline=True)
         embed.add_field(name="Uptime", value=self._get_uptime(breif=True), inline=True)
