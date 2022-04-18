@@ -26,6 +26,22 @@ class Admin(commands.Cog):
         except discord.ext.commands.errors.ExtensionNotLoaded:
             await ctx.channel.send(f'`{extension}` does not exist')
 
+    @commands.command(aliases=['del'])
+    @commands.is_owner()
+    async def delete(self, ctx: commands.Context):
+        """
+        Deletes the message that the author replied to.
+        """
+
+        target : discord.Message = ctx.message.reference
+        if target is None:
+            return await ctx.send('Reply to the message you want to delete', delete_after=5.0)
+
+        if target.resolved.author is not ctx.guild.me:
+            return await ctx.send('You can only delete messages that I sent', delete_after=5.0)
+
+        await target.resolved.delete()
+
 
 async def setup(bot):
     await bot.add_cog(Admin(bot))
