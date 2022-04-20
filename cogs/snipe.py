@@ -23,13 +23,16 @@ class Snipe(commands.Cog):
 
 
     @commands.command()
-    async def snipe(self, ctx):
+    async def snipe(self, ctx : commands.Context, target : discord.TextChannel = None):
         """
-        Snipes the last message that was deleted from the current channel.
+        Snipes the last message that was deleted from the mentioned channel, or the current channel if no channel is mentioned.
 
+        :param target: The channel to snipe from.
+        :type target: discord.TextChannel, optional
         """
 
-        msg = self.del_msg.get(ctx.channel.id, None)
+        target = target or ctx.channel
+        msg = self.del_msg.get(target.id, None)
 
         if not msg:
             return await ctx.send("There is nothing for me to snipe here")
@@ -44,13 +47,16 @@ class Snipe(commands.Cog):
 
 
     @commands.command()
-    async def esnipe(self, ctx):
+    async def esnipe(self, ctx : commands.Context, target : discord.TextChannel = None):
         """
-        eSnipes the last message that was edited from the current channel.
+        eSnipes the last message that was edited from the mentioned channel, or the current channel if no channel is mentioned.
 
+        :param target: The channel to eSnipe from.
+        :type target: discord.TextChannel, optional
         """
 
-        msg = self.edit_msg.get(ctx.channel.id, None)
+        target = target or ctx.channel
+        msg = self.edit_msg.get(target.id, None)
         if not msg:
             return await ctx.send("There is nothing for me to esnipe here")
 

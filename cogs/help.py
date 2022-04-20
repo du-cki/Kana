@@ -1,13 +1,7 @@
 import discord
 from discord.ext import commands
 
-import re
-
-ESCAPE = "\u001b"
-PARAM_RE = re.compile(
-    r":param (?P<param>[a-zA-Z0-9_]+):? (?P<param_description>[a-zA-Z0-9_ .,]+)"
-    r"\n? +:type [a-zA-Z0-9_]+:? (?P<type>[a-zA-Z0-9_ .,]+)"
-)
+from .utils.constants import ESCAPE, PARAM_RE, INVIS_CHAR, FANCY_ARROW_RIGHT
 
 class Help(commands.HelpCommand):
 
@@ -24,7 +18,7 @@ class Help(commands.HelpCommand):
         if not params:
             return None
         
-        return "Arguments:\n" + "\n".join([f"`{param[0]}` : {param[2]}\n\u2800\U00002570\u2800{param[1]}" for param in params])
+        return "Arguments:\n" + "\n".join([f"`{param[0]}` : {param[2]}\n{INVIS_CHAR}{FANCY_ARROW_RIGHT}{INVIS_CHAR}{param[1]}" for param in params])
 
     async def send_bot_help(self, mapping):
         await self.context.send("soon\U00002122")

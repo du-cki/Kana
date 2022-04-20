@@ -5,6 +5,7 @@ import inspect
 import os 
 
 from .utils import time as timeutil
+from .utils.constants import INVIS_CHAR
 
 import psutil
 from platform import python_version
@@ -16,8 +17,7 @@ class Stats(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.repo = pygit2.Repository('.git')
-        self.ESCAPE = "\n"
-        self.INVIS = "\u2800"
+        self.NEW_LINE = "\n"
 
     def _get_uptime(self, breif : bool = False) -> str:
         return timeutil.deltaconv(int(discord.utils.utcnow().timestamp()) - int(self.bot._uptime), breif)
@@ -35,7 +35,7 @@ class Stats(commands.Cog):
         commits = [commit for commit in self.repo.walk(self.repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL)][:count]
         return "\n".join(
             [
-                f"[`{commit.hex[:6]}`](https://github.com/duckist/Kanapy/commit/{commit.hex}) {commit.message[:42] + '...' if len(commit.message) > 40 else commit.message.replace(self.ESCAPE, '').ljust(40, self.INVIS)}" 
+                f"[`{commit.hex[:6]}`](https://github.com/duckist/Kanapy/commit/{commit.hex}) {commit.message[:42] + '...' if len(commit.message) > 40 else commit.message.replace(self.NEW_LINE, '').ljust(40, INVIS_CHAR)}" 
                 for commit in commits
             ]
         )

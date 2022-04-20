@@ -4,6 +4,8 @@ from discord import app_commands
 
 import time
 
+from .utils.constants import WEBSOCKET, CHAT_BOX, POSTGRES
+
 class Ping(commands.Cog):
 
     def __init__(self, bot):
@@ -33,9 +35,9 @@ class Ping(commands.Cog):
         postgres_ping = self._format_ping((end - start) * 1000)
 
         em = discord.Embed(color=0x2F3136) \
-                    .add_field(name="<a:websocket:963608475982774282> Websocket", value=websocket, inline=True) \
-                        .add_field(name="<:message:963608317370974240> Message", value=message_ping, inline=True) \
-                            .add_field(name="<:postgresql:963608621017608294> Database", value=postgres_ping, inline=False) \
+                    .add_field(name=f"{WEBSOCKET} Websocket", value=websocket, inline=True) \
+                        .add_field(name=f"{CHAT_BOX} Message", value=message_ping, inline=True) \
+                            .add_field(name=f"{POSTGRES} Database", value=postgres_ping, inline=False) \
         
         await mes.edit(content=None, embed=em)
 
@@ -59,9 +61,9 @@ class Ping(commands.Cog):
         postgres_ping = self._format_ping((end - start) * 1000)
 
         em = discord.Embed(color=0x2F3136) \
-                    .add_field(name="<a:websocket:963608475982774282> Websocket", value=websocket, inline=True) \
-                        .add_field(name="<:message:963608317370974240> Interaction", value=interaction_ping, inline=True) \
-                            .add_field(name="<:postgresql:963608621017608294> Database", value=postgres_ping, inline=False) \
+                    .add_field(name=f"{WEBSOCKET} Websocket", value=websocket, inline=True) \
+                        .add_field(name=f"{CHAT_BOX} Interaction", value=interaction_ping, inline=True) \
+                            .add_field(name=f"{POSTGRES} Database", value=postgres_ping, inline=False) \
 
         await interaction.edit_original_message(content=None, embed=em)
         
