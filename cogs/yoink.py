@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 
+import typing
 
 class Yoink(commands.Cog):
 
@@ -9,7 +10,8 @@ class Yoink(commands.Cog):
 
     @commands.Cog.listener()
     async def on_user_update(self, before : discord.Member, after : discord.Member):
-        if before.bot:  return
+        if before.bot:
+            return
         
         if before.name != after.name:
             await self.bot.pool.execute("""
@@ -21,14 +23,12 @@ class Yoink(commands.Cog):
 
     @commands.command()
     @commands.is_owner()
-    async def avy(self, ctx : commands.Context, target: discord.Member = None):
+    async def avy(self, ctx : commands.Context, target: typing.Union[discord.Member, discord.User] = None):
         """
-        Get's the name history of a user.
-
-        Parameters
-        ----------
-        target : discord.Member
-            The user to get the name history of.
+        Get's the username history of a user.
+        
+        :param target: The user to get the name history of.
+        :type target: discord.Member, discord.User, optional
         """
         
         target = target or ctx.author

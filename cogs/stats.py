@@ -27,9 +27,6 @@ class Stats(commands.Cog):
         """
         Gets the bot's uptime.
 
-        Parameters
-        ----------
-        None
         """
 
         await ctx.send(self._get_uptime())
@@ -48,9 +45,6 @@ class Stats(commands.Cog):
         """
         Gets the current status of the bot.
 
-        Parameters
-        ----------
-        None
         """
 
         guild = self.bot.get_guild(659189385085845515)
@@ -71,15 +65,14 @@ class Stats(commands.Cog):
     @commands.command(aliases=["src"]) 
     async def source(self, ctx : commands.Context, *, command : str = None):
         """
-        Gets the source code of a command, 
+        Gets the source of a command, if no command is given, it will return the source of the bot.
         this was from danny's implementation of the command (https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/meta.py#L397-L435), 
         thank you danny and thank you for coming back.
 
-        Parameters
-        ----------
-        command : str
-            The command to get the source code of.
+        :param command: The command to get the source code of.
+        :type command: str, optional
         """
+
         source_url = "https://github.com/duckist/Kanapy"
         if command is None:    return await ctx.send(source_url)
 

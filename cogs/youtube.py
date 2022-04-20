@@ -45,10 +45,8 @@ class Youtube(commands.Cog):
         """
         Searches YouTube for a video, if no query is given, it will send a link to youtube.
 
-        Parameters
-        ----------
-        query : str
-            The query to search YouTube for.
+        :param query: The query to search for.
+        :type query: str, optional
         """
 
         if query is None:

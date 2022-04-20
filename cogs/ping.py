@@ -18,9 +18,6 @@ class Ping(commands.Cog):
         """
         Gets the bot's latency.
 
-        Parameters
-        ----------
-        None
         """
         
         start = time.perf_counter()
@@ -47,9 +44,6 @@ class Ping(commands.Cog):
         """
         Gets the bot's latency.
         
-        Parameters
-        ----------
-        None
         """
 
         start = time.perf_counter()

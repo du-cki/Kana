@@ -25,11 +25,8 @@ class Snipe(commands.Cog):
     @commands.command()
     async def snipe(self, ctx):
         """
-        Snipes the last message from the channel that was deleted 2 minutes ago.
+        Snipes the last message that was deleted from the current channel.
 
-        Parameters
-        ----------
-        None
         """
 
         msg = self.del_msg.get(ctx.channel.id, None)
@@ -49,11 +46,8 @@ class Snipe(commands.Cog):
     @commands.command()
     async def esnipe(self, ctx):
         """
-        eSnipes the last message from the channel that was edited 2 minutes ago.
+        eSnipes the last message that was edited from the current channel.
 
-        Parameters
-        ----------
-        None
         """
 
         msg = self.edit_msg.get(ctx.channel.id, None)

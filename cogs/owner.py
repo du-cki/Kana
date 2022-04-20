@@ -13,10 +13,8 @@ class Admin(commands.Cog):
         """
         Reloads the specified extension.
 
-        Parameters
-        ----------
-        extension : str
-            The extension to reload.
+        :param extension: The extension to reload.
+        :type extension: str
         """
 
         try:
@@ -31,6 +29,7 @@ class Admin(commands.Cog):
     async def delete(self, ctx: commands.Context):
         """
         Deletes the message that the author replied to.
+
         """
 
         target : discord.Message = ctx.message.reference

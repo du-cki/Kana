@@ -4,6 +4,8 @@ from discord.ext import commands
 import asyncpg
 from aiohttp import ClientSession
 
+import typing
+
 from os import environ, listdir
 from dotenv import load_dotenv
 load_dotenv()
@@ -26,6 +28,16 @@ async def getPrefix(bot, message):
     
     return commands.when_mentioned_or("uwu")(bot, message)
 
+class KanaContext(commands.Context):
+    def determine_ansi(self, target : typing.Union[discord.Member, discord.User]) -> bool:
+        if isinstance(target, discord.User):
+            return False
+
+        if target.is_on_mobile() \
+            or target.status is discord.Status.offline:
+                return False
+
+        return True
 
 class Kana(commands.Bot):
     def __init__(self, *args, **kwargs):
@@ -34,6 +46,8 @@ class Kana(commands.Bot):
         self.session = None
         self.pool = None
 
+    async def get_context(self, message, *, cls=KanaContext):
+        return await super().get_context(message, cls=cls)
 
     async def on_ready(self):
         print(f'{str(self.user)} is online, on discord.py - {str(discord.__version__)}')

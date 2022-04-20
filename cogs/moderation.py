@@ -12,12 +12,11 @@ class Moderation(commands.Cog):
     @commands.has_permissions(manage_messages=True)
     async def waifupurge(self, ctx : commands.Context, amount : int = 30):
         """
-        Purges all of mudae's waifu posts.
+        Purges a set amount of mudae's waifu posts from the current channel.
 
-        Parameters
-        ----------
-        amount : int
-            The amount of waifus to purge.
+        :param amount: The amount of posts to purge, if not specified, 30 posts will be purged.
+        :type amount: int, optional
+        :permissions: Manage Messages
         """
 
         if amount > 50:
@@ -33,12 +32,11 @@ class Moderation(commands.Cog):
     @commands.command()
     async def prefix(self, ctx : commands.Context, prefix : str = None):
         """
-        Changes the guild specific prefix.
+        Changes the guild specific prefix, if no prefix is given, it will show the current prefix.
 
-        Parameters
-        ----------
-        prefix : str
-            The new prefix.
+        :param prefix: The new prefix
+        :type prefix: str, optional
+        :permissions: Administrator
         """
 
         if prefix is None:
@@ -56,7 +54,6 @@ class Moderation(commands.Cog):
         """, prefix, ctx.guild.id)
 
         await ctx.send(f'The prefix is now `{prefix}`')
-
 
 
 async def setup(bot):

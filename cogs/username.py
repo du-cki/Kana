@@ -18,11 +18,8 @@ class Username(commands.Cog):
     @commands.group(aliases=["users", "user", "usernames"], invoke_without_command=True)
     async def username(self, ctx):
         """
-        Gets all usernames in the database.
+        Gets all your usernames in the database.
 
-        Parameters
-        ----------
-        None
         """
 
         query = db.get({"_id": ctx.author.id})
@@ -35,11 +32,9 @@ class Username(commands.Cog):
     async def add(self, ctx : commands.Context, username : str):
         """
         Adds a username to the database.
-        
-        Parameters
-        ----------
-        username : str
-            The username to add.
+
+        :param username: The username to add.
+        :type username: str
         """
 
         if any(c in "!@#$%^&*()-+?=,<>/" for c in username):    return await ctx.send("There are no special characters in usernames dummy") # returns when string has special characters
@@ -72,10 +67,8 @@ class Username(commands.Cog):
         """
         Remove a username from the database.
 
-        Parameters
-        ----------
-        username : str
-            The username to remove.
+        :param username: The username to remove.
+        :type username: str
         """
 
         q = db.get({"_id": ctx.author.id, "robloxUser": username})

@@ -11,9 +11,6 @@ class Animals(commands.Cog):
         """
         Gets a random cat from the aws.random.cat API
 
-        Parameters
-        ----------
-        None
         """
 
         async with self.bot.session.get(url="https://aws.random.cat/meow") as resp:
@@ -30,9 +27,6 @@ class Animals(commands.Cog):
         """
         Gets a random duck from the random-d.uk API
 
-        Parameters
-        ----------
-        None
         """
         
         async with self.bot.session.get(url="https://random-d.uk/api/random") as resp:
