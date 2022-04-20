@@ -37,7 +37,7 @@ class Help(commands.HelpCommand):
                 f"```ansi"
                 f"\n{self.context.clean_prefix}{ESCAPE}[0;37m{command.qualified_name}{ESCAPE}[0m {''.join(parameters)}"
                 f"```"
-                f"\n{command.short_doc}"
+                f"\n{command.short_doc if command.short_doc else 'No description given.'}"
             )
 
         else:
@@ -45,10 +45,10 @@ class Help(commands.HelpCommand):
                 "```\n"
                 f"{self.context.clean_prefix}{command.qualified_name} {command.signature}"
                 "```"
-                f"\n{command.short_doc}"
+                f"\n{command.short_doc if command.short_doc else 'No description given.'}"
             )
         
-        params = self.check_params(command.callback.__doc__)
+        params = self.check_params(command.callback.__doc__) if command.callback.__doc__ else None
         
         if params:
             description += "\n\n" + params
