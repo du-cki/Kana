@@ -29,7 +29,9 @@ async def getPrefix(bot, message):
     return commands.when_mentioned_or("uwu")(bot, message)
 
 class KanaContext(commands.Context):
-    def determine_ansi(self, target : typing.Union[discord.Member, discord.User]) -> bool:
+    def determine_ansi(self, target : typing.Union[discord.Member, discord.User] = None) -> bool:
+        target = target or self.message.author
+        
         if isinstance(target, discord.User):
             return False
 
