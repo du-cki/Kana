@@ -24,7 +24,7 @@ class Help(commands.HelpCommand):
         if not params:
             return None
         
-        return "Arguments:\n" + "\n".join([f"`{param[0]}` : {param[2]}\n\u2800╰\u2800{param[1]}" for param in params])
+        return "Arguments:\n" + "\n".join([f"`{param[0]}` : {param[2]}\n\u2800\U00002570\u2800{param[1]}" for param in params])
 
     async def send_bot_help(self, mapping):
         await self.context.send("soon\U00002122")
