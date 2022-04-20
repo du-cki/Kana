@@ -35,7 +35,7 @@ class Snipe(commands.Cog):
         msg = self.del_msg.get(target.id, None)
 
         if not msg:
-            return await ctx.send("There is nothing for me to snipe here")
+            return await ctx.send(f"There is nothing for me to snipe {'here' if target is ctx.channel else 'in {target.mention}'}.")
 
         embed = discord.Embed(color=0x2F3136, description=msg[0].content, timestamp=msg[1])
         
@@ -58,7 +58,7 @@ class Snipe(commands.Cog):
         target = target or ctx.channel
         msg = self.edit_msg.get(target.id, None)
         if not msg:
-            return await ctx.send("There is nothing for me to esnipe here")
+            return await ctx.send(f"There is nothing for me to esnipe {'here' if target is ctx.channel else 'in {target.mention}'}.")
 
         embed = discord.Embed(color=0x2F3136, description=msg[0].content, timestamp=msg[1])
         embed.set_author(name=str(msg[0].author), icon_url=msg[0].author.avatar.url)
