@@ -1,7 +1,8 @@
 import discord
 from discord.ext import commands
 
-from .utils.constants import ESCAPE, PARAM_RE, INVIS_CHAR, FANCY_ARROW_RIGHT
+from .utils.constants import ESCAPE, PARAM_RE, INVIS_CHAR, FANCY_ARROW_RIGHT, NL
+
 
 class Help(commands.HelpCommand):
 
@@ -17,20 +18,23 @@ class Help(commands.HelpCommand):
         params = PARAM_RE.findall(doc_string)
         if not params:
             return None
-        
-        return "Arguments:\n" + "\n".join([f"`{param[0]}` : {param[2]}\n{INVIS_CHAR}{FANCY_ARROW_RIGHT}{INVIS_CHAR}{param[1]}" for param in params])
+
+        return "Arguments:\n" + "\n".join([f"`{param[0]}` : {param[2]}\n{INVIS_CHAR}{FANCY_ARROW_RIGHT} {param[1]}" for param in params])
+
 
     async def send_bot_help(self, mapping):
         await self.context.send("soon\U00002122")
 
+
     async def send_command_help(self, command):
         if self.context.determine_ansi(self.context.author):
-            parameters = self.format_params(command.signature.split(" ")) if command.signature else ""
+            parameters = self.format_params(
+                command.signature.split(" ")) if command.signature else ""
 
             description = (
-                f"```ansi"
+                "```ansi"
                 f"\n{self.context.clean_prefix}{ESCAPE}[0;37m{command.qualified_name}{ESCAPE}[0m {''.join(parameters)}"
-                f"```"
+                "```"
                 f"\n{command.short_doc if command.short_doc else 'No description given.'}"
             )
 
@@ -41,9 +45,10 @@ class Help(commands.HelpCommand):
                 "```"
                 f"\n{command.short_doc if command.short_doc else 'No description given.'}"
             )
-        
-        params = self.check_params(command.callback.__doc__) if command.callback.__doc__ else None
-        
+
+        params = self.check_params(
+            command.callback.__doc__) if command.callback.__doc__ else None
+
         if params:
             description += "\n\n" + params
 
@@ -55,7 +60,50 @@ class Help(commands.HelpCommand):
         await self.context.send(embed=em)
 
     async def send_group_help(self, group):
-        await self.context.send("soon\U00002122")
+        pref_len = len(self.context.clean_prefix)
+
+        if self.context.determine_ansi(self.context.author):
+            commands = [
+                f"{INVIS_CHAR * pref_len}{ESCAPE}[0;37m{FANCY_ARROW_RIGHT} {command.name}{ESCAPE}[0m {self.format_params(command.signature.split(' ')) if command.signature else ''}"
+                for command in group.commands
+            ]
+
+            description = (
+                "```ansi"
+                f"\n{self.context.clean_prefix}{ESCAPE}[0;37m{group.name}{ESCAPE}[0m"
+                f"\n{ESCAPE}[0;37m{f'{NL}'.join(commands)}{ESCAPE}[0m"
+                "```"
+                f"\n{group.short_doc if group.short_doc else 'No description given.'}"
+            )
+
+        else:
+            commands = [
+                f"{INVIS_CHAR * pref_len}{FANCY_ARROW_RIGHT} {command.name} {command.signature}"
+                for command in group.commands
+            ]
+
+            description = (
+                "```"
+                f"\n{self.context.clean_prefix}{group.name}"
+                f"\n{f'{NL}'.join(commands)}"
+                "```"
+                f"\n{group.short_doc if group.short_doc else 'No description given.'}"
+            )
+
+        params = [
+            f"`{command.name}`\n{INVIS_CHAR}{FANCY_ARROW_RIGHT} {command.short_doc}"
+            for command in group.commands
+        ]
+
+        if params:
+            description += "\n\nSub-Commands:\n" + "\n".join(params)
+
+        em = discord.Embed(
+            description=description,
+            color=0x2F3136
+        )
+
+        await self.context.send(embed=em)
 
 
 async def setup(bot):

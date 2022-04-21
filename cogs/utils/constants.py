@@ -4,7 +4,7 @@ import re
 FANCY_ARROW_RIGHT = "\U00002570"
 ESCAPE = "\u001b"
 INVIS_CHAR = "\u2800"
-
+NL = "\n"
 
 # emotes
 WEBSOCKET = "<a:websocket:963608475982774282>"
