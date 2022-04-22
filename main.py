@@ -72,7 +72,7 @@ class Kana(commands.Bot):
 
         for cog in glob.glob("cogs/*.py"):
             await self.load_extension(
-                cog.replace("\\", ".").replace(".py", "")
+                cog.replace("\\", ".").replace("/", ".").replace(".py", "")
             )
 
 
