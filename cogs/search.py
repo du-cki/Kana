@@ -82,8 +82,8 @@ class Search(commands.Cog):
         q = await q.json()
 
         parsed_queries = {
-            item["snippet"]["channelTitle"]: [
-                item["snippet"]["title"], "https://www.youtube.com/watch?v=" + item["id"]["videoId"]
+            item["snippet"]["channelTitle"][:100]: [
+                item["snippet"]["title"][:100], "https://www.youtube.com/watch?v=" + item["id"]["videoId"]
                 ]
             for item in q["items"]
         }
