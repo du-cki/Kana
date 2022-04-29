@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+from discord.ext.commands.cooldowns import BucketType
 
 from .utils.constants import YOUTUBE
 
@@ -53,6 +54,7 @@ class Search(commands.Cog):
 
 
     @commands.command(aliases=["yt"])
+    @commands.cooldown(1, 5, BucketType.user)
     async def youtube(self, ctx : commands.Context, *, query : str  = None):
         """
         Searches YouTube for a video, if no query is given, it will send a link to youtube.
@@ -64,7 +66,6 @@ class Search(commands.Cog):
         if not query:
             return await ctx.send("https://www.youtube.com/")
 
-        # q = YoutubeSearch(query, max_results=10).to_dict()
         q = await self.bot.session.get(
             "https://www.googleapis.com/youtube/v3/search", 
             params={

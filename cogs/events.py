@@ -55,7 +55,7 @@ class Events(commands.Cog):
             return await ctx.send("You do not have permission to use this command.")
         
         if isinstance(error, commands.CommandOnCooldown):
-            return await ctx.reply(f"You're on cooldown for `{time.deltaconv(int(error.retry_after))}`", mention_author=False)
+            return await ctx.reply(f"You're on cooldown for `{time.deltaconv(int(error.retry_after))}`", mention_author=False, delete_after=error.retry_after if error.retry_after < 60 else None)
 
         print(error)
 
