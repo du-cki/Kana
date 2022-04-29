@@ -14,15 +14,12 @@ load_dotenv()
 from cogs.utils.constants import STARTUP_QUERY
 
 async def getPrefix(bot, message):
-    if isinstance(message.channel, discord.DMChannel):
+    if isinstance(message.channel, discord.DMChannel) or not message.guild:
         return commands.when_mentioned_or("uwu")(bot, message)
 
-    q = await bot.pool.fetch("""
-    SELECT prefix FROM prefixes WHERE id = $1;
-    """, message.guild.id)
-
+    q = bot._prefixes.get(message.guild.id, None)
     if q:
-        return commands.when_mentioned_or(q[0].get("prefix"))(bot, message)
+        return commands.when_mentioned_or(q)(bot, message)
 
     await bot.pool.execute("""
     INSERT INTO prefixes VALUES ($1, $2);
@@ -62,8 +59,15 @@ class Kana(commands.Bot):
 
         await self.pool.execute(STARTUP_QUERY)
 
-        await self.load_extension("jishaku")
+        self._prefixes = {
+            prefix["id"]: prefix["prefix"]
+            for prefix in (
+                    await bot.pool.fetch("SELECT * FROM prefixes;")
+                )
+            }
 
+        await self.load_extension("jishaku")
+ 
         for cog in glob.glob("cogs/*.py"):
             await self.load_extension(
                 cog.replace("\\", ".").replace("/", ".").replace(".py", "")

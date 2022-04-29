@@ -30,9 +30,10 @@ class Moderation(commands.Cog):
             await ctx.message.add_reaction('\u2705')
 
     @commands.command()
+    @commands.guild_only()
     async def prefix(self, ctx : commands.Context, prefix : str = None):
         """
-        Changes the guild specific prefix, if no prefix is given, it will show the current prefix.
+        Changes the guild specific prefix. if no prefix is given, it will show the current prefix.
 
         :param prefix: The new prefix
         :type prefix: str, optional
@@ -40,18 +41,16 @@ class Moderation(commands.Cog):
         """
 
         if prefix is None:
-            q = await self.bot.pool.fetch(f"""
-            SELECT * FROM prefixes WHERE id = $1;
-            """, ctx.guild.id)
-            
-            return await ctx.send(f"The current prefix for this server is: `{q[0].get('prefix', 'uwu')}`")
+            return await ctx.send(f"The current prefix for this server is: `{self.bot._prefixes.get(ctx.guild.id, 'uwu')}`")
 
         if not ctx.author.guild_permissions.administrator:
             raise commands.MissingPermissions(['administrator'])
 
-        q = await self.bot.pool.execute("""
+        await self.bot.pool.execute("""
         UPDATE prefixes SET prefix = $1 WHERE id = $2;
         """, prefix, ctx.guild.id)
+
+        self.bot._prefixes[ctx.guild.id] = prefix
 
         await ctx.send(f'The prefix is now `{prefix}`')
 
