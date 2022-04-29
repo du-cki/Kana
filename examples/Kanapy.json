@@ -1,0 +1,11 @@
+{
+    "apps": [
+        {
+            "name": "Kanapy",
+            "cwd": "./",
+            "script": "main.py",
+            "args": "",
+            "interpreter": "python3"
+        }
+    ]
+}
