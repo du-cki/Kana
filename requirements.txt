@@ -17,4 +17,3 @@ python-dotenv==0.19.2
 typing_extensions==4.0.1
 urllib3==1.26.8
 yarl==1.7.2
-youtube_search==2.1.0
