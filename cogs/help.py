@@ -27,7 +27,7 @@ class Help(commands.HelpCommand):
 
 
     async def send_command_help(self, command):
-        if self.context.determine_ansi(self.context.author):
+        if self.context.predict_ansi(self.context.author):
             parameters = self.format_params(
                 command.signature.split(" ")) if command.signature else ""
 
@@ -62,7 +62,7 @@ class Help(commands.HelpCommand):
     async def send_group_help(self, group):
         pref_len = len(self.context.clean_prefix)
 
-        if self.context.determine_ansi(self.context.author):
+        if self.context.predict_ansi(self.context.author):
             commands = [
                 f"{INVIS_CHAR * pref_len}{ESCAPE}[0;37m{FANCY_ARROW_RIGHT} {command.name}{ESCAPE}[0m {self.format_params(command.signature.split(' ')) if command.signature else ''}"
                 for command in group.commands

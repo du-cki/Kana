@@ -13,8 +13,14 @@ POSTGRES = "<:postgresql:963608621017608294>"
 
 YOUTUBE = "<:youtube_logo:940649600920985691>"
 
+# regexes
+PARAM_RE = re.compile(
+    r":param (?P<param>[a-zA-Z0-9_]+):? (?P<param_description>[a-zA-Z0-9_ .,]+)"
+    r"\n? +:type [a-zA-Z0-9_]+:? (?P<type>[a-zA-Z0-9_ .,]+)"
+)
+
 # sql
-MAIN = """
+STARTUP_QUERY = """
 CREATE TABLE IF NOT EXISTS prefixes (
 id BIGINT PRIMARY KEY,
 prefix TEXT NOT NULL
@@ -32,9 +38,3 @@ unix_time BIGINT,
 avatar BYTEA
 );
 """
-
-# regexes
-PARAM_RE = re.compile(
-    r":param (?P<param>[a-zA-Z0-9_]+):? (?P<param_description>[a-zA-Z0-9_ .,]+)"
-    r"\n? +:type [a-zA-Z0-9_]+:? (?P<type>[a-zA-Z0-9_ .,]+)"
-)

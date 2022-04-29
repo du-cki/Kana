@@ -11,7 +11,7 @@ from os import environ
 from dotenv import load_dotenv
 load_dotenv()
 
-from cogs.utils.constants import MAIN
+from cogs.utils.constants import STARTUP_QUERY
 
 async def getPrefix(bot, message):
     if isinstance(message.channel, discord.DMChannel):
@@ -32,7 +32,7 @@ async def getPrefix(bot, message):
 
 
 class KanaContext(commands.Context):
-    def determine_ansi(self, target: typing.Union[discord.Member, discord.User] = None) -> bool:
+    def predict_ansi(self, target: typing.Union[discord.Member, discord.User] = None) -> bool:
         target = target or self.message.author
 
         if isinstance(target, discord.User):
@@ -48,25 +48,19 @@ class KanaContext(commands.Context):
 class Kana(commands.Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._uptime = discord.utils.utcnow().timestamp()
-        self.session = None
-        self.pool = None
 
     async def get_context(self, message, *, cls=KanaContext):
         return await super().get_context(message, cls=cls)
 
     async def on_ready(self):
-        print(f'{str(self.user)} is online, on discord.py - {str(discord.__version__)}')
+        print(f'{self.user} is online, on discord.py - {discord.__version__}')
 
     async def setup_hook(self):
+        self._uptime = discord.utils.utcnow().timestamp()
         self.session = ClientSession()
         self.pool = await asyncpg.create_pool(environ["PSQL_URI"])
 
-        await self.pool.execute(MAIN)
-
-        environ["JISHAKU_NO_UNDERSCORE"] = "True"
-        environ["JISHAKU_NO_DM_TRACEBACK"] = "True"
-        environ["JISHAKU_HIDE"] = "True"
+        await self.pool.execute(STARTUP_QUERY)
 
         await self.load_extension("jishaku")
 
@@ -74,7 +68,6 @@ class Kana(commands.Bot):
             await self.load_extension(
                 cog.replace("\\", ".").replace("/", ".").replace(".py", "")
             )
-
 
     async def close(self):
         await super().close()
@@ -89,6 +82,5 @@ bot = Kana(
     intents=discord.Intents().all(),
     strip_after_prefix=True
 )
-
 
 bot.run(environ["TOKEN"], reconnect=True)
