@@ -7,13 +7,17 @@ from asyncio import TimeoutError
 class Filter(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        self.IM_REGEX = re.compile(r"((?:i|l)(?:(?:'|`|‛|‘|’|′|‵)?m| am)) ([\s\S]*)") # in cases of: "im" "i'm" "i am"
-        self.KYS_REGEX = re.compile(r"(kys|killyour\s?self)") # in cases of: "kys"
-        self.PLAY_REGEX = re.compile(r"(?:play|played|playing)") # in cases of: "play" "played" "playing"
-        self.SHUTUP_REGEX = re.compile(r"(stfu|shut\s(?:the\s)?(?:fuck\s)?up)") # in cases of: "stfu" "shut the fuck up"
-        self.GOODBYE_REGEX = re.compile(r"(?:good)? ?bye") # in cases of: "good bye" "bye"
-        self.TY_REGEX = re.compile(r"(?:thank you|thanks) dad") # in cases of: "thank you dad" "thanks dad"
-        self.UP_REGEX = re.compile(r"[A-Z]") # find all capital letters in a string
+        self.MASTER_REGEX = re.compile(
+            r"((?:i|l)(?:(?:'|`|‛|‘|’|′|‵)?m| am)) ([\s\S]*)"
+            r"|(kys|killyour\s?self)"
+            r"|(?:play|played|playing)"
+            r"|(stfu|shut\s(?:the\s)?(?:fuck\s)?up)"
+            r"|(?:good)? ?bye"
+            r"|(?:thank you|thanks) dad"
+        ) # in case of: "i'm", "kys", "play", "stfu", "good bye", "thanks dad"
+        self.UP_REGEX = re.compile(
+            r"[A-Z]"
+        ) # find all capital letters in a string
 
     def _volumeCheck(self, message : str) -> bool:
         splitMsg = message.replace(" ", "")
@@ -29,21 +33,16 @@ class Filter(commands.Cog):
             return
 
         cnt = message.content.lower()
-        if not message.content == "" and (
-            self._volumeCheck(message.content) \
-            or self.IM_REGEX.findall(cnt) \
-            or self.PLAY_REGEX.findall(cnt) \
-            or self.SHUTUP_REGEX.findall(cnt) \
-            or self.GOODBYE_REGEX.findall(cnt) \
-            or self.KYS_REGEX.findall(cnt) \
-            or self.TY_REGEX.findall(cnt) \
-        ):
+        if not message.content == "" \
+                and self._volumeCheck(message.content) \
+                        or self.MASTER_REGEX.findall(cnt):
             try:
                 dmessage = await self.bot.wait_for(
                     "message", 
                     check=self._dadcheck, 
                     timeout=10.0
                 )
+
             except TimeoutError:
                 pass
             else:
