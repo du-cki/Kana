@@ -14,7 +14,7 @@ load_dotenv()
 from cogs.utils.constants import STARTUP_QUERY
 
 async def getPrefix(bot, message):
-    if isinstance(message.channel, discord.DMChannel) or not message.guild:
+    if not message.guild:
         return commands.when_mentioned_or("uwu")(bot, message)
 
     q = bot._prefixes.get(message.guild.id, None)
@@ -67,10 +67,10 @@ class Kana(commands.Bot):
             }
 
         await self.load_extension("jishaku")
- 
-        for cog in glob.glob("cogs/*.py"):
+
+        for cog in glob.glob("cogs/*.py", recursive=True):
             await self.load_extension(
-                cog.replace("\\", ".").replace("/", ".").replace(".py", "")
+                cog.replace("\\", ".").replace("/", ".").removesuffix(".py")
             )
 
     async def close(self):
