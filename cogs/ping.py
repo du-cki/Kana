@@ -34,7 +34,7 @@ class Ping(commands.Cog):
         end = time.perf_counter()
         postgres_ping = self._format_ping((end - start) * 1000)
 
-        em = discord.Embed(color=0x2F3136) \
+        em = discord.Embed(color=0xE59F9F) \
                     .add_field(name=f"{WEBSOCKET} Websocket", value=websocket, inline=True) \
                         .add_field(name=f"{CHAT_BOX} Message", value=message_ping, inline=True) \
                             .add_field(name=f"{POSTGRES} Database", value=postgres_ping, inline=False) \
@@ -60,7 +60,7 @@ class Ping(commands.Cog):
         end = time.perf_counter()
         postgres_ping = self._format_ping((end - start) * 1000)
 
-        em = discord.Embed(color=0x2F3136) \
+        em = discord.Embed(color=0xE59F9F) \
                     .add_field(name=f"{WEBSOCKET} Websocket", value=websocket, inline=True) \
                         .add_field(name=f"{CHAT_BOX} Interaction", value=interaction_ping, inline=True) \
                             .add_field(name=f"{POSTGRES} Database", value=postgres_ping, inline=False) \

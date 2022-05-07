@@ -37,7 +37,7 @@ class Snipe(commands.Cog):
         if not msg:
             return await ctx.send(f"There is nothing for me to snipe {'here' if target is ctx.channel else f'in {target.mention}'}.")
 
-        embed = discord.Embed(color=0x2F3136, description=msg[0].content, timestamp=msg[1])
+        embed = discord.Embed(color=0xE59F9F, description=msg[0].content, timestamp=msg[1])
         
         if msg[0].attachments:
             embed.set_image(url=msg[0].attachments[0].url)
