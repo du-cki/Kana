@@ -46,7 +46,7 @@ class Yoink(commands.Cog):
             return await ctx.send("No records")
 
         em = discord.Embed(
-            color=0x2F3136,
+            color=0xE59F9F,
             description=(
                 "```css\n" +
                 "\n".join(

@@ -53,7 +53,7 @@ class Stats(commands.Cog):
         mem = psutil.Process().memory_full_info().uss / 1024**2
         cpu = psutil.Process().cpu_percent() / psutil.cpu_count()
 
-        embed = discord.Embed(color=0x2F3136, description='Latest Changes:\n' + await self._get_commits(), timestamp=discord.utils.utcnow())
+        embed = discord.Embed(color=0xE59F9F, description='Latest Changes:\n' + await self._get_commits(), timestamp=discord.utils.utcnow())
         embed.set_author(name=str(owner), icon_url=owner.avatar.url, url="https://github.com/duckist")
         embed.add_field(name="Version", value=f"python-{python_version()}\ndiscord.py-{discord.__version__}", inline=True)
         embed.add_field(name="Uptime", value=self._get_uptime(breif=True), inline=True)

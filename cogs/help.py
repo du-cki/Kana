@@ -54,7 +54,7 @@ class Help(commands.HelpCommand):
 
         em = discord.Embed(
             description=description,
-            color=0x2F3136
+            color=0xE59F9F
         )
 
         await self.context.send(embed=em)
@@ -100,7 +100,7 @@ class Help(commands.HelpCommand):
 
         em = discord.Embed(
             description=description,
-            color=0x2F3136
+            color=0xE59F9F
         )
 
         await self.context.send(embed=em)

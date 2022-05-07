@@ -17,7 +17,7 @@ class Animals(commands.Cog):
             resp = await resp.json(content_type="application/json")
             url = resp[0]['url']
         
-        embed = discord.Embed(color=0x2F3136) \
+        embed = discord.Embed(color=0xE59F9F) \
                                 .set_image(url=url)
 
         await ctx.send(embed=embed)
@@ -33,7 +33,7 @@ class Animals(commands.Cog):
             resp = await resp.json(content_type="application/json")
             url = resp["url"]
         
-        embed = discord.Embed(color=0x2F3136) \
+        embed = discord.Embed(color=0xE59F9F) \
                                 .set_image(url=url)
 
         await ctx.send(embed=embed)
