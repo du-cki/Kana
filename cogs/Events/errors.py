@@ -1,27 +1,14 @@
 import discord
 from discord.ext import commands
 
-from .utils import time
+from ..utils import time
 
-class Events(commands.Cog):
-
+class Errors(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_guild_remove(self, guild : discord.Guild):
-        await self.bot.pool.execute("""
-        DELETE FROM prefixes WHERE id = $1
-        """, guild.id)
-
-    @commands.Cog.listener()
-    async def on_message_edit(self, before : discord.Message, after : discord.Message):
-        if before.content != after.content:
-            ctx = await self.bot.get_context(after)
-            await self.bot.invoke(ctx)
-
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx : commands.Context, error):
+    async def on_command_error(self, ctx: commands.Context, error):
         error = getattr(error, 'original', error)
 
         if isinstance(error, commands.CommandNotFound):
@@ -36,8 +23,9 @@ class Events(commands.Cog):
                 fmt = '{}, and {}'.format("**, **".join(missing[:-1]), missing[-1])
             else:
                 fmt = ' and '.join(missing)
-            _message = f'I need the `{fmt}` permission(s) to run this command.'
-            return await ctx.send(_message)
+            return await ctx.send(
+                f'I need the `{fmt}` permissions to run this command.'
+                )
 
         if isinstance(error, commands.MissingPermissions):
             missing = [
@@ -48,17 +36,24 @@ class Events(commands.Cog):
                 fmt = '{}, and {}'.format("**, **".join(missing[:-1]), missing[-1])
             else:
                 fmt = ' and '.join(missing)
-            _message = f'You need the `{fmt}` permission(s) to use this command.'
-            return await ctx.send(_message)
+            return await ctx.send(
+                f'You need the `{fmt}` permissions to use this command.'
+                )
 
         if isinstance(error, commands.CheckFailure):
-            return await ctx.send("You do not have permission to use this command.")
-        
+            return await ctx.send(
+                "You do not have permission to use this command."
+                )
+
         if isinstance(error, commands.CommandOnCooldown):
-            return await ctx.reply(f"You're on cooldown for `{time.deltaconv(int(error.retry_after))}`", mention_author=False, delete_after=error.retry_after if error.retry_after < 60 else None)
+            return await ctx.reply(
+                f"You're on cooldown for `{time.deltaconv(int(error.retry_after))}`",
+                mention_author=False,
+                delete_after=error.retry_after if error.retry_after < 60 else None
+                )
 
         print(error)
 
 
 async def setup(bot):
-    await bot.add_cog(Events(bot))
+    await bot.add_cog(Errors(bot))

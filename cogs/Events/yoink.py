@@ -27,11 +27,9 @@ class Yoink(commands.Cog):
         if before.avatar != after.avatar:
             self.bot.dispatch("user_avatar_update", before, after)
 
-
     def format_time(self, time: int) -> str:
         return datetime.fromtimestamp(time).strftime("%a %d %b %Y %H:%M")
     
-
     @commands.command()
     @commands.is_owner()
     async def avy(self, ctx: commands.Context, target: typing.Union[discord.Member, discord.User] = None):
@@ -53,16 +51,14 @@ class Yoink(commands.Cog):
         if not q:
             return await ctx.send("No records")
 
-        em = discord.Embed(
-            color=0xE59F9F,
-            description=(
+        description = (
                 "```css\n" +
                 "\n".join(
                     f'{self.format_time(q.get("unix_time"))} {q.get("name")}' for q in q
                 ) +
                 "```"
-            )
-        )
+                )
+        em = discord.Embed(description=description)
         
         await ctx.send(embed=em)
 

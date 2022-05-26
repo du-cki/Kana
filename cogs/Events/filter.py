@@ -19,16 +19,13 @@ class Filter(commands.Cog):
             r"[A-Z]"
         ) # find all capital letters in a string
 
-    def _volumeCheck(self, message : str) -> bool:
+    def _volumeCheck(self, message: str) -> bool:
         splitMsg = message.replace(" ", "")
         upCase = self.UP_REGEX.findall(splitMsg)
         return len(upCase) / len(splitMsg) >= 0.6
 
-    def _dadcheck(self, message : str) -> bool:
-        return message.author.id == 503720029456695306
-
     @commands.Cog.listener("on_message")
-    async def _filter(self, message : discord.Message):
+    async def _filter(self, message: discord.Message):
         if not message.author.id == 651454696208465941:
             return
 
@@ -37,9 +34,12 @@ class Filter(commands.Cog):
                 and self._volumeCheck(message.content) \
                         or self.MASTER_REGEX.findall(cnt):
             try:
+                def _dadcheck(message: str) -> bool:
+                    return message.author.id == 503720029456695306 and message.channel.id == message.channel.id
+
                 dmessage = await self.bot.wait_for(
                     "message", 
-                    check=self._dadcheck, 
+                    check=_dadcheck,
                     timeout=10.0
                 )
 

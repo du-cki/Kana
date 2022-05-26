@@ -1,11 +1,10 @@
 import discord
 from discord.ext import commands
 
-from .utils.constants import ESCAPE, PARAM_RE, INVIS_CHAR, FANCY_ARROW_RIGHT, NL
+from ..utils.constants import ESCAPE, PARAM_RE, INVIS_CHAR, FANCY_ARROW_RIGHT, NL
 
 
 class Help(commands.HelpCommand):
-
     def format_params(self, params: list) -> list:
         return " ".join(
             [
@@ -52,10 +51,7 @@ class Help(commands.HelpCommand):
         if params:
             description += "\n\n" + params
 
-        em = discord.Embed(
-            description=description,
-            color=0xE59F9F
-        )
+        em = discord.Embed(description=description)
 
         await self.context.send(embed=em)
 
@@ -98,11 +94,7 @@ class Help(commands.HelpCommand):
         if params:
             description += "\n\nSub-Commands:\n" + "\n".join(params)
 
-        em = discord.Embed(
-            description=description,
-            color=0xE59F9F
-        )
-
+        em = discord.Embed(description=description)
         await self.context.send(embed=em)
 
 

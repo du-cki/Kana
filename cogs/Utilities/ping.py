@@ -4,10 +4,9 @@ from discord import app_commands
 
 import time
 
-from .utils.constants import WEBSOCKET, CHAT_BOX, POSTGRES
+from ..utils.constants import WEBSOCKET, CHAT_BOX, POSTGRES
 
 class Ping(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
 
@@ -19,9 +18,8 @@ class Ping(commands.Cog):
     async def ping(self, ctx : commands.Context):
         """
         Gets the bot's latency.
-
         """
-        
+
         start = time.perf_counter()
         mes = await ctx.send("Ping")
         end = time.perf_counter()
@@ -34,7 +32,7 @@ class Ping(commands.Cog):
         end = time.perf_counter()
         postgres_ping = self._format_ping((end - start) * 1000)
 
-        em = discord.Embed(color=0xE59F9F) \
+        em = discord.Embed() \
                     .add_field(name=f"{WEBSOCKET} Websocket", value=websocket, inline=True) \
                         .add_field(name=f"{CHAT_BOX} Message", value=message_ping, inline=True) \
                             .add_field(name=f"{POSTGRES} Database", value=postgres_ping, inline=False) \
@@ -45,7 +43,6 @@ class Ping(commands.Cog):
     async def _ping(self, interaction: discord.Interaction):
         """
         Gets the bot's latency.
-        
         """
 
         start = time.perf_counter()
@@ -60,7 +57,7 @@ class Ping(commands.Cog):
         end = time.perf_counter()
         postgres_ping = self._format_ping((end - start) * 1000)
 
-        em = discord.Embed(color=0xE59F9F) \
+        em = discord.Embed() \
                     .add_field(name=f"{WEBSOCKET} Websocket", value=websocket, inline=True) \
                         .add_field(name=f"{CHAT_BOX} Interaction", value=interaction_ping, inline=True) \
                             .add_field(name=f"{POSTGRES} Database", value=postgres_ping, inline=False) \

@@ -2,14 +2,14 @@ import discord
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 
-from .utils.constants import YOUTUBE
+from ..utils.constants import YOUTUBE
 
 from os import environ
 from dotenv import load_dotenv
 load_dotenv()
 
 class BaseDropdown(discord.ui.Select):
-    def __init__(self, queries : dict, emoji : str):
+    def __init__(self, queries: dict, emoji: str):
         self.queries = queries
 
         options = [
@@ -30,7 +30,7 @@ class BaseDropdown(discord.ui.Select):
 
 
 class BaseView(discord.ui.View):
-    def __init__(self, author_id : int, queries : dict, emoji : str):
+    def __init__(self, author_id: int, queries: dict, emoji: str):
         super().__init__(timeout=60)
         self.add_item(BaseDropdown(queries, emoji))
         self.author_id = author_id
@@ -55,7 +55,7 @@ class Search(commands.Cog):
 
     @commands.command(aliases=["yt"])
     @commands.cooldown(1, 5, BucketType.user)
-    async def youtube(self, ctx : commands.Context, *, query : str  = None):
+    async def youtube(self, ctx: commands.Context, *, query: str  = None):
         """
         Searches YouTube for a video, if no query is given, it will send a link to youtube.
 

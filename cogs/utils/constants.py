@@ -22,19 +22,19 @@ PARAM_RE = re.compile(
 # sql
 STARTUP_QUERY = """
 CREATE TABLE IF NOT EXISTS prefixes (
-id BIGINT PRIMARY KEY,
-prefix TEXT NOT NULL
+    id BIGINT PRIMARY KEY,
+    prefix TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS users (
-id BIGINT,
-unix_time BIGINT,
-name TEXT
+    id BIGINT,
+    unix_time BIGINT,
+    name TEXT
 );
 
 CREATE TABLE IF NOT EXISTS avatars (
-id BIGINT,
-unix_time BIGINT,
-avatar BYTEA
+    id BIGINT,
+    unix_time BIGINT,
+    avatar BYTEA
 );
 """

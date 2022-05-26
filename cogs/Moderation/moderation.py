@@ -4,13 +4,14 @@ from discord.ext import commands
 from contextlib import suppress
 
 class Moderation(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
 
-    @commands.command(aliases=["wp"])
+    @commands.command(aliases=["wp", "mp", "mudaepurge"])
+    @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
-    async def waifupurge(self, ctx : commands.Context, amount : int = 30):
+    @commands.bot_has_permissions(manage_messages=True)
+    async def waifupurge(self, ctx: commands.Context, amount: int = 30):
         """
         Purges a set amount of mudae's waifu posts from the current channel.
 
@@ -22,16 +23,27 @@ class Moderation(commands.Cog):
         if amount > 50:
             return await ctx.reply("Please enter a smaller number")
 
-        def check(m):
-            return (m.author.id == 432610292342587392 or m.content.startswith("$"))
+        results = {}
+        def check(message: discord.Message):
+            if message.author.id == 432610292342587392 or message.content.startswith("$"):
+                if not results.get(message.author.name):
+                    results[message.author.name] = 1
+                else:
+                    results[message.author.name] += 1
+                return True
+            return False
             
         await ctx.channel.purge(limit=amount, check=check)
-        with suppress(Exception):
-            await ctx.message.add_reaction('\u2705')
+        await ctx.send(embed=discord.Embed(
+            title="Mudae Purge Results",
+            description="\n".join(f"{k} - {v}" for k, v in results.items())
+        ),
+        delete_after=10
+       )
 
     @commands.command()
     @commands.guild_only()
-    async def prefix(self, ctx : commands.Context, prefix : str = None):
+    async def prefix(self, ctx: commands.Context, prefix: str = None):
         """
         Changes the guild specific prefix. if no prefix is given, it will show the current prefix.
 

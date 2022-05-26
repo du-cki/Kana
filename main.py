@@ -7,6 +7,8 @@ from aiohttp import ClientSession
 import glob
 import typing
 
+from motor.motor_asyncio import AsyncIOMotorClient
+
 from os import environ
 from dotenv import load_dotenv
 load_dotenv()
@@ -24,6 +26,7 @@ async def getPrefix(bot, message):
     await bot.pool.execute("""
     INSERT INTO prefixes VALUES ($1, $2);
     """, message.guild.id, "uwu")
+    bot._prefixes[message.guild.id] = "uwu" # my temporary solution for now
 
     return commands.when_mentioned_or("uwu")(bot, message)
 
@@ -40,7 +43,16 @@ class KanaContext(commands.Context):
             return False
 
         return True
+    
+    async def send(self, *args, **kwargs):
+        if kwargs.get("embed") and not kwargs.get("embed").color:
+            kwargs["embed"].color = 0xE59F9F
 
+        for embed in kwargs.get("embeds", []):
+            if not embed.color:
+                embed.color = 0xE59F9F
+
+        return await super().send(*args, **kwargs)
 
 class Kana(commands.Bot):
     def __init__(self, *args, **kwargs):
@@ -56,6 +68,7 @@ class Kana(commands.Bot):
         self._uptime = discord.utils.utcnow().timestamp()
         self.session = ClientSession()
         self.pool = await asyncpg.create_pool(environ["PSQL_URI"])
+        self.mongo = AsyncIOMotorClient(environ["USER_MONGO"])
 
         await self.pool.execute(STARTUP_QUERY)
 
@@ -68,10 +81,12 @@ class Kana(commands.Bot):
 
         await self.load_extension("jishaku")
 
-        for cog in glob.glob("cogs/*.py", recursive=True):
-            await self.load_extension(
-                cog.replace("\\", ".").replace("/", ".").removesuffix(".py")
-            )
+        for cog in glob.glob("cogs/**/*.py", recursive=True):
+            cog = cog.replace("\\", ".").replace("/", ".").removesuffix(".py")
+            if cog.startswith("cogs.utils"):
+                continue
+
+            await self.load_extension(cog)
 
     async def close(self):
         await super().close()
