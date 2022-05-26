@@ -90,8 +90,9 @@ class Kana(commands.Bot):
 
     async def close(self):
         await super().close()
-        await self.pool.close()
         await self.session.close()
+        await self.pool.close()
+        self.mongo.close()
 
 
 bot = Kana(
