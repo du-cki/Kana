@@ -1,14 +1,14 @@
 import discord
 from discord.ext import commands
 
-from ..utils.constants import ESCAPE, PARAM_RE, INVIS_CHAR, FANCY_ARROW_RIGHT, NL
-
+from ..utils.constants import PARAM_RE, INVIS_CHAR, FANCY_ARROW_RIGHT, NL
+from ..utils.markdown import to_ansi, to_codeblock
 
 class Help(commands.HelpCommand):
-    def format_params(self, params: list) -> list:
+    def format_params(self, params: list) -> str:
         return " ".join(
             [
-                f"{f'<{ESCAPE}[0;34m{param[1:-1]}{ESCAPE}[0m>' if param.startswith('<') else f'[{ESCAPE}[0;36m{param[1:-1]}{ESCAPE}[0m]'}"
+                f"{f'{to_ansi(param, 34)}' if param.startswith('<') else f'{to_ansi(param, 36)}'}"
                 for param in params
             ]
         )
@@ -18,30 +18,30 @@ class Help(commands.HelpCommand):
         if not params:
             return None
 
-        return "Arguments:\n" + "\n".join([f"`{param[0]}` : {param[2]}\n{INVIS_CHAR}{FANCY_ARROW_RIGHT} {param[1]}" for param in params])
+        return (
+                "Arguments:\n" + 
+                "\n".join([f"`{param[0]}`: {param[2]}\n{INVIS_CHAR}{FANCY_ARROW_RIGHT} {param[1]}" for param in params]
+                )
+            )
 
 
-    async def send_bot_help(self, mapping):
+    async def send_bot_help(self, mapping) -> None:
         await self.context.send("soon\U00002122")
 
 
-    async def send_command_help(self, command):
+    async def send_command_help(self, command: commands.Command) -> None:
         if self.context.predict_ansi(self.context.author):
             parameters = self.format_params(
                 command.signature.split(" ")) if command.signature else ""
 
             description = (
-                "```ansi"
-                f"\n{self.context.clean_prefix}{ESCAPE}[0;37m{command.qualified_name}{ESCAPE}[0m {''.join(parameters)}"
-                "```"
+                to_codeblock(f"\n{self.context.clean_prefix}{to_ansi(command.qualified_name, 37)} {''.join(parameters)}", "ansi") +
                 f"\n{command.short_doc if command.short_doc else 'No description given.'}"
             )
 
         else:
             description = (
-                "```\n"
-                f"{self.context.clean_prefix}{command.qualified_name} {command.signature}"
-                "```"
+                to_codeblock(f"{self.context.clean_prefix}{command.qualified_name} {command.signature}") +
                 f"\n{command.short_doc if command.short_doc else 'No description given.'}"
             )
 
@@ -55,20 +55,20 @@ class Help(commands.HelpCommand):
 
         await self.context.send(embed=em)
 
-    async def send_group_help(self, group):
+    async def send_group_help(self, group: commands.Group) -> None:
         pref_len = len(self.context.clean_prefix)
 
         if self.context.predict_ansi(self.context.author):
             commands = [
-                f"{INVIS_CHAR * pref_len}{ESCAPE}[0;37m{FANCY_ARROW_RIGHT} {command.name}{ESCAPE}[0m {self.format_params(command.signature.split(' ')) if command.signature else ''}"
+                f"{INVIS_CHAR * pref_len}{to_ansi(FANCY_ARROW_RIGHT + ' ' + command.name, 37)} {self.format_params(command.signature.split(' ')) if command.signature else ''}"
                 for command in group.commands
             ]
 
             description = (
-                "```ansi"
-                f"\n{self.context.clean_prefix}{ESCAPE}[0;37m{group.name}{ESCAPE}[0m"
-                f"\n{ESCAPE}[0;37m{f'{NL}'.join(commands)}{ESCAPE}[0m"
-                "```"
+                to_codeblock(
+                    f"\n{self.context.clean_prefix}{to_ansi(group.name, 37)}" +
+                    to_ansi(f"\n{f'{NL}'.join(commands)}", 37), "ansi"
+                ) +
                 f"\n{group.short_doc if group.short_doc else 'No description given.'}"
             )
 
@@ -79,10 +79,10 @@ class Help(commands.HelpCommand):
             ]
 
             description = (
-                "```"
-                f"\n{self.context.clean_prefix}{group.name}"
-                f"\n{f'{NL}'.join(commands)}"
-                "```"
+                to_codeblock(
+                    f"\n{self.context.clean_prefix}{group.name}"
+                    f"\n{f'{NL}'.join(commands)}"
+                ) +
                 f"\n{group.short_doc if group.short_doc else 'No description given.'}"
             )
 

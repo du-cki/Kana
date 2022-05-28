@@ -24,7 +24,8 @@ async def getPrefix(bot, message):
         return commands.when_mentioned_or(q)(bot, message)
 
     await bot.pool.execute("""
-    INSERT INTO prefixes VALUES ($1, $2);
+    INSERT INTO prefixes
+    VALUES ($1, $2);
     """, message.guild.id, "uwu")
     bot._prefixes[message.guild.id] = "uwu" # my temporary solution for now
 

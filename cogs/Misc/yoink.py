@@ -1,6 +1,7 @@
 import discord
 from discord.ext import commands
 
+from ..utils.markdown import to_codeblock
 from datetime import datetime
 
 import typing
@@ -51,13 +52,12 @@ class Yoink(commands.Cog):
         if not q:
             return await ctx.send("No records")
 
-        description = (
-                "```css\n" +
-                "\n".join(
-                    f'{self.format_time(q.get("unix_time"))} {q.get("name")}' for q in q
-                ) +
-                "```"
-                )
+        description = to_codeblock(
+                        "\n".join(
+                            f'[ {self.format_time(q.get("unix_time"))} ] {q.get("name")}' for q in q
+                        ), "css"
+                    )
+
         em = discord.Embed(description=description)
         
         await ctx.send(embed=em)
