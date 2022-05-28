@@ -1,3 +1,4 @@
+import contextlib
 import discord
 from discord.ext import commands
 
@@ -13,10 +14,8 @@ from platform import python_version
 import pygit2
 
 class Stats(commands.Cog):
-
     def __init__(self, bot):
         self.bot = bot
-        self.repo = pygit2.Repository('.git')
         self.NEW_LINE = "\n"
 
     def _get_uptime(self, breif: bool = False) -> str:
@@ -31,13 +30,22 @@ class Stats(commands.Cog):
         await ctx.send(self._get_uptime())
 
     async def _get_commits(self, count: int = 3) -> str:
-        commits = [commit for commit in self.repo.walk(self.repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL)][:count]
-        return "\n".join(
-            [
-                f"[`{commit.hex[:6]}`](https://github.com/duckist/Kanapy/commit/{commit.hex}) {commit.message[:42] + '...' if len(commit.message) > 40 else commit.message.replace(self.NEW_LINE, '').ljust(40, INVIS_CHAR)}" 
-                for commit in commits
-            ]
-        )
+        with contextlib.suppress(Exception):
+            commits = [
+                commit 
+                for commit in self.repo.walk(
+                    pygit2.Repository('.git').head.target,
+                    pygit2.GIT_SORT_TOPOLOGICAL
+                )
+            ][:count]
+
+            return "\n".join(
+                [
+                    f"[`{commit.hex[:6]}`](https://github.com/duckist/Kanapy/commit/{commit.hex}) {commit.message[:42] + '...' if len(commit.message) > 40 else commit.message.replace(self.NEW_LINE, '').ljust(40, INVIS_CHAR)}" 
+                    for commit in commits
+                ]
+            )
+        return "Could not retrieve commits."
 
     @commands.command()
     async def about(self, ctx: commands.Context):
