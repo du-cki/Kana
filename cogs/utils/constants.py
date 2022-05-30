@@ -1,3 +1,4 @@
+import typing
 import re
 
 # random constants
@@ -5,6 +6,14 @@ FANCY_ARROW_RIGHT = "\U00002570"
 ESCAPE = "\u001b"
 INVIS_CHAR = "\u2800"
 NL = "\n"
+VALID_EDIT_KWARGS: typing.Dict[str, typing.Any] = {
+    'content': None,
+    'embed': None,
+    'attachments': [],
+    'delete_after': None,
+    'allowed_mentions': None,
+    'view': None,
+}
 
 # emotes
 WEBSOCKET = "<a:websocket:963608475982774282>"

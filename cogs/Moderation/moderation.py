@@ -60,7 +60,6 @@ class Moderation(commands.Cog):
         await self.bot.pool.execute("""
         UPDATE prefixes SET prefix = $1 WHERE id = $2;
         """, prefix, ctx.guild.id)
-
         self.bot._prefixes[ctx.guild.id] = prefix
 
         await ctx.send(f'The prefix is now `{prefix}`')

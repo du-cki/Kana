@@ -51,7 +51,7 @@ class Errors(commands.Cog):
                 delete_after=error.retry_after if error.retry_after < 60 else None
                 )
 
-        print(error)
+        raise error
 
 
 async def setup(bot):

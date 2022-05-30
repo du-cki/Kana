@@ -5,12 +5,13 @@ async-timeout==4.0.2
 asyncpg==0.25.0
 attrs==21.4.0
 braceexpand==0.1.7
+cachetools==5.2.0
 certifi==2021.10.8
 cffi==1.15.0
 charset-normalizer==2.0.12
 click==8.1.3
 colorama==0.4.4
-discord.py @ git+https://github.com/Rapptz/discord.py@5fcd4e411fc6f7d58465c6766585afda0518e6ff
+discord.py @ git+https://github.com/Rapptz/discord.py@36f039a1bffb835a555be8a43976397ba6eb9c76
 dnspython==2.2.1
 frozenlist==1.3.0
 idna==3.3

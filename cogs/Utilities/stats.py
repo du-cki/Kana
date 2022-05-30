@@ -19,7 +19,7 @@ class Stats(commands.Cog):
         self.NEW_LINE = "\n"
 
     def _get_uptime(self, breif: bool = False) -> str:
-        return timeutil.deltaconv(int(discord.utils.utcnow().timestamp()) - int(self.bot._uptime), breif)
+        return timeutil.deltaconv(int(discord.utils.utcnow().timestamp() - self.bot._uptime.timestamp()), breif)
 
     @commands.command()
     async def uptime(self, ctx: commands.Context):
@@ -31,10 +31,11 @@ class Stats(commands.Cog):
 
     async def _get_commits(self, count: int = 3) -> str:
         with contextlib.suppress(Exception):
+            repo = pygit2.Repository('.git')
             commits = [
-                commit 
-                for commit in self.repo.walk(
-                    pygit2.Repository('.git').head.target,
+                commit
+                for commit in repo.walk(
+                    repo.head.target,
                     pygit2.GIT_SORT_TOPOLOGICAL
                 )
             ][:count]
