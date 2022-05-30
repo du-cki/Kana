@@ -45,7 +45,7 @@ class KanaContext(commands.Context):
 
         return True
     
-    async def send(self, *args, **kwargs):
+    async def send(self, *args, **kwargs) -> discord.Message:
         if kwargs.get("embed") and not kwargs.get("embed").color:
             kwargs["embed"].color = 0xE59F9F
 
@@ -54,6 +54,13 @@ class KanaContext(commands.Context):
                 embed.color = 0xE59F9F
 
         return await super().send(*args, **kwargs)
+
+    async def reply(self, *args, **kwargs) -> discord.Message:
+        if not kwargs.get("mention_author"):
+            kwargs["mention_author"] = False
+
+        return await super().reply(*args, **kwargs)
+
 
 class Kana(commands.Bot):
     def __init__(self, *args, **kwargs):
@@ -66,10 +73,10 @@ class Kana(commands.Bot):
         print(f'{self.user} is online, on discord.py - {discord.__version__}')
 
     async def setup_hook(self):
-        self._uptime = discord.utils.utcnow().timestamp()
         self.session = ClientSession()
-        self.pool = await asyncpg.create_pool(environ["PSQL_URI"])
+        self._uptime = discord.utils.utcnow().timestamp()
         self.mongo = AsyncIOMotorClient(environ["USER_MONGO"])
+        self.pool = await asyncpg.create_pool(environ["PSQL_URI"])
 
         await self.pool.execute(STARTUP_QUERY)
 
@@ -90,10 +97,10 @@ class Kana(commands.Bot):
             await self.load_extension(cog)
 
     async def close(self):
-        await super().close()
-        await self.session.close()
-        await self.pool.close()
         self.mongo.close()
+        await super().close()
+        await self.pool.close()
+        await self.session.close()
 
 
 bot = Kana(

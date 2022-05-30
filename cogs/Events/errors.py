@@ -23,7 +23,7 @@ class Errors(commands.Cog):
                 fmt = '{}, and {}'.format("**, **".join(missing[:-1]), missing[-1])
             else:
                 fmt = ' and '.join(missing)
-            return await ctx.send(
+            return await ctx.reply(
                 f'I need the `{fmt}` permissions to run this command.'
                 )
 
@@ -36,19 +36,18 @@ class Errors(commands.Cog):
                 fmt = '{}, and {}'.format("**, **".join(missing[:-1]), missing[-1])
             else:
                 fmt = ' and '.join(missing)
-            return await ctx.send(
+            return await ctx.reply(
                 f'You need the `{fmt}` permissions to use this command.'
                 )
 
         if isinstance(error, commands.CheckFailure):
-            return await ctx.send(
+            return await ctx.reply(
                 "You do not have permission to use this command."
                 )
 
         if isinstance(error, commands.CommandOnCooldown):
             return await ctx.reply(
                 f"You're on cooldown for `{time.deltaconv(int(error.retry_after))}`",
-                mention_author=False,
                 delete_after=error.retry_after if error.retry_after < 60 else None
                 )
 

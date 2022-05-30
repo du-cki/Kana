@@ -1,9 +1,8 @@
-import contextlib
 import discord
 from discord.ext import commands
 
 import inspect
-import os 
+import os
 
 from ..utils import time as timeutil
 from ..utils.constants import INVIS_CHAR
@@ -11,6 +10,7 @@ from ..utils.constants import INVIS_CHAR
 import psutil
 from platform import python_version
 
+import contextlib
 import pygit2
 
 class Stats(commands.Cog):
