@@ -11,14 +11,31 @@ class Yoink(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_user_name_update(self, before: discord.User, _: discord.User):
-        if before.bot:
-            return
+    async def on_guild_join(self, guild: discord.Guild):
+        members = await guild.chunk(cache=True) if not guild.chunked else guild.members
 
+        for member in members: # i love data
+            avatar = await member.avatar.read()
+
+            await self.bot.pool.execute("""
+            INSERT INTO avatars (id, unix_time, avatar)
+            VALUES ($1, $2, $3)
+            """, member.id, discord.utils.utcnow().timestamp(), avatar)
+
+    @commands.Cog.listener()
+    async def on_user_avatar_update(self, _: discord.User, after: discord.User):
+        avatar = await after.avatar.read()
         await self.bot.pool.execute("""
-        INSERT INTO users VALUES ($1, $2, $3)
-        """, before.id, discord.utils.utcnow().timestamp(), before.name)
+        INSERT INTO avatars (id, unix_time, avatar)
+        VALUES ($1, $2, $3)
+        """, after.id, discord.utils.utcnow().timestamp(), avatar)
 
+    @commands.Cog.listener()
+    async def on_user_name_update(self, before: discord.User, _: discord.User):
+        await self.bot.pool.execute("""
+        INSERT INTO users (id, unix_time, name)
+        VALUES ($1, $2, $3)
+        """, before.id, discord.utils.utcnow().timestamp(), before.name)
 
     @commands.Cog.listener()
     async def on_user_update(self, before: discord.User, after: discord.User):

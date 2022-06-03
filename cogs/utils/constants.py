@@ -36,13 +36,13 @@ CREATE TABLE IF NOT EXISTS prefixes (
 );
 
 CREATE TABLE IF NOT EXISTS users (
-    id BIGINT,
+    id BIGINT PRIMARY KEY,
     unix_time BIGINT,
     name TEXT
 );
 
 CREATE TABLE IF NOT EXISTS avatars (
-    id BIGINT,
+    id BIGINT PRIMARY KEY,
     unix_time BIGINT,
     avatar BYTEA
 );
