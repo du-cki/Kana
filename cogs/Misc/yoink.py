@@ -11,7 +11,7 @@ class Yoink(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_user_username_update(self, before: discord.User, after: discord.User):
+    async def on_user_name_update(self, before: discord.User, _: discord.User):
         if before.bot:
             return
 
@@ -23,7 +23,7 @@ class Yoink(commands.Cog):
     @commands.Cog.listener()
     async def on_user_update(self, before: discord.User, after: discord.User):
         if before.name != after.name:
-            self.bot.dispatch("user_username_update", before, after)
+            self.bot.dispatch("user_name_update", before, after)
 
         if before.avatar != after.avatar:
             self.bot.dispatch("user_avatar_update", before, after)

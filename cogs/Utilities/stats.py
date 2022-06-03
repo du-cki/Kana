@@ -42,7 +42,7 @@ class Stats(commands.Cog):
 
             return "\n".join(
                 [
-                    f"[`{commit.hex[:6]}`](https://github.com/duckist/Kanapy/commit/{commit.hex}) {commit.message[:42] + '...' if len(commit.message) > 40 else commit.message.replace(self.NEW_LINE, '').ljust(40, INVIS_CHAR)}" 
+                    f"[`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) {commit.message[:42] + '...' if len(commit.message) > 40 else commit.message.replace(self.NEW_LINE, '').ljust(40, INVIS_CHAR)}" 
                     for commit in commits
                 ]
             )
@@ -61,7 +61,7 @@ class Stats(commands.Cog):
         cpu = psutil.Process().cpu_percent() / psutil.cpu_count()
 
         embed = discord.Embed(description='Latest Changes:\n' + await self._get_commits(), timestamp=discord.utils.utcnow())
-        embed.set_author(name=str(owner), icon_url=owner.avatar.url, url="https://github.com/duckist")
+        embed.set_author(name=str(owner), icon_url=owner.avatar.url, url="https://github.com/du-cki")
         embed.add_field(name="Version", value=f"python-{python_version()}\ndiscord.py-{discord.__version__}", inline=True)
         embed.add_field(name="Uptime", value=self._get_uptime(breif=True), inline=True)
         embed.add_field(name="Process", value=f'{mem: .2f} MiB\n{cpu:.2f}% CPU', inline=True)
@@ -80,11 +80,13 @@ class Stats(commands.Cog):
         :type command: str, optional
         """
 
-        source_url = "https://github.com/duckist/Kanapy"
-        if command is None:    return await ctx.send(source_url)
+        source_url = "https://github.com/du-cki/Kanapy"
+        if command is None:
+            return await ctx.send(source_url)
 
         obj = self.bot.get_command(command.replace(".", ""))
-        if obj is None:    return await ctx.send("Could not find command")
+        if obj is None:
+            return await ctx.send("Could not find command")
 
         src = obj.callback.__code__
         module = obj.callback.__module__

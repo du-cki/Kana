@@ -6,7 +6,7 @@ After=network-online.target
 Type=simple
 WorkingDirectory=PATH/TO/Kanapy
 ExecStart=/usr/bin/python3 main.py
-User=root
+User=ubuntu
 Restart=always
 TimeoutStopSec=10
 
