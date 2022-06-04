@@ -12,30 +12,34 @@ class Yoink(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
-        members = await guild.chunk(cache=True) if not guild.chunked else guild.members
+        members: typing.List[discord.Member] = await guild.chunk(cache=True) if not guild.chunked else guild.members
 
         for member in members: # i love data
-            avatar = await member.avatar.read()
+            if member.mutual_guilds or member == member.guild.me:
+                return
+            
+            avatar = await member.display_avatar.read()
 
             await self.bot.pool.execute("""
-            INSERT INTO avatars (id, unix_time, avatar)
+            INSERT INTO avatar_history (user_id, time_changed, avatar)
             VALUES ($1, $2, $3)
-            """, member.id, discord.utils.utcnow().timestamp(), avatar)
+            """, member.id, discord.utils.utcnow(), avatar)
 
     @commands.Cog.listener()
     async def on_user_avatar_update(self, _: discord.User, after: discord.User):
-        avatar = await after.avatar.read()
+        avatar = await after.display_avatar.read()
+
         await self.bot.pool.execute("""
-        INSERT INTO avatars (id, unix_time, avatar)
+        INSERT INTO avatar_history (user_id, time_changed, avatar)
         VALUES ($1, $2, $3)
-        """, after.id, discord.utils.utcnow().timestamp(), avatar)
+        """, after.id, discord.utils.utcnow(), avatar)
 
     @commands.Cog.listener()
     async def on_user_name_update(self, before: discord.User, _: discord.User):
         await self.bot.pool.execute("""
-        INSERT INTO users (id, unix_time, name)
+        INSERT INTO username_history (user_id, time_changed, name)
         VALUES ($1, $2, $3)
-        """, before.id, discord.utils.utcnow().timestamp(), before.name)
+        """, before.id, discord.utils.utcnow(), before.name)
 
     @commands.Cog.listener()
     async def on_user_update(self, before: discord.User, after: discord.User):
@@ -45,8 +49,8 @@ class Yoink(commands.Cog):
         if before.avatar != after.avatar:
             self.bot.dispatch("user_avatar_update", before, after)
 
-    def format_time(self, time: int) -> str:
-        return datetime.fromtimestamp(time).strftime("%a %d %b %Y %H:%M")
+    def format_time(self, time: datetime) -> str:
+        return time.strftime("%a %d %b %Y %H:%M")
     
     @commands.command()
     @commands.is_owner()
@@ -61,9 +65,9 @@ class Yoink(commands.Cog):
         target = target or ctx.author
 
         q = await self.bot.pool.fetch("""
-        SELECT name, unix_time FROM users 
-        WHERE id = $1 
-        ORDER BY unix_time DESC;
+        SELECT name, time_changed FROM username_history
+        WHERE user_id = $1
+        ORDER BY time_changed DESC;
         """, target.id)
 
         if not q:
@@ -71,12 +75,11 @@ class Yoink(commands.Cog):
 
         description = to_codeblock(
                         "\n".join(
-                            f'[ {self.format_time(q.get("unix_time"))} ] {q.get("name")}' for q in q
+                            f'[ {self.format_time(q.get("time_changed"))} ] {q.get("name")}' for q in q
                         ), "css"
                     )
 
         em = discord.Embed(description=description)
-        
         await ctx.send(embed=em)
 
 

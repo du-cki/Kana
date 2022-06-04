@@ -16,11 +16,11 @@ VALID_EDIT_KWARGS: typing.Dict[str, typing.Any] = {
 }
 
 # emotes
-WEBSOCKET = "<a:websocket:963608475982774282>"
-CHAT_BOX = "<:message:963608317370974240>"
-POSTGRES = "<:postgresql:963608621017608294>"
+WEBSOCKET = "<a:_:963608475982774282>"
+CHAT_BOX = "<:_:963608317370974240>"
+POSTGRES = "<:_:963608621017608294>"
 
-YOUTUBE = "<:youtube_logo:940649600920985691>"
+YOUTUBE = "<:_:940649600920985691>"
 
 # regexes
 PARAM_RE = re.compile(
@@ -35,15 +35,15 @@ CREATE TABLE IF NOT EXISTS prefixes (
     prefix TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS users (
-    id BIGINT PRIMARY KEY,
-    unix_time BIGINT,
-    name TEXT
+CREATE TABLE IF NOT EXISTS username_history (
+    user_id BIGINT NOT NULL,
+    time_changed TIMESTAMP WITH TIME ZONE NOT NULL,
+    name TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS avatars (
-    id BIGINT PRIMARY KEY,
-    unix_time BIGINT,
-    avatar BYTEA
+CREATE TABLE IF NOT EXISTS avatar_history (
+    user_id BIGINT NOT NULL,
+    time_changed TIMESTAMP WITH TIME ZONE NOT NULL,
+    avatar BYTEA NOT NULL
 );
 """
