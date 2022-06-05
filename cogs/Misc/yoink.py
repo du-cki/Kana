@@ -26,6 +26,17 @@ class Yoink(commands.Cog):
             """, member.id, discord.utils.utcnow(), avatar)
 
     @commands.Cog.listener()
+    async def on_member_join(self, member: discord.Member):
+        if member.mutual_guilds:
+            return
+        
+        avatar = await member.display_avatar.read()
+        await self.bot.pool.execute("""
+        INSERT INTO avatar_history (user_id, time_changed, avatar)
+        VALUES ($1, $2, $3)
+        """, member.id, discord.utils.utcnow(), avatar)
+
+    @commands.Cog.listener()
     async def on_user_avatar_update(self, _: discord.User, after: discord.User):
         avatar = await after.display_avatar.read()
 
@@ -51,10 +62,10 @@ class Yoink(commands.Cog):
 
     def format_time(self, time: datetime) -> str:
         return time.strftime("%a %d %b %Y %H:%M")
-    
+
     @commands.command()
     @commands.is_owner()
-    async def avy(self, ctx: commands.Context, target: typing.Union[discord.Member, discord.User] = None):
+    async def avy(self, ctx: commands.Context, target: typing.Optional[typing.Union[discord.Member, discord.User]]):
         """
         Get's the username history of a user, displays accordingly in unix time.
         
