@@ -1,10 +1,14 @@
 import discord
 from discord.ext import commands
 
-from ..utils.markdown import to_codeblock
+import typing
 from datetime import datetime
 
-import typing
+import imghdr
+from io import BytesIO
+
+from ..utils.markdown import to_codeblock
+
 
 class Yoink(commands.Cog):
     def __init__(self, bot):
@@ -19,11 +23,9 @@ class Yoink(commands.Cog):
                 continue
             
             avatar = await member.display_avatar.read()
-
             await self.bot.pool.execute("""
-            INSERT INTO avatar_history (user_id, time_changed, avatar)
-            VALUES ($1, $2, $3)
-            """, member.id, discord.utils.utcnow(), avatar)
+            SELECT insert_avy($1, $2, $3, $4)
+            """, member.id, discord.utils.utcnow(), imghdr.what(BytesIO(avatar)), avatar) # type: ignore
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -32,18 +34,16 @@ class Yoink(commands.Cog):
         
         avatar = await member.display_avatar.read()
         await self.bot.pool.execute("""
-        INSERT INTO avatar_history (user_id, time_changed, avatar)
-        VALUES ($1, $2, $3)
-        """, member.id, discord.utils.utcnow(), avatar)
+        SELECT insert_avy($1, $2, $3, $4)
+        """, member.id, discord.utils.utcnow(), imghdr.what(BytesIO(avatar)), avatar)  # type: ignore
 
     @commands.Cog.listener()
     async def on_user_avatar_update(self, _: discord.User, after: discord.User):
         avatar = await after.display_avatar.read()
 
         await self.bot.pool.execute("""
-        INSERT INTO avatar_history (user_id, time_changed, avatar)
-        VALUES ($1, $2, $3)
-        """, after.id, discord.utils.utcnow(), avatar)
+        SELECT insert_avy($1, $2, $3, $4)
+        """, after.id, discord.utils.utcnow(), imghdr.what(BytesIO(avatar)), avatar)  # type: ignore
 
     @commands.Cog.listener()
     async def on_user_name_update(self, before: discord.User, _: discord.User):
