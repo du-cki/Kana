@@ -45,13 +45,24 @@ class Errors(commands.Cog):
                 "You do not have permission to use this command."
                 )
 
+        if isinstance(error, commands.errors.ChannelNotFound):
+            return await ctx.reply(
+                f"`{error.argument}` is not a valid channel."
+                )
+
+        if isinstance(error, commands.BadArgument):
+            return await ctx.reply(
+                error.args[0]
+                )
+
         if isinstance(error, commands.CommandOnCooldown):
             return await ctx.reply(
                 f"You're on cooldown for `{time.deltaconv(int(error.retry_after))}`",
                 delete_after=error.retry_after if error.retry_after < 60 else None
                 )
+        
 
-        raise error
+        raise error # type: ignore
 
 
 async def setup(bot):
