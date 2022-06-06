@@ -82,7 +82,7 @@ class Stats(commands.Cog):
 
         source_url = "https://github.com/du-cki/Kanapy"
         if command is None:
-            return await ctx.send(source_url)
+            return await ctx.send(f'<{source_url}>')
 
         obj = self.bot.get_command(command.replace(".", ""))
         if obj is None:
