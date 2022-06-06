@@ -12,6 +12,9 @@ class Help(commands.HelpCommand):
                 for param in params
             ]
         )
+    
+    def humanize(self, param: str) -> str:
+        return param.replace("discord.", "").replace("optional", "This is Optional")
 
     def check_params(self, doc_string: str) -> str:
         params = PARAM_RE.findall(doc_string)
@@ -19,8 +22,8 @@ class Help(commands.HelpCommand):
             return None
 
         return (
-                "Arguments:\n" + 
-                "\n".join([f"`{param[0]}`: {param[2]}\n{INVIS_CHAR}{FANCY_ARROW_RIGHT} {param[1]}" for param in params]
+                "**Arguments:**\n" + 
+                "\n".join([f"`{param[0]}`: {self.humanize(param[2])}\n{INVIS_CHAR}{FANCY_ARROW_RIGHT} {param[1]}" for param in params]
                 )
             )
 
