@@ -1,16 +1,21 @@
 import discord
 from discord.ext import commands
 
+import typing
 import difflib
 
 from ..utils.markdown import to_codeblock
 
 class ExtensionConverter(commands.Converter):
-    async def convert(self, ctx, argument):
+    async def convert(self, ctx: commands.Context, argument: typing.Optional[str]):
+        if not argument or argument in ["*", "~", "all"]:
+            return list(ctx.bot.extensions.keys())
+            
         extension = difflib.get_close_matches(argument, ctx.bot.extensions.keys(), n=1, cutoff=0.4)
         if not extension:
             raise commands.BadArgument(f"`{argument}` is not a valid extension.")
-        return extension[0]
+
+        return [extension[0]]
 
 class Admin(commands.Cog):
     def __init__(self, bot):
@@ -52,22 +57,27 @@ class Admin(commands.Cog):
         res = await ctx.channel.purge(limit=limit, bulk=bulk, check=pred) # type: ignore
         if not res:
             return await ctx.send('No messages were found to cleanup.')
-        await ctx.send(f'Cleaned up {len(res)} message{"s" if len(res) > 1 else ""}.', delete_after=10.0)
 
-    @commands.command()
-    async def reload(self, ctx: commands.Context, extension: ExtensionConverter):
+        await ctx.send(f'Cleaned up {f"{len(res)} messages" if len(res) > 1 else "a message"}.', delete_after=10.0)
+
+    @commands.command(name="reload")
+    async def _reload(self, ctx: commands.Context, *, extensions: ExtensionConverter):
         """
         Reloads the closest `Extension` it finds with the name provided.
 
         :param extension: The name of the extension to reload.
         :type extension: str
         """
-        try:
-            await self.bot.reload_extension(extension)
-        except Exception as e:
-            await ctx.send(f'Could not reload `{extension}`\n{to_codeblock(e)}') # type: ignore
-        else:
-            await ctx.send(f'Reloaded `{extension}`')
+        msg = ''
+        
+        for extension in extensions: # type: ignore
+            try:
+                await self.bot.reload_extension(extension)
+            except Exception as e:
+                msg += f'\nCould not reload `{extension}`\n{to_codeblock(e, "py")}' # type: ignore
+            else:
+                msg += f'\nReloaded `{extension}`'
+        await ctx.send(msg)
 
 
 async def setup(bot):
