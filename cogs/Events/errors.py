@@ -61,6 +61,10 @@ class Errors(commands.Cog):
                 delete_after=error.retry_after if error.retry_after < 60 else None
                 )
         
+        if isinstance(error, commands.MissingRequiredArgument):
+            return await ctx.reply(
+                f"You're missing the `{error.param.name}` argument."
+                )
 
         raise error # type: ignore
 
