@@ -14,12 +14,12 @@ class Help(commands.HelpCommand):
         )
     
     def humanize(self, param: str) -> str:
-        return param.replace("discord.", "").replace("optional", "This is Optional")
+        return param.replace("discord.", "").replace("optional", "this is Optional").replace("int", "number")
 
     def check_params(self, doc_string: str) -> str:
         params = PARAM_RE.findall(doc_string)
         if not params:
-            return None
+            return None # type: ignore
 
         return (
                 "**Arguments:**\n" + 
