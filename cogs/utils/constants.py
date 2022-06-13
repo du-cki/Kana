@@ -22,6 +22,11 @@ POSTGRES = "<:_:963608621017608294>"
 
 YOUTUBE = "<:_:940649600920985691>"
 
+DOUBLE_LEFT = "<:_:982445997269606450>"
+LEFT = "<:_:982445470548893696>"
+RIGHT = "<:_:982444215936118784>"
+DOUBLE_RIGHT = "<:_:982379739165655060>"
+
 # regexes
 PARAM_RE = re.compile(
     r":param (?P<param>[a-zA-Z0-9_]+):? (?P<param_description>[a-zA-Z0-9_ .,]+)"

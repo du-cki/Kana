@@ -8,7 +8,7 @@ import imghdr
 from io import BytesIO
 
 from ..utils.markdown import to_codeblock
-
+from ..utils.paginator import EmbeddedPaginator
 
 class Yoink(commands.Cog):
     def __init__(self, bot):
@@ -60,11 +60,13 @@ class Yoink(commands.Cog):
         if before.avatar != after.avatar:
             self.bot.dispatch("user_avatar_update", before, after)
 
+        if before.discriminator != after.discriminator:
+            self.bot.dispatch("user_discriminator_update", before, after) # currently dunder, as i don't log it yet
+
     def format_time(self, time: datetime) -> str:
         return time.strftime("%a %d %b %Y %H:%M")
 
     @commands.command()
-    @commands.is_owner()
     async def avy(self, ctx: commands.Context, target: typing.Optional[typing.Union[discord.Member, discord.User]]):
         """
         Get's the username history of a user, displays accordingly in unix time.
@@ -75,23 +77,26 @@ class Yoink(commands.Cog):
         
         target = target or ctx.author
 
-        q = await self.bot.pool.fetch("""
+        query = await self.bot.pool.fetch("""
         SELECT name, time_changed FROM username_history
         WHERE user_id = $1
         ORDER BY time_changed DESC;
         """, target.id)
 
-        if not q:
+        if not query:
             return await ctx.send("No records")
 
-        description = to_codeblock(
-                        "\n".join(
-                            f'[ {self.format_time(q.get("time_changed"))} ] {q.get("name")}' for q in q
-                        ), "css"
-                    )
+        chunks = discord.utils.as_chunks(
+            [f'[ {self.format_time(q.get("time_changed"))} ] {q.get("name")}' for q in query],
+            10
+        )
 
-        em = discord.Embed(description=description)
-        await ctx.send(embed=em)
+        await EmbeddedPaginator(
+            ctx,
+            [to_codeblock('\n'.join(chunk), "css") for chunk in chunks], # type: ignore
+            per_page=1,
+            title=f"{target.display_name}'s username History"
+        ).start()
 
 
 async def setup(bot):
