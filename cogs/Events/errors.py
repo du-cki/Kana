@@ -2,13 +2,14 @@ import discord
 from discord.ext import commands
 
 from ..utils import time
+from ..utils.subclasses import Kana, KanaContext
 
 class Errors(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Kana):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, error):
+    async def on_command_error(self, ctx: KanaContext, error):
         error = getattr(error, 'original', error)
 
         if isinstance(error, commands.CommandNotFound):

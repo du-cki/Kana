@@ -5,17 +5,18 @@ from discord import app_commands
 import time
 
 from ..utils.constants import WEBSOCKET, CHAT_BOX, POSTGRES
+from ..utils.subclasses import Kana, KanaContext
 
 class Ping(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Kana):
         self.bot = bot
 
-    def _format_ping(self, ping : int) -> str:
+    def _format_ping(self, ping: int) -> str:
         p = f"```diff\n{'-' if ping > 150 else '+'} {round(ping)}ms"
         return p.ljust(30) + "```"
 
     @commands.command()
-    async def ping(self, ctx : commands.Context):
+    async def ping(self, ctx: KanaContext):
         """
         Gets the bot's latency.
         """
@@ -23,14 +24,14 @@ class Ping(commands.Cog):
         start = time.perf_counter()
         mes = await ctx.send("Ping")
         end = time.perf_counter()
-        message_ping = self._format_ping((end - start) * 1000)
+        message_ping = self._format_ping((end - start) * 1000) # type: ignore
 
-        websocket = self._format_ping(self.bot.latency * 1000)
+        websocket = self._format_ping(self.bot.latency * 1000) # type: ignore
 
         start = time.perf_counter()
         await self.bot.pool.fetch("SELECT 1")
         end = time.perf_counter()
-        postgres_ping = self._format_ping((end - start) * 1000)
+        postgres_ping = self._format_ping((end - start) * 1000) # type: ignore
 
         em = discord.Embed(color=0xE59F9F) \
                     .add_field(name=f"{WEBSOCKET} Websocket", value=websocket, inline=True) \
@@ -48,14 +49,14 @@ class Ping(commands.Cog):
         start = time.perf_counter()
         await interaction.response.send_message("Ping")
         end = time.perf_counter()
-        interaction_ping = self._format_ping((end - start) * 1000)
+        interaction_ping = self._format_ping((end - start) * 1000) # type: ignore
 
-        websocket = self._format_ping(self.bot.latency * 1000)
+        websocket = self._format_ping(self.bot.latency * 1000) # type: ignore
 
         start = time.perf_counter()
         await self.bot.pool.fetch("SELECT 1")
         end = time.perf_counter()
-        postgres_ping = self._format_ping((end - start) * 1000)
+        postgres_ping = self._format_ping((end - start) * 1000) # type: ignore
 
         em = discord.Embed(color=0xE59F9F) \
                     .add_field(name=f"{WEBSOCKET} Websocket", value=websocket, inline=True) \

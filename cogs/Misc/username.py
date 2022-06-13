@@ -2,11 +2,14 @@ import discord
 from discord.ext import commands
 
 from contextlib import suppress
-
 from motor.motor_asyncio import AsyncIOMotorClient
 
+import typing
+
+from ..utils.subclasses import Kana, KanaContext
+
 class Username(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Kana):
         self.bot = bot
         self.db: AsyncIOMotorClient = self.bot.mongo.main["r.py"]
 
@@ -24,7 +27,7 @@ class Username(commands.Cog):
         await ctx.send(embed=em)
 
     @username.command()
-    async def add(self, ctx: commands.Context, username: str):
+    async def add(self, ctx: KanaContext, username: str):
         """
         Adds a username to the database.
 
@@ -53,7 +56,7 @@ class Username(commands.Cog):
         await self.db.insert_one({"_id": ctx.author.id, "robloxUser": [_user], "username": str(ctx.author)})
         await ctx.send(f"Added `{_user}` to my database")
 
-    async def _checkUser(self, username: str) -> str:
+    async def _checkUser(self, username: str) -> typing.Optional[str]:
         async with self.bot.session.get(url='https://users.roblox.com/v1/users/search', params={"keyword": username}) as res:
             res = await res.json()
             with suppress(KeyError):
@@ -61,7 +64,7 @@ class Username(commands.Cog):
             return None
     
     @username.command(aliases=["delete", "del", "rem"])
-    async def remove(self, ctx: commands.Context, username: str):
+    async def remove(self, ctx: KanaContext, username: str):
         """
         Remove a username from the database.
 

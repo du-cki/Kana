@@ -4,8 +4,10 @@ from discord.ext import commands
 import typing
 from cachetools import TTLCache
 
+from ..utils.subclasses import Kana, KanaContext
+
 class Snipe(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Kana):
         self.bot = bot
         self.del_msg = TTLCache(maxsize=2000, ttl=120)
         self.edit_msg = TTLCache(maxsize=2000, ttl=120)

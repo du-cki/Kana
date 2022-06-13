@@ -2,11 +2,14 @@ import discord
 from discord.ext import commands
 from discord.ext.commands.cooldowns import BucketType
 
-from ..utils.constants import YOUTUBE
+import typing
 
 from os import environ
 from dotenv import load_dotenv
 load_dotenv()
+
+from ..utils.constants import YOUTUBE
+from ..utils.subclasses import Kana, KanaContext
 
 class BaseDropdown(discord.ui.Select):
     def __init__(self, queries: dict, emoji: str):
@@ -34,7 +37,7 @@ class BaseView(discord.ui.View):
         super().__init__(timeout=60)
         self.add_item(BaseDropdown(queries, emoji))
         self.author_id = author_id
-        self.response = None
+        self.response: discord.Message = None # type: ignore
 
     async def interaction_check(self, interaction: discord.Interaction):
         if interaction.user.id != self.author_id:
@@ -44,18 +47,17 @@ class BaseView(discord.ui.View):
 
     async def on_timeout(self):
         for children in self.children:
-            children.disabled = True
+            children.disabled = True # type: ignore
         await self.response.edit(view=self)
 
 
 class Search(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Kana):
         self.bot = bot
-
 
     @commands.command(aliases=["yt"])
     @commands.cooldown(1, 5, BucketType.user)
-    async def youtube(self, ctx: commands.Context, *, query: str  = None):
+    async def youtube(self, ctx: KanaContext, *, query: typing.Optional[str]):
         """
         Searches YouTube for a video, if no query is given, it will send a link to youtube.
 

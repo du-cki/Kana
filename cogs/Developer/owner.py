@@ -6,9 +6,10 @@ import difflib
 
 from ..utils.markdown import to_codeblock
 from ..utils.paginator import EmbeddedPaginator
+from ..utils.subclasses import Kana, KanaContext
 
 class ExtensionConverter(commands.Converter):
-    async def convert(self, ctx: commands.Context, argument: str):
+    async def convert(self, ctx: KanaContext, argument: str):
         if argument.lower() in ("all", "*", "~"):
             return list(ctx.bot.extensions)
 
@@ -19,14 +20,14 @@ class ExtensionConverter(commands.Converter):
         return extension
 
 class Admin(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Kana):
         self.bot = bot
 
-    async def cog_check(self, ctx: commands.Context):
+    async def cog_check(self, ctx: KanaContext):
         return await self.bot.is_owner(ctx.author)
 
     @commands.command(aliases=['del'])
-    async def delete(self, ctx: commands.Context):
+    async def delete(self, ctx: KanaContext):
         """
         Deletes the message that the author replied to.
         """
@@ -41,7 +42,8 @@ class Admin(commands.Cog):
         await target.resolved.delete() # type: ignore
 
     @commands.command()
-    async def cleanup(self, ctx: commands.Context, limit: commands.Range[int, 1, 500] = 25):
+    @commands.guild_only()
+    async def cleanup(self, ctx: KanaContext, limit: commands.Range[int, 1, 500] = 25):
         """
         Deletes the last `limit` amount of messages sent by the bot, if the bot has the `Manage Messages` permission, then it will also delete the command messages.
 
@@ -52,7 +54,7 @@ class Admin(commands.Cog):
         bulk = ctx.channel.permissions_for(ctx.me).manage_messages # type: ignore
 
         if bulk:
-            prefixes: typing.Tuple[str] = await self.bot.get_prefix(ctx.message)
+            prefixes: typing.Tuple[str] = await self.bot.get_prefix(ctx.message) # type: ignore
 
         def check(message: discord.Message):
             return message.author == ctx.me or (bulk and any(message.content.startswith(prefix) for prefix in prefixes))
@@ -64,7 +66,7 @@ class Admin(commands.Cog):
         await ctx.send(f'Cleaned up {len(res)} message{"s" if len(res) > 1 else ""}.', delete_after=10.0)
 
     @commands.command(name="reload", aliases=["re", "rl"])
-    async def _reload(self, ctx: commands.Context, *, extensions: ExtensionConverter):
+    async def _reload(self, ctx: KanaContext, *, extensions: ExtensionConverter):
         """
         Reloads the closest `Extension` it finds with the name provided.
 

@@ -3,6 +3,7 @@ from discord.ext import commands
 
 from ..utils.constants import PARAM_RE, INVIS_CHAR, FANCY_ARROW_RIGHT, NL
 from ..utils.markdown import to_ansi, to_codeblock
+from ..utils.subclasses import KanaContext
 
 class Help(commands.HelpCommand):
     def format_params(self, params: list) -> str:
@@ -33,6 +34,7 @@ class Help(commands.HelpCommand):
 
 
     async def send_command_help(self, command: commands.Command) -> None:
+        self.context: KanaContext
         if self.context.predict_ansi(self.context.author):
             parameters = self.format_params(
                 command.signature.split(" ")) if command.signature else ""

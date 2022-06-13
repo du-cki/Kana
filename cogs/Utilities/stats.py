@@ -1,11 +1,9 @@
 import discord
 from discord.ext import commands
 
+import typing
 import inspect
 import os
-
-from ..utils import time as timeutil
-from ..utils.constants import INVIS_CHAR
 
 import psutil
 from platform import python_version
@@ -13,8 +11,13 @@ from platform import python_version
 import contextlib
 import pygit2
 
+from ..utils import time as timeutil
+from ..utils.constants import INVIS_CHAR
+from ..utils.subclasses import Kana, KanaContext
+
+
 class Stats(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Kana):
         self.bot = bot
         self.NEW_LINE = "\n"
 
@@ -22,7 +25,7 @@ class Stats(commands.Cog):
         return timeutil.deltaconv(int(discord.utils.utcnow().timestamp() - self.bot._uptime.timestamp()), breif)
 
     @commands.command()
-    async def uptime(self, ctx: commands.Context):
+    async def uptime(self, ctx: KanaContext):
         """
         Gets the bot's uptime.
         """
@@ -49,19 +52,19 @@ class Stats(commands.Cog):
         return "Could not retrieve commits."
 
     @commands.command()
-    async def about(self, ctx: commands.Context):
+    async def about(self, ctx: KanaContext):
         """
         Gets the current status of the bot.
         """
 
-        guild = self.bot.get_guild(659189385085845515)
+        guild = self.bot.get_guild(659189385085845515) or await self.bot.fetch_guild(659189385085845515)
         owner = guild.get_member(651454696208465941) or await guild.fetch_member(651454696208465941)
 
         mem = psutil.Process().memory_full_info().uss / 1024**2
         cpu = psutil.Process().cpu_percent() / psutil.cpu_count()
 
         embed = discord.Embed(description='Latest Changes:\n' + await self._get_commits(), timestamp=discord.utils.utcnow())
-        embed.set_author(name=str(owner), icon_url=owner.avatar.url, url="https://github.com/du-cki")
+        embed.set_author(name=str(owner), icon_url=owner.display_avatar.url, url="https://github.com/du-cki")
         embed.add_field(name="Version", value=f"python-{python_version()}\ndiscord.py-{discord.__version__}", inline=True)
         embed.add_field(name="Uptime", value=self._get_uptime(breif=True), inline=True)
         embed.add_field(name="Process", value=f'{mem: .2f} MiB\n{cpu:.2f}% CPU', inline=True)
@@ -70,7 +73,7 @@ class Stats(commands.Cog):
 
 
     @commands.command(aliases=["src"]) 
-    async def source(self, ctx: commands.Context, *, command: str = None):
+    async def source(self, ctx: KanaContext, *, command: typing.Optional[str]):
         """
         Gets the source of a command, if no command is given, it will return the source of the bot.
         this was from danny's implementation of the command (https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/meta.py#L397-L435), 
@@ -81,12 +84,20 @@ class Stats(commands.Cog):
         """
 
         source_url = "https://github.com/du-cki/Kanapy"
+        branch = "main"
         if command is None:
             return await ctx.send(f'<{source_url}>')
 
         obj = self.bot.get_command(command.replace(".", ""))
         if obj is None:
             return await ctx.send("Could not find command")
+        
+        if obj.cog.__class__.__name__ == "Jishaku":
+            branch = "master"
+            source_url = "https://github.com/Gorialis/jishaku"
+        
+        if obj.__class__.__name__ == "_HelpCommandImpl":
+            return await ctx.send(f"<https://github.com/du-cki/Kanapy/blob/{branch}/cogs/Helpful/help.py>")
 
         src = obj.callback.__code__
         module = obj.callback.__module__
@@ -97,7 +108,7 @@ class Stats(commands.Cog):
             location = os.path.relpath(filename).replace('\\', '/')
         location = module.replace('.', '/') + '.py'
 
-        await ctx.send(f'<{source_url}/blob/main/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>')
+        await ctx.send(f'<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>')
 
 async def setup(bot):
     await bot.add_cog(Stats(bot))

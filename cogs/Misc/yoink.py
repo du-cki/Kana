@@ -9,9 +9,10 @@ from io import BytesIO
 
 from ..utils.markdown import to_codeblock
 from ..utils.paginator import EmbeddedPaginator
+from ..utils.subclasses import Kana, KanaContext
 
 class Yoink(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Kana):
         self.bot = bot
 
     @commands.Cog.listener()
@@ -67,7 +68,7 @@ class Yoink(commands.Cog):
         return time.strftime("%a %d %b %Y %H:%M")
 
     @commands.command()
-    async def avy(self, ctx: commands.Context, target: typing.Optional[typing.Union[discord.Member, discord.User]]):
+    async def avy(self, ctx: KanaContext, target: typing.Optional[typing.Union[discord.Member, discord.User]]):
         """
         Get's the username history of a user, displays accordingly in unix time.
         

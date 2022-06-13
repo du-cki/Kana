@@ -4,8 +4,10 @@ from discord.ext import commands
 import re
 from asyncio import TimeoutError
 
+from ..utils.subclasses import Kana
+
 class Filter(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Kana):
         self.bot = bot
         self.MASTER_REGEX = re.compile(
             r"((?:i|l)(?:(?:'|`|‛|‘|’|′|‵)?m| am)) ([\s\S]*)"

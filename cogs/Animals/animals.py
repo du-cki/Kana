@@ -1,13 +1,14 @@
 import discord
 from discord.ext import commands
 
+from ..utils.subclasses import Kana, KanaContext
 
 class Animals(commands.Cog):
-    def __init__(self, bot):
+    def __init__(self, bot: Kana):
         self.bot = bot
 
     @commands.command(aliases=["meow", "kitty"])
-    async def cat(self, ctx: commands.Context):
+    async def cat(self, ctx: KanaContext):
         """
         Gets a random cat from the thecatapi.com API.
         """
@@ -20,7 +21,7 @@ class Animals(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["quack", "qwuak"])
-    async def duck(self, ctx: commands.Context):
+    async def duck(self, ctx: KanaContext):
         """
         Gets a random duck from the random-d.uk API.
         """
