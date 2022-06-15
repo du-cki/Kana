@@ -21,8 +21,8 @@ class Stats(commands.Cog):
         self.bot = bot
         self.NEW_LINE = "\n"
 
-    def _get_uptime(self, breif: bool = False) -> str:
-        return timeutil.deltaconv(int(discord.utils.utcnow().timestamp() - self.bot._uptime.timestamp()), breif)
+    def _get_uptime(self, brief: bool = False) -> str:
+        return timeutil.deltaconv(int(discord.utils.utcnow().timestamp() - self.bot._uptime.timestamp()), brief)
 
     @commands.command()
     async def uptime(self, ctx: KanaContext):
@@ -66,7 +66,7 @@ class Stats(commands.Cog):
         embed = discord.Embed(description='Latest Changes:\n' + await self._get_commits(), timestamp=discord.utils.utcnow())
         embed.set_author(name=str(owner), icon_url=owner.display_avatar.url, url="https://github.com/du-cki")
         embed.add_field(name="Version", value=f"python-{python_version()}\ndiscord.py-{discord.__version__}", inline=True)
-        embed.add_field(name="Uptime", value=self._get_uptime(breif=True), inline=True)
+        embed.add_field(name="Uptime", value=self._get_uptime(brief=True), inline=True)
         embed.add_field(name="Process", value=f'{mem: .2f} MiB\n{cpu:.2f}% CPU', inline=True)
 
         await ctx.send(embed=embed)
