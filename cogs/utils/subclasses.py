@@ -104,12 +104,20 @@ class Kana(commands.Bot):
 
         await self.pool.execute(STARTUP_QUERY) # type: ignore
 
-        self._prefixes: typing.Dict[int, str] = {
-            prefix["id"]: prefix["prefix"]
+        self.prefixes: typing.Dict[int, str] = {
+            prefix["guild_id"]: prefix["prefix"]
             for prefix in (
-                    await self.pool.fetch("SELECT * FROM prefixes;") # type: ignore
+                    await self.pool.fetch("SELECT guild_id, prefix FROM guild_settings;") # type: ignore
                 )
             }
+
+        self.disabled_modules: typing.Dict[int, str] = {
+            module["guild_id"]: module["disabled_modules"]
+            for module in (
+                await self.pool.fetch("SELECT guild_id, disabled_modules FROM guild_settings") # type: ignore
+            )
+            if module["disabled_modules"] is not None
+        }
 
         await self.load_extension("jishaku")
 

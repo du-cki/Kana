@@ -1,6 +1,7 @@
-CREATE TABLE IF NOT EXISTS prefixes (
-    id BIGINT PRIMARY KEY,
-    prefix TEXT NOT NULL
+CREATE TABLE IF NOT EXISTS guild_settings (
+    guild_id BIGINT PRIMARY KEY,
+    prefix TEXT NOT NULL,
+    disabled_modules TEXT[]
 );
 
 CREATE TABLE IF NOT EXISTS username_history (

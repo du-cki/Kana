@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands
 
-import typing
-
 from os import environ
 from dotenv import load_dotenv
 load_dotenv()
@@ -13,15 +11,15 @@ async def getPrefix(bot: Kana, message: discord.Message):
     if not message.guild:
         return commands.when_mentioned_or("uwu")(bot, message)
 
-    q: typing.Optional[str] = bot._prefixes.get(message.guild.id, None)
+    q = bot.prefixes.get(message.guild.id, None)
     if q:
         return commands.when_mentioned_or(q)(bot, message)
 
     await bot.pool.execute("""
-    INSERT INTO prefixes
+    INSERT INTO guild_settings
     VALUES ($1, $2);
     """, message.guild.id, "uwu")
-    bot._prefixes[message.guild.id] = "uwu" # my temporary solution for now
+    bot.prefixes[message.guild.id] = "uwu" # my temporary solution for now
 
     return commands.when_mentioned_or("uwu")(bot, message)
 

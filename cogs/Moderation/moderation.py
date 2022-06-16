@@ -44,7 +44,6 @@ class Moderation(commands.Cog):
        )
 
     @commands.command()
-    @commands.guild_only()
     async def prefix(self, ctx: KanaContext, prefix: typing.Optional[str]):
         """
         Changes the guild specific prefix. if no prefix is given, it will show the current prefix.
@@ -53,17 +52,21 @@ class Moderation(commands.Cog):
         :type prefix: str, optional
         :permissions: Administrator
         """
+        if not ctx.guild:
+            return
 
         if prefix is None:
-            return await ctx.send(f"The current prefix for this server is: `{self.bot._prefixes.get(ctx.guild.id, 'uwu')}`") # type: ignore
+            return await ctx.send(f"The current prefix for this server is: `{self.bot.prefixes.get(ctx.guild.id, 'uwu')}`")
 
         if not ctx.author.guild_permissions.administrator: # type: ignore
             raise commands.MissingPermissions(['administrator'])
 
         await self.bot.pool.execute("""
-        UPDATE prefixes SET prefix = $1 WHERE id = $2;
-        """, prefix, ctx.guild.id) # type: ignore
-        self.bot._prefixes[ctx.guild.id] = prefix # type: ignore
+        UPDATE guild_settings
+        SET prefix = $1
+        WHERE guild_id = $2;
+        """, prefix, ctx.guild.id)
+        self.bot.prefixes[ctx.guild.id] = prefix
 
         await ctx.send(f'The prefix is now `{prefix}`')
 
