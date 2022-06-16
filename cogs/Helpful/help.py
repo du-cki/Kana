@@ -28,10 +28,8 @@ class Help(commands.HelpCommand):
                 )
             )
 
-
     async def send_bot_help(self, mapping) -> None:
-        await self.context.send("soon\U00002122")
-
+        await self.context.send("never\U00002122")
 
     async def send_command_help(self, command: commands.Command) -> None:
         self.context: KanaContext
@@ -68,10 +66,12 @@ class Help(commands.HelpCommand):
                 f"{INVIS_CHAR * pref_len}{to_ansi(FANCY_ARROW_RIGHT + ' ' + command.name, 37)} {self.format_params(command.signature.split(' ')) if command.signature else ''}"
                 for command in group.commands
             ]
+            parameters = self.format_params(
+                group.signature.split(" ")) if group.signature else ""
 
             description = (
                 to_codeblock(
-                    f"\n{self.context.clean_prefix}{to_ansi(group.name, 37)}" +
+                    f"\n{self.context.clean_prefix}{to_ansi(group.name, 37)} {parameters}" +
                     to_ansi(f"\n{f'{NL}'.join(commands)}", 37), "ansi"
                 ) +
                 f"\n{group.short_doc if group.short_doc else 'No description given.'}"
@@ -85,19 +85,25 @@ class Help(commands.HelpCommand):
 
             description = (
                 to_codeblock(
-                    f"\n{self.context.clean_prefix}{group.name}"
+                    f"\n{self.context.clean_prefix}{group.name} {group.signature}"
                     f"\n{f'{NL}'.join(commands)}"
                 ) +
                 f"\n{group.short_doc if group.short_doc else 'No description given.'}"
             )
 
-        params = [
+        sub_commands = [
             f"`{command.name}`\n{INVIS_CHAR}{FANCY_ARROW_RIGHT} {command.short_doc}"
             for command in group.commands
         ]
 
+        params = self.check_params(
+            group.command.__doc__) if group.command.__doc__ else None
+
         if params:
-            description += "\n\nSub-Commands:\n" + "\n".join(params)
+            description += "\n\n" + params
+
+        if sub_commands:
+            description += f"\n\nSub-Command{'s' if len(sub_commands) > 1 else ''}:\n" + "\n".join(sub_commands)
 
         em = discord.Embed(description=description)
         await self.context.send(embed=em)
