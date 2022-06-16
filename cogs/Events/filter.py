@@ -6,6 +6,7 @@ from asyncio import TimeoutError
 
 from ..utils.subclasses import Kana
 
+
 class Filter(commands.Cog):
     def __init__(self, bot: Kana):
         self.bot = bot
@@ -16,10 +17,8 @@ class Filter(commands.Cog):
             r"|(stfu|shut\s(?:the\s)?(?:fuck\s)?up)"
             r"|(?:good)? ?bye"
             r"|(?:thank you|thanks) dad"
-        ) # in case of: "i'm", "kys", "play", "stfu", "good bye", "thanks dad"
-        self.UP_REGEX = re.compile(
-            r"[A-Z]"
-        ) # find all capital letters in a string
+        )  # in case of: "i'm", "kys", "play", "stfu", "good bye", "thanks dad"
+        self.UP_REGEX = re.compile(r"[A-Z]")  # find all capital letters in a string
 
     def _volumeCheck(self, message: str) -> bool:
         splitMsg = message.replace(" ", "")
@@ -32,17 +31,21 @@ class Filter(commands.Cog):
             return
 
         cnt = message.content.lower()
-        if not message.content == "" \
-                and self._volumeCheck(message.content) \
-                        or self.MASTER_REGEX.findall(cnt):
+        if (
+            not message.content == ""
+            and self._volumeCheck(message.content)
+            or self.MASTER_REGEX.findall(cnt)
+        ):
             try:
+
                 def _dadcheck(message: str) -> bool:
-                    return message.author.id == 503720029456695306 and message.channel.id == message.channel.id
+                    return (
+                        message.author.id == 503720029456695306
+                        and message.channel.id == message.channel.id
+                    )
 
                 dmessage = await self.bot.wait_for(
-                    "message", 
-                    check=_dadcheck,
-                    timeout=10.0
+                    "message", check=_dadcheck, timeout=10.0
                 )
 
             except TimeoutError:
@@ -50,6 +53,7 @@ class Filter(commands.Cog):
             else:
                 await dmessage.delete()
                 await message.channel.send("suck my dick dad bot")
+
 
 async def setup(bot):
     await bot.add_cog(Filter(bot))

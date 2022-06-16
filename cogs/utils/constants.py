@@ -7,12 +7,12 @@ ESCAPE = "\u001b"
 INVIS_CHAR = "\u2800"
 NL = "\n"
 VALID_EDIT_KWARGS: typing.Dict[str, typing.Any] = {
-    'content': None,
-    'embed': None,
-    'attachments': [],
-    'delete_after': None,
-    'allowed_mentions': None,
-    'view': None,
+    "content": None,
+    "embed": None,
+    "attachments": [],
+    "delete_after": None,
+    "allowed_mentions": None,
+    "view": None,
 }
 
 # emotes

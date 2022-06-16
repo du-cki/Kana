@@ -5,6 +5,7 @@ import typing
 
 from ..utils.subclasses import Kana, KanaContext
 
+
 class Moderation(commands.Cog):
     def __init__(self, bot: Kana):
         self.bot = bot
@@ -26,22 +27,26 @@ class Moderation(commands.Cog):
             return await ctx.reply("Please enter a smaller number")
 
         results = {}
+
         def check(message: discord.Message):
-            if message.author.id == 432610292342587392 or message.content.startswith("$"):
+            if message.author.id == 432610292342587392 or message.content.startswith(
+                "$"
+            ):
                 if not results.get(message.author.name):
                     results[message.author.name] = 1
                 else:
                     results[message.author.name] += 1
                 return True
             return False
-            
-        await ctx.channel.purge(limit=amount, check=check) # type: ignore
-        await ctx.send(embed=discord.Embed(
-            title="Mudae Purge Results",
-            description="\n".join(f"{k} - {v}" for k, v in results.items())
-        ),
-        delete_after=10
-       )
+
+        await ctx.channel.purge(limit=amount, check=check)  # type: ignore
+        await ctx.send(
+            embed=discord.Embed(
+                title="Mudae Purge Results",
+                description="\n".join(f"{k} - {v}" for k, v in results.items()),
+            ),
+            delete_after=10,
+        )
 
     @commands.command()
     async def prefix(self, ctx: KanaContext, prefix: typing.Optional[str]):
@@ -56,19 +61,25 @@ class Moderation(commands.Cog):
             return
 
         if prefix is None:
-            return await ctx.send(f"The current prefix for this server is: `{self.bot.prefixes.get(ctx.guild.id, 'uwu')}`")
+            return await ctx.send(
+                f"The current prefix for this server is: `{self.bot.prefixes.get(ctx.guild.id, 'uwu')}`"
+            )
 
-        if not ctx.author.guild_permissions.administrator: # type: ignore
-            raise commands.MissingPermissions(['administrator'])
+        if not ctx.author.guild_permissions.administrator:  # type: ignore
+            raise commands.MissingPermissions(["administrator"])
 
-        await self.bot.pool.execute("""
+        await self.bot.pool.execute(
+            """
         UPDATE guild_settings
         SET prefix = $1
         WHERE guild_id = $2;
-        """, prefix, ctx.guild.id)
+        """,
+            prefix,
+            ctx.guild.id,
+        )
         self.bot.prefixes[ctx.guild.id] = prefix
 
-        await ctx.send(f'The prefix is now `{prefix}`')
+        await ctx.send(f"The prefix is now `{prefix}`")
 
 
 async def setup(bot):
