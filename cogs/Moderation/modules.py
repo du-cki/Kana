@@ -22,6 +22,7 @@ class Modules(commands.Cog):
         await ctx.send_help(ctx.command)
 
     @module.command(name="list", aliases=["all"])
+    @commands.has_permissions(manage_guild=True)
     async def _list(self, ctx: KanaContext):
         """
         Lists all modules and their current status in the server.
@@ -40,6 +41,7 @@ class Modules(commands.Cog):
         await ctx.send(embed=embed)
 
     @module.command(aliases=["on"])
+    @commands.has_permissions(manage_guild=True)
     async def enable(self, ctx: KanaContext, module: str):
         """
         Enables a module in the server.
@@ -68,6 +70,7 @@ class Modules(commands.Cog):
         await ctx.send(f"Module `{module}` has been enabled.")
 
     @module.command(aliases=["off"])
+    @commands.has_permissions(manage_guild=True)
     async def disable(self, ctx: KanaContext, module: str):
         """
         Disables a module in the server.
