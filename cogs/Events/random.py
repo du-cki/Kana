@@ -33,8 +33,8 @@ class Events(commands.Cog):
                 for prefix in await self.bot.get_prefix(message)
                 if prefix not in ["<@!668118072611176470> ", "<@668118072611176470> "]
             ]
-            await message.channel.send(
-                f"My prefix{f' is `{prefixes[0]}`!' if len(prefixes) <= 1 else 'es are ' + ', '.join(prefixes)}"
+            await message.reply(
+                f"Hello \N{WAVING HAND SIGN}, my prefix{f' is `{prefixes[0]}`!' if len(prefixes) <= 1 else 'es are ' + ', '.join(prefixes)}"
             )
 
 async def setup(bot):
