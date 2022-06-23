@@ -1,18 +1,16 @@
-import discord
-from discord.ext import commands
-
-import typing
+import contextlib
 import inspect
 import os
-
-import psutil
+import typing
 from platform import python_version
 
-import contextlib
-import pygit2
+import discord
+import psutil
+import pygit2  # type: ignore
+from discord.ext import commands
 
 from ..utils import time as timeutil
-from ..utils.constants import INVIS_CHAR
+from ..utils.constants import INVIS_CHAR, library_versions
 from ..utils.subclasses import Kana, KanaContext
 
 
@@ -21,9 +19,9 @@ class Stats(commands.Cog):
         self.bot = bot
         self.NEW_LINE = "\n"
 
-    def _get_uptime(self, brief: bool = False) -> str:
+    def _get_start_time(self, brief: bool = False) -> str:
         return timeutil.deltaconv(
-            int(discord.utils.utcnow().timestamp() - self.bot._uptime.timestamp()),
+            int(discord.utils.utcnow().timestamp() - self.bot.start_time.timestamp()),
             brief,
         )
 
@@ -33,22 +31,24 @@ class Stats(commands.Cog):
         Gets the bot's uptime.
         """
 
-        await ctx.send(self._get_uptime())
+        await ctx.send(self._get_start_time())
 
     async def _get_commits(self, count: int = 3) -> str:
         with contextlib.suppress(Exception):
-            repo = pygit2.Repository(".git")
-            commits = [
+            repo = pygit2.Repository(".git")  # type: ignore
+            commits = [  # type: ignore
                 commit
-                for commit in repo.walk(repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL)
+                for commit in repo.walk(repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL)  # type: ignore
             ][:count]
 
-            return "\n".join(
-                [
-                    f"[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] {commit.message[:42] + '...' if len(commit.message) > 40 else commit.message.replace(self.NEW_LINE, '')}"
-                    for commit in commits
-                ]
-            )
+            final: str = ""
+            for commit in commits:  # type: ignore
+                if len(commit.message) > 40:  # type: ignore
+                    final += f"\n[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] " + commit.message[:42].replace("\n", "") + "..."  # type: ignore
+                    continue
+                final += f"\n[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] " + commit.message.replace("\n", "")  # type: ignore
+            return final
+
         return "Could not retrieve commits."
 
     @commands.command()
@@ -83,7 +83,9 @@ class Stats(commands.Cog):
             value=f"python-{python_version()}\ndiscord.py-{discord.__version__}",
             inline=True,
         )
-        embed.add_field(name="Uptime", value=self._get_uptime(brief=True), inline=True)
+        embed.add_field(
+            name="Uptime", value=self._get_start_time(brief=True), inline=True
+        )
         embed.add_field(
             name="Process", value=f"{mem: .2f} MiB\n{cpu:.2f}% CPU", inline=True
         )
@@ -111,7 +113,7 @@ class Stats(commands.Cog):
             return await ctx.send("Could not find command")
 
         if obj.cog.__class__.__name__ == "Jishaku":
-            branch = "master"
+            branch = library_versions.get("jishaku", "master")
             source_url = "https://github.com/Gorialis/jishaku"
 
         if obj.__class__.__name__ == "_HelpCommandImpl":
@@ -128,10 +130,15 @@ class Stats(commands.Cog):
             location = os.path.relpath(filename).replace("\\", "/")
         location = module.replace(".", "/") + ".py"
 
-        await ctx.send(
-            f"<{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}>"
+        view = discord.ui.View()
+        view.add_item(
+            discord.ui.Button(
+                label="Github",
+                url=f"{source_url}/blob/{branch}/{location}#L{firstlineno}-L{firstlineno + len(lines) - 1}",
+            )
         )
+        await ctx.send(view=view)
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     await bot.add_cog(Stats(bot))

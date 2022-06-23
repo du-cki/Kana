@@ -33,9 +33,9 @@ class Yoink(commands.Cog):
             """,
                 member.id,
                 discord.utils.utcnow(),
-                imghdr.what(BytesIO(avatar)),
+                imghdr.what(BytesIO(avatar)),  # type: ignore
                 avatar,
-            )  # type: ignore
+            )
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -49,9 +49,9 @@ class Yoink(commands.Cog):
         """,
             member.id,
             discord.utils.utcnow(),
-            imghdr.what(BytesIO(avatar)),
+            imghdr.what(BytesIO(avatar)),  # type: ignore
             avatar,
-        )  # type: ignore
+        )
 
     @commands.Cog.listener()
     async def on_user_avatar_update(self, _: discord.User, after: discord.User):
@@ -63,9 +63,9 @@ class Yoink(commands.Cog):
         """,
             after.id,
             discord.utils.utcnow(),
-            imghdr.what(BytesIO(avatar)),
+            imghdr.what(BytesIO(avatar)),  # type: ignore
             avatar,
-        )  # type: ignore
+        )
 
     @commands.Cog.listener()
     async def on_user_name_update(self, before: discord.User, _: discord.User):
@@ -132,11 +132,11 @@ class Yoink(commands.Cog):
 
         await EmbeddedPaginator(
             ctx,
-            [to_codeblock("\n".join(chunk), "css") for chunk in chunks],  # type: ignore
+            [to_codeblock("\n".join(chunk), "css") for chunk in chunks],
             per_page=1,
             title=f"{target.display_name}'s username History",
         ).start()
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     await bot.add_cog(Yoink(bot))

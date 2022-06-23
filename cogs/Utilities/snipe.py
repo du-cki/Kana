@@ -4,7 +4,7 @@ from discord.ext import commands
 import typing
 from cachetools import TTLCache
 
-import contextlib
+from datetime import datetime
 
 from ..utils.subclasses import Kana, KanaContext
 
@@ -12,8 +12,12 @@ from ..utils.subclasses import Kana, KanaContext
 class Snipe(commands.Cog):
     def __init__(self, bot: Kana):
         self.bot = bot
-        self.del_msg = TTLCache(maxsize=2000, ttl=120)
-        self.edit_msg = TTLCache(maxsize=2000, ttl=120)
+        self.del_msg: TTLCache[int, typing.Tuple[discord.Message, datetime]] = TTLCache(
+            maxsize=2000, ttl=120
+        )
+        self.edit_msg: TTLCache[
+            int, typing.Tuple[discord.Message, datetime]
+        ] = TTLCache(maxsize=2000, ttl=120)
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
@@ -49,16 +53,16 @@ class Snipe(commands.Cog):
         if "snipe" in self.bot.disabled_modules.get(ctx.guild.id, []):
             return await ctx.send("Sniping is disabled in this server.")
 
-        target: discord.TextChannel = target or ctx.channel  # type: ignore
+        target: discord.abc.Messageable = target or ctx.channel
         msg = self.del_msg.get(target.id, None)
 
         if not msg:
             return await ctx.send(
-                f"There is nothing for me to snipe {'here' if target is ctx.channel else f'in {target.mention}'}."
+                f"There is nothing for me to snipe {'here' if target is ctx.channel else f'in <#{target.id}>'}."
             )
 
         message, timestamp = msg
-        embeds = []
+        embeds: typing.List[discord.Embed] = []
         embed = discord.Embed(description=message.content, timestamp=timestamp)
         embed.set_author(
             name=message.author.display_name, icon_url=message.author.display_avatar
@@ -109,21 +113,21 @@ class Snipe(commands.Cog):
         if "snipe" in self.bot.disabled_modules.get(ctx.guild.id, []):
             return await ctx.send("Sniping is disabled in this server.")
 
-        target: discord.TextChannel = target or ctx.channel  # type: ignore
+        target: discord.abc.Messageable = target or ctx.channel
         msg = self.edit_msg.get(target.id, None)
 
         if not msg:
             return await ctx.send(
-                f"There is nothing for me to esnipe {'here' if target is ctx.channel else f'in {target.mention}'}."
+                f"There is nothing for me to esnipe {'here' if target is ctx.channel else f'in <#{target.id}>'}."
             )
 
         message, timestamp = msg
         embed = discord.Embed(description=message.content, timestamp=timestamp)
         embed.set_author(
-            name=message.author.display_name, icon_url=message.author.avatar.url
+            name=message.author.display_name, icon_url=message.author.display_avatar
         )
         await ctx.send(embed=embed)
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     await bot.add_cog(Snipe(bot))

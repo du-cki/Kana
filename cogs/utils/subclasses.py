@@ -1,19 +1,22 @@
+from __future__ import annotations
+import typing
+from typing_extensions import Self
+
 import discord
 from discord.ext import commands
 
-import asyncpg  # type: ignore
+import asyncpg
 from aiohttp import ClientSession
-from motor.motor_asyncio import AsyncIOMotorClient  # type: ignore
+from motor.motor_asyncio import AsyncIOMotorClient
 
 import glob
-import typing
 from copy import deepcopy
 from cachetools import TTLCache
 
 from .constants import STARTUP_QUERY, VALID_EDIT_KWARGS
 
 
-class KanaContext(commands.Context):
+class KanaContext(commands.Context["Kana"]):
     def predict_ansi(
         self, target: typing.Optional[typing.Union[discord.Member, discord.User]]
     ) -> bool:
@@ -37,24 +40,29 @@ class KanaContext(commands.Context):
 
         return True
 
-    async def send(self, *args, **kwargs) -> discord.Message:
+    async def send(self, *args: typing.Any, **kwargs: typing.Any) -> discord.Message:
         """
         Sends a message to Context.channel.
-        This is a override of :meth:`discord.abc.Messageable.send`.
+        This is a override of :meth:`discord.ext.commands.Context.send`.
 
         :return: The message sent.
         :rtype: discord.Message
         """
 
-        if kwargs.get("embed") and not kwargs.get("embed").color:  # type: ignore
+        embed = kwargs.get("embed")
+        if embed and not embed.color:
             kwargs["embed"].color = 0xE59F9F
 
         for embed in kwargs.get("embeds", []):
             if not embed.color:
                 embed.color = 0xE59F9F
 
-        if self.message.id in self.bot.cached_edits:
-            message: discord.Message = self.channel.get_partial_message(self.bot.cached_edits[self.message.id])  # type: ignore
+        if self.message.id in self.bot.cached_edits and not isinstance(
+            self.channel, discord.GroupChannel
+        ):
+            message: discord.PartialMessage = self.channel.get_partial_message(
+                self.bot.cached_edits[self.message.id]
+            )
             if message:
                 _kwargs = deepcopy(VALID_EDIT_KWARGS)
                 _kwargs["content"] = args[0] if args else None
@@ -72,10 +80,10 @@ class KanaContext(commands.Context):
         self.bot.cached_edits[self.message.id] = message.id
         return message
 
-    async def reply(self, *args, **kwargs) -> discord.Message:
+    async def reply(self, *args: typing.Any, **kwargs: typing.Any) -> discord.Message:
         """
         Replies to the message the author sent.
-        This is a override of :meth:`discord.abc.Messageable.reply`.
+        This is a override of :meth:`discord.ext.commands.Context.send`.
 
         :return: The message sent.
         :rtype: discord.Message
@@ -88,13 +96,18 @@ class KanaContext(commands.Context):
 
 
 class Kana(commands.Bot):
-    def __init__(self, *args, **kwargs):
+    pool: asyncpg.Pool[typing.Any]  # cause idk what to pass in as generic type
+
+    def __init__(self, *args: typing.Any, **kwargs: typing.Any):
         super().__init__(*args, **kwargs)
         self.mongo_uri = kwargs.get("mongo_uri")
         self.psql_uri = kwargs.get("psql_uri")
 
     async def get_context(
-        self, message: discord.Message, *, cls=KanaContext
+        self,
+        message: typing.Union[discord.Message, discord.Interaction],
+        *,
+        cls: commands.Context[Self] = KanaContext,
     ) -> KanaContext:
         return await super().get_context(message, cls=cls)
 
@@ -103,26 +116,35 @@ class Kana(commands.Bot):
 
     async def setup_hook(self) -> None:
         self.session = ClientSession()
-        self._uptime = discord.utils.utcnow()
-        self.mongo = AsyncIOMotorClient(self.mongo_uri)
-        self.cached_edits = TTLCache(
+        self.start_time = discord.utils.utcnow()
+        self.mongo: AsyncIOMotorClient = AsyncIOMotorClient(self.mongo_uri)
+        self.cached_edits: TTLCache[int, int] = TTLCache(
             maxsize=2000, ttl=300.0
         )  # mapping of (command).message.id to (response).message.id
-        self.pool: asyncpg.pool.Pool = await asyncpg.create_pool(self.psql_uri)  # type: ignore
+        conn = await asyncpg.create_pool(self.psql_uri)
 
-        await self.pool.execute(STARTUP_QUERY)  # type: ignore
+        if conn is None:
+            raise RuntimeError(
+                "Failed to connect to the database."
+            )  # i hope this doesn't happen but this is mainly for type checking purposes
+
+        self.pool = conn
+
+        await self.pool.execute(STARTUP_QUERY)
 
         self.prefixes: typing.Dict[int, str] = {
             prefix["guild_id"]: prefix["prefix"]
             for prefix in (
-                await self.pool.fetch("SELECT guild_id, prefix FROM guild_settings;")  # type: ignore
+                await self.pool.fetch("SELECT guild_id, prefix FROM guild_settings;")
             )
         }
 
         self.disabled_modules: typing.Dict[int, str] = {
             module["guild_id"]: module["disabled_modules"]
             for module in (
-                await self.pool.fetch("SELECT guild_id, disabled_modules FROM guild_settings")  # type: ignore
+                await self.pool.fetch(
+                    "SELECT guild_id, disabled_modules FROM guild_settings"
+                )
             )
             if module["disabled_modules"] is not None
         }

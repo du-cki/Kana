@@ -38,7 +38,7 @@ class Filter(commands.Cog):
         ):
             try:
 
-                def _dadcheck(message: str) -> bool:
+                def _dadcheck(message: discord.Message) -> bool:
                     return (
                         message.author.id == 503720029456695306
                         and message.channel.id == message.channel.id
@@ -55,5 +55,5 @@ class Filter(commands.Cog):
                 await message.channel.send("suck my dick dad bot")
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     await bot.add_cog(Filter(bot))

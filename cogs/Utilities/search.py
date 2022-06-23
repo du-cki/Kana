@@ -1,11 +1,11 @@
 import discord
 from discord.ext import commands
-from discord.ext.commands.cooldowns import BucketType
+from discord.ext.commands.cooldowns import BucketType  # type: ignore
 
 import typing
 
 from os import environ
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # type: ignore
 
 load_dotenv()
 
@@ -13,8 +13,8 @@ from ..utils.constants import YOUTUBE
 from ..utils.subclasses import Kana, KanaContext
 
 
-class BaseDropdown(discord.ui.Select):
-    def __init__(self, queries: dict, emoji: str):
+class BaseDropdown(discord.ui.Select[discord.ui.View]):
+    def __init__(self, queries: typing.Dict[str, typing.List[str]], emoji: str):
         self.queries = queries
 
         options = [
@@ -29,11 +29,13 @@ class BaseDropdown(discord.ui.Select):
 
 
 class BaseView(discord.ui.View):
-    def __init__(self, author_id: int, queries: dict, emoji: str):
+    def __init__(
+        self, author_id: int, queries: typing.Dict[str, typing.List[str]], emoji: str
+    ):
         super().__init__(timeout=60)
         self.add_item(BaseDropdown(queries, emoji))
         self.author_id = author_id
-        self.response: discord.Message = None  # type: ignore
+        self.response: typing.Optional[discord.Message] = None
 
     async def interaction_check(self, interaction: discord.Interaction):
         if interaction.user.id != self.author_id:
@@ -45,8 +47,11 @@ class BaseView(discord.ui.View):
 
     async def on_timeout(self):
         for children in self.children:
-            children.disabled = True  # type: ignore
-        await self.response.edit(view=self)
+            if isinstance(children, BaseDropdown):
+                children.disabled = True
+
+        if self.response is not None:  # pesky pesky linter
+            await self.response.edit(view=self)
 
 
 class Search(commands.Cog):
@@ -94,5 +99,5 @@ class Search(commands.Cog):
         view.response = await ctx.send(list(parsed_queries.values())[0][1], view=view)
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     await bot.add_cog(Search(bot))

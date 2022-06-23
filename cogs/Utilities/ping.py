@@ -12,7 +12,7 @@ class Ping(commands.Cog):
     def __init__(self, bot: Kana):
         self.bot = bot
 
-    def _format_ping(self, ping: int) -> str:
+    def _format_ping(self, ping: float) -> str:
         p = f"```diff\n{'-' if ping > 150 else '+'} {round(ping)}ms"
         return p.ljust(30) + "```"
 
@@ -25,14 +25,14 @@ class Ping(commands.Cog):
         start = time.perf_counter()
         mes = await ctx.send("Ping")
         end = time.perf_counter()
-        message_ping = self._format_ping((end - start) * 1000)  # type: ignore
+        message_ping = self._format_ping((end - start) * 1000)
 
-        websocket = self._format_ping(self.bot.latency * 1000)  # type: ignore
+        websocket = self._format_ping(self.bot.latency * 1000)
 
         start = time.perf_counter()
         await self.bot.pool.fetch("SELECT 1")
         end = time.perf_counter()
-        postgres_ping = self._format_ping((end - start) * 1000)  # type: ignore
+        postgres_ping = self._format_ping((end - start) * 1000)
 
         em = (
             discord.Embed(color=0xE59F9F)
@@ -51,14 +51,14 @@ class Ping(commands.Cog):
         start = time.perf_counter()
         await interaction.response.send_message("Ping")
         end = time.perf_counter()
-        interaction_ping = self._format_ping((end - start) * 1000)  # type: ignore
+        interaction_ping = self._format_ping((end - start) * 1000)
 
-        websocket = self._format_ping(self.bot.latency * 1000)  # type: ignore
+        websocket = self._format_ping(self.bot.latency * 1000)
 
         start = time.perf_counter()
         await self.bot.pool.fetch("SELECT 1")
         end = time.perf_counter()
-        postgres_ping = self._format_ping((end - start) * 1000)  # type: ignore
+        postgres_ping = self._format_ping((end - start) * 1000)
 
         em = (
             discord.Embed(color=0xE59F9F)
@@ -71,5 +71,5 @@ class Ping(commands.Cog):
         await interaction.edit_original_message(content=None, embed=em)
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     await bot.add_cog(Ping(bot))

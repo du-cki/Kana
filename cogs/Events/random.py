@@ -5,6 +5,7 @@ import re
 
 from ..utils.subclasses import Kana
 
+
 class Events(commands.Cog):
     def __init__(self, bot: Kana):
         self.bot = bot
@@ -26,7 +27,7 @@ class Events(commands.Cog):
 
     @commands.Cog.listener()
     async def on_message(self, message: discord.Message) -> None:
-        if re.fullmatch(rf"<@!?{self.bot.user.id}>", message.content): # type: ignore
+        if re.fullmatch(rf"<@!?{self.bot.user.id}>", message.content):  # type: ignore
             prefixes = [
                 f"`{prefix}`"
                 for prefix in await self.bot.get_prefix(message)
@@ -35,6 +36,7 @@ class Events(commands.Cog):
             await message.reply(
                 f"Hello \N{WAVING HAND SIGN}, my prefix{f' is `{prefixes[0]}`!' if len(prefixes) <= 1 else 'es are ' + ', '.join(prefixes)}"
             )
+
 
 async def setup(bot: Kana):
     await bot.add_cog(Events(bot))

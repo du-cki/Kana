@@ -11,7 +11,6 @@ class Moderation(commands.Cog):
         self.bot = bot
 
     @commands.command(aliases=["wp", "mp", "mudaepurge"])
-    @commands.guild_only()
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
     async def waifupurge(self, ctx: KanaContext, amount: int = 30):
@@ -22,11 +21,16 @@ class Moderation(commands.Cog):
         :type amount: int, optional
         :permissions: Manage Messages
         """
+        if isinstance(
+            ctx.channel,
+            discord.DMChannel | discord.PartialMessageable | discord.GroupChannel,
+        ):  # purely for linter
+            return
 
-        if amount > 50:
+        if amount > 100:
             return await ctx.reply("Please enter a smaller number")
 
-        results = {}
+        results: typing.Dict[str, int] = {}
 
         def check(message: discord.Message):
             if message.author.id == 432610292342587392 or message.content.startswith(
@@ -39,7 +43,7 @@ class Moderation(commands.Cog):
                 return True
             return False
 
-        await ctx.channel.purge(limit=amount, check=check)  # type: ignore
+        await ctx.channel.purge(limit=amount, check=check)
         await ctx.send(
             embed=discord.Embed(
                 title="Mudae Purge Results",
@@ -57,7 +61,9 @@ class Moderation(commands.Cog):
         :type prefix: str, optional
         :permissions: Administrator
         """
-        if not ctx.guild:
+        if not ctx.guild or isinstance(
+            ctx.author, discord.User
+        ):  # purely for linting purposes
             return
 
         if prefix is None:
@@ -65,7 +71,7 @@ class Moderation(commands.Cog):
                 f"The current prefix for this server is: `{self.bot.prefixes.get(ctx.guild.id, 'uwu')}`"
             )
 
-        if not ctx.author.guild_permissions.administrator:  # type: ignore
+        if not ctx.author.guild_permissions.administrator:
             raise commands.MissingPermissions(["administrator"])
 
         await self.bot.pool.execute(
@@ -82,5 +88,5 @@ class Moderation(commands.Cog):
         await ctx.send(f"The prefix is now `{prefix}`")
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     await bot.add_cog(Moderation(bot))

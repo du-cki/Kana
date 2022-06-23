@@ -33,6 +33,20 @@ PARAM_RE = re.compile(
     r"\n? +:type [a-zA-Z0-9_]+:? (?P<type>[a-zA-Z0-9_ .,]+)"
 )
 
-# sql
+# jank parsers
 with open("schema.sql", "r") as f:
     STARTUP_QUERY = f.read()
+
+with open("requirements.txt") as f:
+    requirements = f.read().splitlines()
+
+library_versions: typing.Dict[str, str] = {}
+
+for module in requirements:
+    match = re.findall(
+        r"https:\/\/github.com\/(?P<user_name>[a-zA-Z0-9_.-]+)\/(?P<project>[a-zA-Z0-9_.-]+)@(?P<commit_hash>[a-zA-Z0-9_.-]+)",
+        module,
+    )
+    if match:
+        _, project, commit_hash = match[0]
+        library_versions[project] = commit_hash

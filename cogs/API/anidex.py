@@ -78,7 +78,7 @@ class Anidex(commands.GroupCog, name="anime"):
     @app_commands.command(description="Search for an anime.")
     @app_commands.describe(query="The Anime to search for.")
     async def search(self, interaction: discord.Interaction, query: str) -> None:
-        if interaction.channel is None: # lint lint lint
+        if interaction.channel is None:  # lint lint lint
             return
 
         await interaction.response.defer(thinking=False)
@@ -96,7 +96,12 @@ class Anidex(commands.GroupCog, name="anime"):
 
         data = resp["data"]["Media"]
 
-        if data["isAdult"] and not (isinstance(interaction.channel, discord.DMChannel | discord.PartialMessageable) or interaction.channel.is_nsfw()):
+        if data["isAdult"] and not (
+            isinstance(
+                interaction.channel, discord.DMChannel | discord.PartialMessageable
+            )
+            or interaction.channel.is_nsfw()
+        ):
             await interaction.edit_original_message(
                 content=(
                     "The requested anime is marked as NSFW, but this channel is not NSFW."

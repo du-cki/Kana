@@ -1,13 +1,15 @@
 import discord
 from discord.ext import commands
 
+import typing
+
 from ..utils.constants import PARAM_RE, INVIS_CHAR, FANCY_ARROW_RIGHT, NL
 from ..utils.markdown import to_ansi, to_codeblock
-from ..utils.subclasses import KanaContext
+from ..utils.subclasses import KanaContext, Kana
 
 
 class Help(commands.HelpCommand):
-    def format_params(self, params: list) -> str:
+    def format_params(self, params: typing.List[str]) -> str:
         return " ".join(
             [
                 f"{f'{to_ansi(param, 34)}' if param.startswith('<') else f'{to_ansi(param, 36)}'}"
@@ -134,5 +136,5 @@ class Help(commands.HelpCommand):
         await self.context.send(embed=em)
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     bot.help_command = Help()

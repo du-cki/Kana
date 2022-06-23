@@ -99,5 +99,5 @@ class Modules(commands.Cog):
         await ctx.send(f"Module `{module}` has been disabled.")
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     await bot.add_cog(Modules(bot))

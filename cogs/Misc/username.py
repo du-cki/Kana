@@ -15,7 +15,7 @@ class Username(commands.Cog):
         self.db: AsyncIOMotorClient = self.bot.mongo.main["r.py"]
 
     @commands.group(aliases=["users", "user", "usernames"], invoke_without_command=True)
-    async def username(self, ctx):
+    async def username(self, ctx: KanaContext):
         """
         Gets all your usernames in the database.
         """
@@ -104,5 +104,5 @@ class Username(commands.Cog):
         await ctx.send(f"Removed `{username}` from my database.")
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     await bot.add_cog(Username(bot))

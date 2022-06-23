@@ -1,4 +1,3 @@
-import discord
 from discord.ext import commands
 
 from ..utils import time
@@ -10,7 +9,7 @@ class Errors(commands.Cog):
         self.bot = bot
 
     @commands.Cog.listener()
-    async def on_command_error(self, ctx: KanaContext, error):
+    async def on_command_error(self, ctx: KanaContext, error: commands.CommandError):
         error = getattr(error, "original", error)
 
         if isinstance(error, commands.CommandNotFound):
@@ -60,8 +59,8 @@ class Errors(commands.Cog):
         if isinstance(error, commands.MissingRequiredArgument):
             return await ctx.reply(f"You're missing the `{error.param.name}` argument.")
 
-        raise error  # type: ignore
+        raise error
 
 
-async def setup(bot):
+async def setup(bot: Kana):
     await bot.add_cog(Errors(bot))
