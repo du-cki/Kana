@@ -9,7 +9,6 @@ from cachetools import LRUCache
 
 from ..utils.subclasses import Kana
 
-
 ANIME_SEARCH_QUERY = """
 query ($search: String) {
   Page(perPage: 10) {
@@ -79,6 +78,9 @@ class Anidex(commands.GroupCog, name="anime"):
     @app_commands.command(description="Search for an anime.")
     @app_commands.describe(query="The Anime to search for.")
     async def search(self, interaction: discord.Interaction, query: str) -> None:
+        if interaction.channel is None: # lint lint lint
+            return
+
         await interaction.response.defer(thinking=False)
         resp: typing.Dict[str, typing.Any] = await (
             await interaction.client.session.post(  # type: ignore
@@ -94,7 +96,7 @@ class Anidex(commands.GroupCog, name="anime"):
 
         data = resp["data"]["Media"]
 
-        if data["isAdult"] is True and (not isinstance(interaction.channel, discord.DMChannel) or interaction.channel.is_nsfw() is False):  # type: ignore
+        if data["isAdult"] and not (isinstance(interaction.channel, discord.DMChannel | discord.PartialMessageable) or interaction.channel.is_nsfw()):
             await interaction.edit_original_message(
                 content=(
                     "The requested anime is marked as NSFW, but this channel is not NSFW."
@@ -136,6 +138,7 @@ class Anidex(commands.GroupCog, name="anime"):
     ) -> typing.List[app_commands.Choice[str]]:
         print(f"{str(interaction.user)!r} is searching for {current}")
 
+        current = current.lower()
         if current in self.search_cache:
             return self.search_cache[current]
 
