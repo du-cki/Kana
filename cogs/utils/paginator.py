@@ -84,6 +84,8 @@ class EmbeddedPaginator(discord.ui.View):
         else:
             self._after.disabled = False
             self._last_page.disabled = False
+        
+        self.breaker.disabled = self.current_page == 0 and self.current_page + 1 == len(self.source)
 
     async def on_timeout(self) -> None:
         for children in self.children:
