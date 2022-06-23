@@ -17,7 +17,7 @@ dnspython==2.2.1
 frozenlist==1.3.0
 idna==3.3
 import-expression==1.1.4
-jishaku==2.5.0a419+gb3a49d7.master
+jishaku @ git+https://github.com/Gorialis/jishaku@717f6543bdc99758b6aee5a00231ad4f4f27de7e
 motor==3.0.0
 motor-stubs==1.7.1
 multidict==6.0.2
