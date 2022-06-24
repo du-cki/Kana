@@ -44,9 +44,14 @@ class Stats(commands.Cog):
             final: str = ""
             for commit in commits:  # type: ignore
                 if len(commit.message) > 40:  # type: ignore
-                    final += f"\n[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] " + commit.message[:42].replace("\n", "") + "..."  # type: ignore
+                    final += f"\n[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] " # type: ignore
+                    final += commit.message[:42].replace("\n", "") # type: ignore
+                    final += "..."
+                    final += " (<t:" + str(commit.commit_time) + ":R>)" # type: ignore
                     continue
-                final += f"\n[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] " + commit.message.replace("\n", "")  # type: ignore
+                final += f"\n[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] " # type: ignore
+                final += commit.message.replace("\n", "") # type: ignore
+                final += " (<t:" + str(commit.commit_time) + ":R>)" # type: ignore
             return final
 
         return "Could not retrieve commits."
@@ -68,9 +73,9 @@ class Stats(commands.Cog):
         cpu = psutil.Process().cpu_percent() / psutil.cpu_count()
 
         embed = discord.Embed(
-            description="**Latest Changes:** ".ljust(40, INVIS_CHAR)
-            + "\n"
-            + await self._get_commits(),
+            description="**Latest Changes:** "
+            + await self._get_commits()
+            + "\n".ljust(40, INVIS_CHAR),
             timestamp=discord.utils.utcnow(),
         )
         embed.set_author(
@@ -87,7 +92,7 @@ class Stats(commands.Cog):
             name="Uptime", value=self._get_start_time(brief=True), inline=True
         )
         embed.add_field(
-            name="Process", value=f"{mem: .2f} MiB\n{cpu:.2f}% CPU", inline=True
+            name="Process", value=f"{mem:.2f} MiB\n{cpu:.2f}% CPU", inline=True
         )
 
         await ctx.send(embed=embed)
