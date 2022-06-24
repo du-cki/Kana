@@ -126,7 +126,7 @@ class Anidex(commands.GroupCog, name="anime"):
         embed.add_field(name="Genres", value=", ".join(data["genres"]))
         embed.add_field(name="Score", value=f"{data['averageScore']}/100")
         embed.add_field(name="Episodes", value=data["episodes"])
-        embed.add_field(name="Status", value=data["status"].lower())
+        embed.add_field(name="Status", value=data["status"].title())
 
         view = None
         if data["trailer"] is not None:
