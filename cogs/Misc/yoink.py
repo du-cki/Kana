@@ -1,11 +1,13 @@
 import discord
 from discord.ext import commands
 
-import typing
+from typing import Any, List, Optional, Tuple, Union
 from datetime import datetime
 
 import imghdr
 from io import BytesIO
+
+from pytz import utc
 
 from ..utils.markdown import to_codeblock
 from ..utils.paginator import EmbeddedPaginator
@@ -18,24 +20,26 @@ class Yoink(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
-        members: typing.List[discord.Member] = (
+        members: List[discord.Member] = (
             await guild.chunk(cache=True) if not guild.chunked else guild.members
         )
+
+        for_exec: List[Tuple[Any, ...]] = []
 
         for member in members:  # i love data
             if member.mutual_guilds or member == member.guild.me:
                 continue
 
             avatar = await member.display_avatar.read()
-            await self.bot.pool.execute(
-                """
-            SELECT insert_avy($1, $2, $3, $4)
-            """,
-                member.id,
-                discord.utils.utcnow(),
-                imghdr.what(BytesIO(avatar)),  # type: ignore
-                avatar,
+
+            for_exec.append(
+                (member.id, discord.utils.utcnow(), imghdr.what(None, avatar), avatar)
             )
+
+        sql = """
+        SELECT insert_avy($1, $2, $3, $4)
+        """
+        await self.bot.pool.executemany(sql, for_exec)
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -99,7 +103,7 @@ class Yoink(commands.Cog):
     async def avy(
         self,
         ctx: KanaContext,
-        target: typing.Optional[typing.Union[discord.Member, discord.User]],
+        target: Optional[Union[discord.Member, discord.User]],
     ):
         """
         Get's the username history of a user, displays accordingly in unix time.
