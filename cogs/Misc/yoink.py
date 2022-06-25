@@ -7,8 +7,6 @@ from datetime import datetime
 import imghdr
 from io import BytesIO
 
-from pytz import utc
-
 from ..utils.markdown import to_codeblock
 from ..utils.paginator import EmbeddedPaginator
 from ..utils.subclasses import Kana, KanaContext
