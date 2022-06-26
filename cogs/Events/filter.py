@@ -44,7 +44,7 @@ class Filter(commands.Cog):
                         and message.channel.id == message.channel.id
                     )
 
-                dmessage = await self.bot.wait_for(
+                dmessage: discord.Message = await self.bot.wait_for(
                     "message", check=_dadcheck, timeout=10.0
                 )
 

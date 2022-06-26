@@ -1,24 +1,24 @@
 from __future__ import annotations
-import typing
-from typing_extensions import Self
 
-import discord
-from discord.ext import commands
-
-import asyncpg
-from aiohttp import ClientSession
-from motor.motor_asyncio import AsyncIOMotorClient
+from typing import Dict, Optional, Type, Union, Any
 
 import glob
 from copy import deepcopy
+
+import asyncpg
+import discord
+from aiohttp import ClientSession
 from cachetools import TTLCache
+from discord.ext import commands
+from motor.motor_asyncio import AsyncIOMotorClient
+from typing_extensions import Self
 
 from .constants import STARTUP_QUERY, VALID_EDIT_KWARGS
 
 
 class KanaContext(commands.Context["Kana"]):
     def predict_ansi(
-        self, target: typing.Optional[typing.Union[discord.Member, discord.User]]
+        self, target: Optional[Union[discord.Member, discord.User]]
     ) -> bool:
         """
         Predicts whether or not the user (or author) will be able to use ANSI codes.
@@ -40,7 +40,7 @@ class KanaContext(commands.Context["Kana"]):
 
         return True
 
-    async def send(self, *args: typing.Any, **kwargs: typing.Any) -> discord.Message:
+    async def send(self, *args: Any, **kwargs: Any) -> discord.Message:
         """
         Sends a message to Context.channel.
         This is a override of :meth:`discord.ext.commands.Context.send`.
@@ -80,7 +80,7 @@ class KanaContext(commands.Context["Kana"]):
         self.bot.cached_edits[self.message.id] = message.id
         return message
 
-    async def reply(self, *args: typing.Any, **kwargs: typing.Any) -> discord.Message:
+    async def reply(self, *args: Any, **kwargs: Any) -> discord.Message:
         """
         Replies to the message the author sent.
         This is a override of :meth:`discord.ext.commands.Context.send`.
@@ -96,20 +96,22 @@ class KanaContext(commands.Context["Kana"]):
 
 
 class Kana(commands.Bot):
-    pool: asyncpg.Pool[typing.Any]  # cause idk what to pass in as generic type
+    pool: asyncpg.Pool
+    session: ClientSession
 
-    def __init__(self, *args: typing.Any, **kwargs: typing.Any):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
         self.mongo_uri = kwargs.get("mongo_uri")
         self.psql_uri = kwargs.get("psql_uri")
+        self._context: Type[KanaContext]
 
     async def get_context(
         self,
-        message: typing.Union[discord.Message, discord.Interaction],
+        message: Union[discord.Message, discord.Interaction],
         *,
-        cls: commands.Context[Self] = KanaContext,
+        cls: Type[commands.Context[Self]] = KanaContext,
     ) -> KanaContext:
-        return await super().get_context(message, cls=cls)
+        return await super().get_context(message, cls=self._context)
 
     async def on_ready(self) -> None:
         print(f"{self.user} is online, on discord.py - {discord.__version__}")
@@ -132,14 +134,14 @@ class Kana(commands.Bot):
 
         await self.pool.execute(STARTUP_QUERY)
 
-        self.prefixes: typing.Dict[int, str] = {
+        self.prefixes: Dict[int, str] = {
             prefix["guild_id"]: prefix["prefix"]
             for prefix in (
                 await self.pool.fetch("SELECT guild_id, prefix FROM guild_settings;")
             )
         }
 
-        self.disabled_modules: typing.Dict[int, str] = {
+        self.disabled_modules: Dict[int, str] = {
             module["guild_id"]: module["disabled_modules"]
             for module in (
                 await self.pool.fetch(

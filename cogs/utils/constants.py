@@ -1,12 +1,12 @@
-import typing
 import re
+from typing import Any, Dict
 
 # random constants
 FANCY_ARROW_RIGHT = "\U00002570"
 ESCAPE = "\u001b"
 INVIS_CHAR = "\u2800"
 NL = "\n"
-VALID_EDIT_KWARGS: typing.Dict[str, typing.Any] = {
+VALID_EDIT_KWARGS: Dict[str, Any] = {
     "content": None,
     "embed": None,
     "attachments": [],
@@ -40,7 +40,7 @@ with open("schema.sql", "r") as f:
 with open("requirements.txt") as f:
     requirements = f.read().splitlines()
 
-library_versions: typing.Dict[str, str] = {}
+library_versions: Dict[str, str] = {}
 
 for module in requirements:
     match = re.findall(

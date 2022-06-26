@@ -1,8 +1,8 @@
 import contextlib
 import inspect
 import os
-import typing
 from platform import python_version
+from typing import Optional
 
 import discord
 import psutil
@@ -98,7 +98,7 @@ class Stats(commands.Cog):
         await ctx.send(embed=embed)
 
     @commands.command(aliases=["src"])
-    async def source(self, ctx: KanaContext, *, command: typing.Optional[str]):
+    async def source(self, ctx: KanaContext, *, command: Optional[str]):
         """
         Gets the source of a command, if no command is given, it will return the source of the bot.
         this was from danny's implementation of the command (https://github.com/Rapptz/RoboDanny/blob/rewrite/cogs/meta.py#L397-L435),

@@ -1,7 +1,7 @@
+import re
+
 import discord
 from discord.ext import commands
-
-import re
 
 from ..utils.subclasses import Kana
 
@@ -31,7 +31,7 @@ class Events(commands.Cog):
             prefixes = [
                 f"`{prefix}`"
                 for prefix in await self.bot.get_prefix(message)
-                if prefix not in ["<@!668118072611176470> ", "<@668118072611176470> "]
+                if not re.fullmatch(r'<@!?668118072611176470>\s?', prefix)
             ]
             await message.reply(
                 f"Hello \N{WAVING HAND SIGN}, my prefix{f' is `{prefixes[0]}`!' if len(prefixes) <= 1 else 'es are ' + ', '.join(prefixes)}"
