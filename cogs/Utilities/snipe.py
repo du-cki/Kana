@@ -14,9 +14,9 @@ class Snipe(commands.Cog):
         self.del_msg: TTLCache[int, Tuple[discord.Message, datetime]] = TTLCache(
             maxsize=2000, ttl=120
         )
-        self.edit_msg: TTLCache[
-            int, Tuple[discord.Message, datetime]
-        ] = TTLCache(maxsize=2000, ttl=120)
+        self.edit_msg: TTLCache[int, Tuple[discord.Message, datetime]] = TTLCache(
+            maxsize=2000, ttl=120
+        )
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):

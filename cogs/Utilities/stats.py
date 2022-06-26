@@ -44,14 +44,14 @@ class Stats(commands.Cog):
             final: str = ""
             for commit in commits:  # type: ignore
                 if len(commit.message) > 40:  # type: ignore
-                    final += f"\n[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] " # type: ignore
-                    final += commit.message[:42].replace("\n", "") # type: ignore
+                    final += f"\n[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] "  # type: ignore
+                    final += commit.message[:42].replace("\n", "")  # type: ignore
                     final += "..."
-                    final += " (<t:" + str(commit.commit_time) + ":R>)" # type: ignore
+                    final += " (<t:" + str(commit.commit_time) + ":R>)"  # type: ignore
                     continue
-                final += f"\n[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] " # type: ignore
-                final += commit.message.replace("\n", "") # type: ignore
-                final += " (<t:" + str(commit.commit_time) + ":R>)" # type: ignore
+                final += f"\n[ [`{commit.hex[:6]}`](https://github.com/du-cki/Kanapy/commit/{commit.hex}) ] "  # type: ignore
+                final += commit.message.replace("\n", "")  # type: ignore
+                final += " (<t:" + str(commit.commit_time) + ":R>)"  # type: ignore
             return final
 
         return "Could not retrieve commits."

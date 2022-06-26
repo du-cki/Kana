@@ -28,9 +28,7 @@ class BaseDropdown(discord.ui.Select[discord.ui.View]):
 
 
 class BaseView(discord.ui.View):
-    def __init__(
-        self, author_id: int, queries: Dict[str, List[str]], emoji: str
-    ):
+    def __init__(self, author_id: int, queries: Dict[str, List[str]], emoji: str):
         super().__init__(timeout=60)
         self.add_item(BaseDropdown(queries, emoji))
         self.author_id = author_id
