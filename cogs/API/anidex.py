@@ -133,7 +133,7 @@ class Anidex(commands.GroupCog, name="anime"):
             url = self.construct_trailer_url(data["trailer"])
             if url is not None:
                 view = discord.ui.View()
-                view.add_item(discord.ui.Button(label="Trailer", url=url))
+                view.add_item(discord.ui.Button(label="Trailer", url=url.strip()))
 
         await interaction.edit_original_message(embed=embed, view=view)
 
