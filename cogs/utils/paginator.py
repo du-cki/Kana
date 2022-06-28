@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 
 import typing
-import traceback
 
 from .constants import DOUBLE_LEFT, LEFT, RIGHT, DOUBLE_RIGHT
 
@@ -119,8 +118,8 @@ class EmbeddedPaginator(discord.ui.View):
         await modal.wait()
 
         page = modal.page.value
-        if page.isdigit() and (int(page) > 0 or int(page) <= len(self.source + 1)) and int(page) - 1 != self.current_page:  # type: ignore # due to the nature of the method im using this should be put here sadly
-            await self.jump_to(int(page) - 1)  # type: ignore
+        if page.isdigit() and (int(page) > 0 or int(page) <= len(self.source + 1)) and int(page) - 1 != self.current_page and page is not None:  # type: ignore # due to the nature of the method im using this should be put here sadly
+            await self.jump_to(int(page) - 1)
 
     @discord.ui.button(emoji=RIGHT, style=discord.ButtonStyle.grey)
     async def _after(

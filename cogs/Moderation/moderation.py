@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-import typing
+from typing import Dict, Optional
 
 from ..utils.subclasses import Kana, KanaContext
 
@@ -30,7 +30,7 @@ class Moderation(commands.Cog):
         if amount > 100:
             return await ctx.reply("Please enter a smaller number")
 
-        results: typing.Dict[str, int] = {}
+        results: Dict[str, int] = {}
 
         def check(message: discord.Message):
             if message.author.id == 432610292342587392 or message.content.startswith(
@@ -53,7 +53,7 @@ class Moderation(commands.Cog):
         )
 
     @commands.command()
-    async def prefix(self, ctx: KanaContext, prefix: typing.Optional[str]):
+    async def prefix(self, ctx: KanaContext, prefix: Optional[str]):
         """
         Changes the guild specific prefix. if no prefix is given, it will show the current prefix.
 

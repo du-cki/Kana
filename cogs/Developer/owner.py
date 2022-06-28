@@ -1,8 +1,8 @@
+import difflib
+from typing import List, Optional
+
 import discord
 from discord.ext import commands
-
-import typing
-import difflib
 
 from ..utils.markdown import to_codeblock
 from ..utils.paginator import EmbeddedPaginator
@@ -12,7 +12,7 @@ from ..utils.subclasses import Kana, KanaContext
 class ExtensionConverter(commands.Converter[Kana]):
     async def convert(
         self, ctx: commands.Context[Kana], argument: str
-    ) -> typing.Optional[typing.List[str]]:
+    ) -> Optional[List[str]]:
         if argument.lower() in ("all", "*", "~"):
             return list(ctx.bot.extensions)
 
@@ -38,7 +38,7 @@ class Owner(commands.Cog):
         Deletes the message that the author replied to.
         """
 
-        target: typing.Optional[discord.MessageReference] = ctx.message.reference
+        target: Optional[discord.MessageReference] = ctx.message.reference
         if target is None:
             return await ctx.send(
                 "Reply to the message you want to delete", delete_after=5.0
@@ -97,7 +97,7 @@ class Owner(commands.Cog):
         :type extension: str
         """
 
-        msg: typing.List[str] = []
+        msg: List[str] = []
         for extension in extensions:  # type: ignore
             try:
                 extension: str

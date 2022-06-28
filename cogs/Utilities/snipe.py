@@ -1,10 +1,9 @@
-import discord
-from discord.ext import commands
-
-import typing
-from cachetools import TTLCache
-
 from datetime import datetime
+from typing import List, Optional, Tuple
+
+import discord
+from cachetools import TTLCache
+from discord.ext import commands
 
 from ..utils.subclasses import Kana, KanaContext
 
@@ -12,12 +11,12 @@ from ..utils.subclasses import Kana, KanaContext
 class Snipe(commands.Cog):
     def __init__(self, bot: Kana):
         self.bot = bot
-        self.del_msg: TTLCache[int, typing.Tuple[discord.Message, datetime]] = TTLCache(
+        self.del_msg: TTLCache[int, Tuple[discord.Message, datetime]] = TTLCache(
             maxsize=2000, ttl=120
         )
-        self.edit_msg: TTLCache[
-            int, typing.Tuple[discord.Message, datetime]
-        ] = TTLCache(maxsize=2000, ttl=120)
+        self.edit_msg: TTLCache[int, Tuple[discord.Message, datetime]] = TTLCache(
+            maxsize=2000, ttl=120
+        )
 
     @commands.Cog.listener()
     async def on_message_delete(self, message: discord.Message):
@@ -40,7 +39,7 @@ class Snipe(commands.Cog):
             self.edit_msg[before.channel.id] = (before, discord.utils.utcnow())
 
     @commands.command()
-    async def snipe(self, ctx: KanaContext, target: typing.Optional[discord.TextChannel]):  # type: ignore
+    async def snipe(self, ctx: KanaContext, target: Optional[discord.TextChannel]):
         """
         Snipes the last message that was deleted from the mentioned channel, or the current channel if no channel is mentioned.
 
@@ -53,16 +52,16 @@ class Snipe(commands.Cog):
         if "snipe" in self.bot.disabled_modules.get(ctx.guild.id, []):
             return await ctx.send("Sniping is disabled in this server.")
 
-        target: discord.abc.Messageable = target or ctx.channel
-        msg = self.del_msg.get(target.id, None)
+        _target: discord.abc.Messageable = target or ctx.channel
+        msg = self.del_msg.get(_target.id, None)
 
         if not msg:
             return await ctx.send(
-                f"There is nothing for me to snipe {'here' if target is ctx.channel else f'in <#{target.id}>'}."
+                f"There is nothing for me to snipe {'here' if _target is ctx.channel else f'in <#{_target.id}>'}."
             )
 
         message, timestamp = msg
-        embeds: typing.List[discord.Embed] = []
+        embeds: List[discord.Embed] = []
         embed = discord.Embed(description=message.content, timestamp=timestamp)
         embed.set_author(
             name=message.author.display_name, icon_url=message.author.display_avatar
@@ -100,7 +99,7 @@ class Snipe(commands.Cog):
         )
 
     @commands.command()
-    async def esnipe(self, ctx: KanaContext, target: typing.Optional[discord.TextChannel]):  # type: ignore
+    async def esnipe(self, ctx: KanaContext, target: Optional[discord.TextChannel]):
         """
         e(dit)-Snipes the last message that was edited from the mentioned channel, or the current channel if no channel is mentioned.
 
@@ -113,12 +112,13 @@ class Snipe(commands.Cog):
         if "snipe" in self.bot.disabled_modules.get(ctx.guild.id, []):
             return await ctx.send("Sniping is disabled in this server.")
 
-        target: discord.abc.Messageable = target or ctx.channel
-        msg = self.edit_msg.get(target.id, None)
+        _target: discord.abc.Messageable = target or ctx.channel
+
+        msg = self.edit_msg.get(_target.id, None)
 
         if not msg:
             return await ctx.send(
-                f"There is nothing for me to esnipe {'here' if target is ctx.channel else f'in <#{target.id}>'}."
+                f"There is nothing for me to esnipe {'here' if _target is ctx.channel else f'in <#{_target.id}>'}."
             )
 
         message, timestamp = msg
