@@ -3,7 +3,7 @@ import re
 import discord
 from discord.ext import commands
 
-from ..utils.subclasses import Kana
+from ..utils import Kana
 
 
 class Events(commands.Cog):

@@ -3,7 +3,7 @@ from discord.ext import commands
 
 from typing import Dict, Optional
 
-from ..utils.subclasses import Kana, KanaContext
+from ..utils import Kana, KanaContext
 
 
 class Moderation(commands.Cog):

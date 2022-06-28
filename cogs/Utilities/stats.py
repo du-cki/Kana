@@ -9,9 +9,7 @@ import psutil
 import pygit2  # type: ignore
 from discord.ext import commands
 
-from ..utils import time as timeutil
-from ..utils.constants import INVIS_CHAR, library_versions
-from ..utils.subclasses import Kana, KanaContext
+from ..utils import time, INVIS_CHAR, library_versions, Kana, KanaContext
 
 
 class Stats(commands.Cog):
@@ -20,7 +18,7 @@ class Stats(commands.Cog):
         self.NEW_LINE = "\n"
 
     def _get_start_time(self, brief: bool = False) -> str:
-        return timeutil.deltaconv(
+        return time.deltaconv(
             int(discord.utils.utcnow().timestamp() - self.bot.start_time.timestamp()),
             brief,
         )

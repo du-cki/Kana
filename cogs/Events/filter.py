@@ -4,7 +4,7 @@ from discord.ext import commands
 import re
 from asyncio import TimeoutError
 
-from ..utils.subclasses import Kana
+from ..utils import Kana
 
 
 class Filter(commands.Cog):

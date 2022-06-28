@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from ..utils.subclasses import Kana, KanaContext
+from ..utils import Kana, KanaContext
 
 
 class Modules(commands.Cog):

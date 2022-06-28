@@ -3,9 +3,16 @@ from discord.ext import commands
 
 from typing import List
 
-from ..utils.constants import PARAM_RE, INVIS_CHAR, FANCY_ARROW_RIGHT, NL
-from ..utils.markdown import to_ansi, to_codeblock
-from ..utils.subclasses import KanaContext, Kana
+from ..utils import (
+    PARAM_RE,
+    INVIS_CHAR,
+    FANCY_ARROW_RIGHT,
+    NL,
+    to_ansi,
+    to_codeblock,
+    KanaContext,
+    Kana,
+)
 
 
 class Help(commands.HelpCommand):

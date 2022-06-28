@@ -1,7 +1,6 @@
 from discord.ext import commands
 
-from ..utils import time
-from ..utils.subclasses import Kana, KanaContext
+from ..utils import time, Kana, KanaContext
 
 
 class Errors(commands.Cog):

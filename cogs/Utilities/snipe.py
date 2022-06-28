@@ -5,7 +5,7 @@ import discord
 from cachetools import TTLCache
 from discord.ext import commands
 
-from ..utils.subclasses import Kana, KanaContext
+from ..utils import Kana, KanaContext
 
 
 class Snipe(commands.Cog):

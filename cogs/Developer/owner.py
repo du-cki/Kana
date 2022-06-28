@@ -4,9 +4,7 @@ from typing import List, Optional
 import discord
 from discord.ext import commands
 
-from ..utils.markdown import to_codeblock
-from ..utils.paginator import EmbeddedPaginator
-from ..utils.subclasses import Kana, KanaContext
+from ..utils import to_codeblock, EmbeddedPaginator, Kana, KanaContext
 
 
 class ExtensionConverter(commands.Converter[Kana]):

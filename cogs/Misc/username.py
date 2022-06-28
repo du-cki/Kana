@@ -6,7 +6,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 import typing
 
-from ..utils.subclasses import Kana, KanaContext
+from ..utils import Kana, KanaContext
 
 
 class Username(commands.Cog):

@@ -4,8 +4,7 @@ from discord import app_commands
 
 import time
 
-from ..utils.constants import WEBSOCKET, CHAT_BOX, POSTGRES
-from ..utils.subclasses import Kana, KanaContext
+from ..utils import WEBSOCKET, CHAT_BOX, POSTGRES, Kana, KanaContext
 
 
 class Ping(commands.Cog):

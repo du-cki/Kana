@@ -8,7 +8,7 @@ import asyncio
 
 from cachetools import LRUCache
 
-from ..utils.subclasses import Kana
+from ..utils import Kana
 
 ANIME_SEARCH_QUERY = """
 query ($search: String) {
@@ -58,7 +58,9 @@ class Anime(commands.GroupCog, name="anime"):
     def __init__(self, bot: Kana):
         self.bot = bot
         self.search_cooldown = commands.CooldownMapping.from_cooldown(1, 2, key)  # type: ignore
-        self.cached_results: LRUCache[str, typing.List[app_commands.Choice[str]]] = LRUCache(maxsize=2000) 
+        self.cached_results: LRUCache[
+            str, typing.List[app_commands.Choice[str]]
+        ] = LRUCache(maxsize=2000)
         self.A_PATTERN = re.compile(r'<a href="(?P<link>[^"]+)">(?P<title>[^"]+)<\/a>')
 
     def formatter(self, obj: re.Match[typing.Any]) -> str:
@@ -66,7 +68,7 @@ class Anime(commands.GroupCog, name="anime"):
         return f"[{content}]({URL})"
 
     def parse_html(self, html: str) -> str:
-        html = self.A_PATTERN.sub(self.formatter, html) # to cleanup hyperlinks
+        html = self.A_PATTERN.sub(self.formatter, html)  # to cleanup hyperlinks
 
         return (
             html.replace("<br>", "")
@@ -81,7 +83,7 @@ class Anime(commands.GroupCog, name="anime"):
         if data["site"] == "youtube":
             return "https://www.youtube.com/watch?v=" + data["id"]
         elif data["site"] == "dailymotion":
-            return "https://www.dailymotion.com/video/" + data['id']
+            return "https://www.dailymotion.com/video/" + data["id"]
 
     @app_commands.command(description="Search for an anime.")
     @app_commands.describe(query="The Anime to search for.")

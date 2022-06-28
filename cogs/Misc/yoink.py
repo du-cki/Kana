@@ -7,9 +7,7 @@ from datetime import datetime
 import imghdr
 from io import BytesIO
 
-from ..utils.markdown import to_codeblock
-from ..utils.paginator import EmbeddedPaginator
-from ..utils.subclasses import Kana, KanaContext
+from ..utils import to_codeblock, EmbeddedPaginator, Kana, KanaContext
 
 
 class Yoink(commands.Cog):

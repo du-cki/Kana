@@ -8,8 +8,7 @@ from dotenv import load_dotenv  # type: ignore
 
 load_dotenv()
 
-from ..utils.constants import YOUTUBE
-from ..utils.subclasses import Kana, KanaContext
+from ..utils import YOUTUBE, Kana, KanaContext
 
 
 class BaseDropdown(discord.ui.Select[discord.ui.View]):
