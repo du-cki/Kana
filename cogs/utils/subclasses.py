@@ -111,7 +111,7 @@ class Kana(commands.Bot):
         *,
         cls: Type[commands.Context[Self]] = KanaContext,
     ) -> KanaContext:
-        return await super().get_context(message, cls=self._context)
+        return await super().get_context(message, cls=cls)
 
     async def on_ready(self) -> None:
         print(f"{self.user} is online, on discord.py - {discord.__version__}")
