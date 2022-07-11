@@ -14,21 +14,39 @@ from ..utils import YOUTUBE, Kana, KanaContext
 class BaseDropdown(discord.ui.Select[discord.ui.View]):
     def __init__(self, queries: Dict[str, List[str]], emoji: str):
         self.queries = queries
+        self.emoji = emoji
 
         options = [
-            discord.SelectOption(label=channel, description=url[0], emoji=emoji)
-            for channel, url in self.queries.items()
+            discord.SelectOption(
+                label=author,
+                description=url[0],
+                emoji=self.emoji,
+                default=True if _iter == 0 else False # my jank way of making first item the default
+                )
+            for _iter, (author, url) in enumerate(self.queries.items())
         ]
-
-        super().__init__(placeholder="Show more...", options=options)
+        super().__init__(options=options)
 
     async def callback(self, interaction: discord.Interaction):
-        await interaction.response.edit_message(content=self.queries[self.values[0]][1])
+        self.options = [
+            discord.SelectOption(
+                label=author,
+                description=url[0],
+                emoji=self.emoji,
+                default=True if self.values[0] == author else False
+                )
+            for author, url in self.queries.items()
+        ]
+        
+        await interaction.response.edit_message(
+            content=self.queries[self.values[0]][1],
+            view=self.view
+            )
 
 
 class BaseView(discord.ui.View):
     def __init__(self, author_id: int, queries: Dict[str, List[str]], emoji: str):
-        super().__init__(timeout=60)
+        super().__init__(timeout=180)
         self.add_item(BaseDropdown(queries, emoji))
         self.author_id = author_id
         self.response: Optional[discord.Message] = None
@@ -74,7 +92,7 @@ class Search(commands.Cog):
                 "q": query,
                 "part": "snippet",
                 "type": "video",
-                "maxResults": 10,
+                "maxResults": 25,
             },
         )
 
