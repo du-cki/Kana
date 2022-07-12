@@ -1,5 +1,6 @@
 from os import environ
 from typing import Dict, List, Optional
+from html import unescape
 
 import discord
 from discord.ext import commands
@@ -18,30 +19,31 @@ class BaseDropdown(discord.ui.Select[discord.ui.View]):
 
         options = [
             discord.SelectOption(
-                label=author,
-                description=url[0],
+                label=metadata[0],
+                description=metadata[1],
                 emoji=self.emoji,
-                default=True if _iter == 0 else False # my jank way of making first item the default
-                )
-            for _iter, (author, url) in enumerate(self.queries.items())
+                value=URL,
+                default=True
+                if _iter == 0
+                else False,  # my jank way of making first item the default
+            )
+            for _iter, (URL, metadata) in enumerate(self.queries.items())
         ]
         super().__init__(options=options)
 
     async def callback(self, interaction: discord.Interaction):
         self.options = [
             discord.SelectOption(
-                label=author,
-                description=url[0],
+                label=metadata[0],
+                description=metadata[1],
                 emoji=self.emoji,
-                default=True if self.values[0] == author else False
-                )
-            for author, url in self.queries.items()
-        ]
-        
-        await interaction.response.edit_message(
-            content=self.queries[self.values[0]][1],
-            view=self.view
+                value=URL,
+                default=True if self.values[0] == URL else False,
             )
+            for (URL, metadata) in self.queries.items()
+        ]
+
+        await interaction.response.edit_message(content=self.values[0], view=self.view)
 
 
 class BaseView(discord.ui.View):
@@ -101,16 +103,17 @@ class Search(commands.Cog):
 
         q = await q.json()
 
-        parsed_queries = {
-            item["snippet"]["channelTitle"][:100]: [
-                item["snippet"]["title"][:100],
-                "https://www.youtube.com/watch?v=" + item["id"]["videoId"],
+        parsed_queries: Dict[str, List[str]] = {
+            "https://www.youtube.com/watch?v="
+            + item["id"]["videoId"]: [
+                unescape(item["snippet"]["channelTitle"][:100]),  # channel name
+                unescape(item["snippet"]["title"][:100]),  # video title
             ]
             for item in q["items"]
         }
 
         view = BaseView(ctx.author.id, parsed_queries, YOUTUBE)
-        view.response = await ctx.send(list(parsed_queries.values())[0][1], view=view)
+        view.response = await ctx.send(list(parsed_queries.keys())[0], view=view)
 
 
 async def setup(bot: Kana):
