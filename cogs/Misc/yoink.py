@@ -5,7 +5,6 @@ from typing import Any, List, Optional, Tuple, Union
 from datetime import datetime
 
 import imghdr
-from io import BytesIO
 
 from ..utils import to_codeblock, EmbeddedPaginator, Kana, KanaContext
 
@@ -23,19 +22,23 @@ class Yoink(commands.Cog):
         for_exec: List[Tuple[Any, ...]] = []
 
         for member in members:  # i love data
-            if member.mutual_guilds or member == member.guild.me:
+            if not hasattr(member, "mutual_guilds") or member.mutual_guilds or member is member.guild.me:
                 continue
 
-            avatar = await member.display_avatar.read()
-
-            for_exec.append(
-                (member.id, discord.utils.utcnow(), imghdr.what(None, avatar), avatar)
-            )
+            try:
+                avatar = await member.display_avatar.read()
+            except: # for whatever reason it errors, we don't care.
+                pass
+            else:
+                for_exec.append(
+                    (member.id, discord.utils.utcnow(), imghdr.what(None, avatar), avatar)
+                )
 
         sql = """
         SELECT insert_avy($1, $2, $3, $4)
         """
         await self.bot.pool.executemany(sql, for_exec)
+        del for_exec
 
     @commands.Cog.listener()
     async def on_member_join(self, member: discord.Member):
@@ -49,7 +52,7 @@ class Yoink(commands.Cog):
         """,
             member.id,
             discord.utils.utcnow(),
-            imghdr.what(BytesIO(avatar)),  # type: ignore
+            imghdr.what(None, avatar),
             avatar,
         )
 
@@ -63,7 +66,7 @@ class Yoink(commands.Cog):
         """,
             after.id,
             discord.utils.utcnow(),
-            imghdr.what(BytesIO(avatar)),  # type: ignore
+            imghdr.what(None, avatar),
             avatar,
         )
 
@@ -90,7 +93,7 @@ class Yoink(commands.Cog):
         if before.discriminator != after.discriminator:
             self.bot.dispatch(
                 "user_discriminator_update", before, after
-            )  # currently dunder, as i don't log it yet
+            )  # currently dunder, as i don't log it yet.
 
     def format_time(self, time: datetime) -> str:
         return time.strftime("%a %d %b %Y %H:%M")
