@@ -22,16 +22,25 @@ class Yoink(commands.Cog):
         for_exec: List[Tuple[Any, ...]] = []
 
         for member in members:  # i love data
-            if not hasattr(member, "mutual_guilds") or member.mutual_guilds or member is member.guild.me:
+            if (
+                not hasattr(member, "mutual_guilds")
+                or member.mutual_guilds
+                or member is member.guild.me
+            ):
                 continue
 
             try:
                 avatar = await member.display_avatar.read()
-            except: # for whatever reason it errors, we don't care.
+            except:  # for whatever reason it errors, we don't care.
                 pass
             else:
                 for_exec.append(
-                    (member.id, discord.utils.utcnow(), imghdr.what(None, avatar), avatar)
+                    (
+                        member.id,
+                        discord.utils.utcnow(),
+                        imghdr.what(None, avatar),
+                        avatar,
+                    )
                 )
 
         sql = """
