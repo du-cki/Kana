@@ -11,8 +11,8 @@ config = Config(".env")
 
 class App(Starlette):
     def __init__(self, *args: Any, **kwargs: Any):
-        kwargs["on_startup"] += self.start
-        kwargs["on_shutdown"] += self.close
+        kwargs["on_startup"] = [self.start]
+        kwargs["on_shutdown"] = [self.close]
         super().__init__(*args, **kwargs) # type: ignore
 
     async def start(self) -> None:
