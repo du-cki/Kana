@@ -15,6 +15,14 @@ class Pokemon(commands.Cog):
     def __init__(self, bot: Kana):
         self.bot = bot
         self.HINT_REGEX = re.compile(r'The pokémon is (?P<pokemon>[^"]+).')
+        self.flags = {
+            "en": "\U0001f1ec\U0001f1e7",
+            "ja": "\U0001f1ef\U0001f1f5",
+            "ja_r": "\U0001f1ef\U0001f1f5",
+            "ja_t": "\U0001f1ef\U0001f1f5",
+            "de": "\U0001f1e9\U0001f1ea",
+            "fr": "\U0001f1eb\U0001f1f7",
+        }
 
     @commands.group(invoke_without_command=True)
     async def hint(self, ctx: KanaContext):
@@ -31,9 +39,6 @@ class Pokemon(commands.Cog):
         if isinstance(message, discord.DeletedReferencedMessage | None):  # linter
             return
 
-        if message.author.id != 716390085896962058:
-            return await ctx.send("You're not replying to pokétwo you pesky pesk brat.")
-
         match = self.HINT_REGEX.fullmatch(message.content)
         if not match:
             return await ctx.send("No matches found.")
@@ -42,13 +47,12 @@ class Pokemon(commands.Cog):
             await ctx.invoke(self.refresh)
 
         hint = match.group("pokemon").replace("\\_", "_")
-
         guesses = await self.guess(hint)
 
         if len(guesses) > 1:
-            guesses = "\n".join(guesses)
+            guesses = "\n".join(f"**{guesses}**")
             return await ctx.send(
-                f"I found {len(guesses)} guesses for this pokémon hint,\n{guesses}"
+                f"Multiple guesses found:\n{guesses}"
             )
 
         pokemon = self.pokemons.get(guesses[0])
@@ -56,7 +60,17 @@ class Pokemon(commands.Cog):
         if not pokemon:
             return  # linter
 
-        await ctx.send("\n".join(pokemon.values()))
+        pokemon["en"] = guesses[0] # as its the key, i can't do much about this.
+
+        names = pokemon.items()
+        formatted: Dict[str, str] = {
+            self.flags[k]: v
+            for k, v in names
+        }
+
+        await ctx.send(
+            ', '.join(f"{k} **{v}**" for k, v in formatted.items())
+        )
 
     @hint.command(aliases=["build"])
     @commands.is_owner()
@@ -67,12 +81,12 @@ class Pokemon(commands.Cog):
         if hasattr(self, "pokemons"):
             del self.pokemons
 
-        message = await ctx.send("Building cache, give me second.")
+        message = await ctx.send("building pokémon cache, give me second.")
         start = time.perf_counter()
         await self.build_pokemon_lookup_dict()
 
         await message.edit(
-            content=f"Done building cache, and it took `{time.perf_counter() - start:.2f}` seconds."
+            content=f"done building cache, and it took `{time.perf_counter() - start:.2f}` seconds."
         )
 
     async def build_pokemon_lookup_dict(self) -> None:
