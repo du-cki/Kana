@@ -1,7 +1,7 @@
 from starlette.requests import Request
 from starlette.responses import Response
 
-async def get(request: Request) -> Response:
+async def avatars(request: Request) -> Response:
     sql = '''
     SELECT avatar_id FROM avatar_history 
         WHERE user_id = $1
@@ -11,9 +11,9 @@ async def get(request: Request) -> Response:
     if not query:
         return Response("<h1>Not Found</h1>", status_code=404)
 
-    end = '<html><body>'
+    out = '<html><body>'
     for avatar in [query["avatar_id"] for query in query]:
-        end += f'<img src="/static/{avatar}" height="100px" width="100px" style="padding: 5px;"/>'
-    end += '</body></html>'
+        out += f'<img src="/static/{avatar}" height="100px" width="100px" style="padding: 5px;"/>'
+    out += '</body></html>'
 
-    return Response(end, media_type='text/html')
+    return Response(out, media_type='text/html')
