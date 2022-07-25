@@ -51,26 +51,19 @@ class Pokemon(commands.Cog):
 
         if len(guesses) > 1:
             guesses = "\n".join(f"**{guesses}**")
-            return await ctx.send(
-                f"Multiple guesses found:\n{guesses}"
-            )
+            return await ctx.send(f"Multiple guesses found:\n{guesses}")
 
         pokemon = self.pokemons.get(guesses[0])
 
         if not pokemon:
             return  # linter
 
-        pokemon["en"] = guesses[0] # as its the key, i can't do much about this.
+        pokemon["en"] = guesses[0]  # as its the key, i can't do much about this.
 
         names = pokemon.items()
-        formatted: Dict[str, str] = {
-            self.flags[k]: v
-            for k, v in names
-        }
+        formatted: Dict[str, str] = {self.flags[k]: v for k, v in names}
 
-        await ctx.send(
-            ', '.join(f"{k} **{v}**" for k, v in formatted.items())
-        )
+        await ctx.send(", ".join(f"{k} **{v}**" for k, v in formatted.items()))
 
     @hint.command(aliases=["build"])
     @commands.is_owner()
