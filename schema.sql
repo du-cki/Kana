@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS username_history (
 
 CREATE TABLE IF NOT EXISTS avatar_history (
     user_id BIGINT NOT NULL,
+    avatar_id UUID NOT NULL,
     time_changed TIMESTAMP WITH TIME ZONE NOT NULL,
     format TEXT NOT NULL,
     avatar BYTEA NOT NULL
@@ -32,7 +33,11 @@ CREATE OR REPLACE FUNCTION insert_avy(one BIGINT, two TIMESTAMP WITH TIME ZONE, 
             SELECT * FROM selection
             WHERE avatar = four
         ) THEN
-            INSERT INTO avatar_history (user_id, time_changed, format, avatar)
-            VALUES (one, two, three, four);
+            INSERT INTO avatar_history (
+                user_id, 
+                avatar_id, 
+                time_changed, format, 
+                avatar
+            ) VALUES (one, gen_random_uuid(), two, three, four);
         END IF;
     END $$; 
