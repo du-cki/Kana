@@ -6,13 +6,13 @@ serve this to the internet. I'll be using [nginx](https://nginx.org) for this pa
 I'd also recommend setting up [Cloudflare caching](https://developers.cloudflare.com/cache) (specfically, to the `/static/*` path) to reduce bandwith, and overall avoid any sort of "[DDoS attack](https://en.wikipedia.org/wiki/Denial-of-service_attack)".
 
 ### Nginx Setup
-- Edit the file `avyh.conf-example` and replace `server_name` with your domain, and `root` with the [CWD](https://en.wikipedia.org/wiki/Working_directory, "Current Working Directory") of `Kanapy`
+- Edit the file `setup/avyh.conf-example` and replace `server_name` with your domain, and `root` with the [CWD](https://en.wikipedia.org/wiki/Working_directory, "Current Working Directory") of `Kanapy`
 - Then rename the file and remove `-example` suffix, and copy the file over to `/etc/nginx/conf.d`.
 - Run `(sudo) nginx -s reload`, and you should be done.
 
 ### Starlette Setup
 I'll be using [systemd]("https://systemd.io/", "systemd") to keep the webserver running.
-Replace the following in `avyh.service-example`:
+Replace the following in `setup/avyh.service-example`:
 
 - `Description` - [ `Optional` ] you can change this to anything
 - `WorkingDirectory` - with your [CWD](https://en.wikipedia.org/wiki/Working_directory, "Current Working Directory").

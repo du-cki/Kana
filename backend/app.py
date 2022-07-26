@@ -1,9 +1,9 @@
 import asyncpg
 
-from typing import Any
-
 from starlette.applications import Starlette
 from starlette.config import Config
+
+from typing import Any
 
 from .routes import Routes
 

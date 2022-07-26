@@ -16,4 +16,7 @@ async def avatars(request: Request) -> Response:
         out += f'<img src="/static/{avatar}" height="100px" width="100px" style="padding: 5px;"/>'
     out += '</body></html>'
 
-    return Response(out, media_type='text/html')
+    return Response(
+        out,
+        media_type='text/html'
+    )
