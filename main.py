@@ -2,11 +2,11 @@ import discord
 from discord.ext import commands
 
 from os import environ
-from dotenv import load_dotenv
-
+from dotenv import load_dotenv # type: ignore
 load_dotenv()
 
 from cogs.utils.subclasses import Kana
+import cogs.utils.library_override # type: ignore
 
 
 async def getPrefix(bot: Kana, message: discord.Message):
@@ -31,13 +31,13 @@ async def getPrefix(bot: Kana, message: discord.Message):
 
 
 bot = Kana(
-    command_prefix=getPrefix,
     help_command=None,  # i'm too lazy to subclass help so i'll just disable it for the time being
     case_insensitive=True,
-    intents=discord.Intents().all(),
     strip_after_prefix=True,
-    mongo_uri=environ["USER_MONGO"],
+    command_prefix=getPrefix,
     psql_uri=environ["PSQL_URI"],
+    intents=discord.Intents().all(),
+    mongo_uri=environ["USER_MONGO"],
 )
 
-bot.run(environ["TOKEN"], reconnect=True)
+bot.run(environ["TOKEN"])

@@ -13,7 +13,7 @@ cffi==1.15.0
 charset-normalizer==2.0.12
 click==8.1.3
 colorama==0.4.4
-discord.py @ git+https://github.com/Rapptz/discord.py@36f039a1bffb835a555be8a43976397ba6eb9c76
+discord.py @ git+https://github.com/Rapptz/discord.py@fb8d5c15d0ccdde369e4262fa5f9aad95e7989f2
 dnspython==2.2.1
 frozenlist==1.3.0
 idna==3.3
