@@ -1,7 +1,7 @@
 import discord
 from discord.ext import commands
 
-from typing import Any, List, Optional, Tuple, Union
+from typing import Any, List, Sequence, Optional, Tuple, Union
 from datetime import datetime
 
 import imghdr
@@ -15,7 +15,7 @@ class Yoink(commands.Cog):
 
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
-        members: List[discord.Member] = (
+        members: Sequence[discord.Member] | List[discord.Member] = (
             await guild.chunk(cache=True) if not guild.chunked else guild.members
         )
 
@@ -28,11 +28,10 @@ class Yoink(commands.Cog):
                 or member is member.guild.me
             ):
                 continue
-
             try:
                 avatar = await member.display_avatar.read()
-            except:  # for whatever reason it errors, we don't care.
-                pass
+            except:  # for whatever reason it errors, we don't care, and the loop would still continue.
+                continue
             else:
                 for_exec.append(
                     (

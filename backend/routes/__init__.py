@@ -6,6 +6,6 @@ from .static import static
 
 Routes = [
     Route("/ping", ping),
-    Route("/{user:int}/avatars", avatars),
+    Route("/{user:int}/avatarhistory", avatars),
     Route("/static/{avatar:UUID}", static),
 ]

@@ -1,17 +1,17 @@
 from __future__ import annotations
-
 from typing import Dict, Optional, Type, Union, Any
+from typing_extensions import Self
+
+from discord.ext import commands
+import discord
 
 import glob
-from copy import deepcopy
-
 import asyncpg
-import discord
+
+from copy import deepcopy
 from aiohttp import ClientSession
 from cachetools import TTLCache
-from discord.ext import commands
 from motor.motor_asyncio import AsyncIOMotorClient
-from typing_extensions import Self
 
 from .constants import STARTUP_QUERY, VALID_EDIT_KWARGS
 
@@ -161,8 +161,8 @@ class Kana(commands.Bot):
             await self.load_extension(cog)
 
     async def close(self) -> None:
-        self.mongo.close()
         await super().close()
+        self.mongo.close()
         await self.pool.close()
         self.cached_edits.clear()
         await self.session.close()

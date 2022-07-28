@@ -8,17 +8,14 @@ from ..utils import predict_media_type
 async def static(request: Request) -> Response:
     avatar = request.path_params["avatar"]
 
-    sql = '''
+    sql = """
     SELECT avatar, format FROM avatar_history
         WHERE avatar_id = $1;
-    '''
+    """
     query = await request.app.pool.fetchrow(sql, avatar)
 
     if not query:
         return Response(status_code=404)
 
     fmt = predict_media_type(query["format"])
-    return Response(
-        query["avatar"],
-        media_type=fmt
-    )
+    return Response(query["avatar"], media_type=fmt)
