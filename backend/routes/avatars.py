@@ -26,8 +26,9 @@ async def avatars(request: Request) -> Response:
             f'<link rel="icon" href="/static/{avatars[0]}">'
             '<meta property="og:type" content="website">'
             '<meta name="theme-color" content="#ffd1dc">'
-            f'<meta property="og:title" content="{user}\'s Avatar History">'
+            f'<meta property="og:title" content="{user}">'
             f'<meta property="og:image" content="/static/{avatars[0]}">'
+            '<meta property="og:site_name" content="Discord Avatar History">'
             "</head>"
         )
 
