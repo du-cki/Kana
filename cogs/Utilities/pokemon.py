@@ -5,8 +5,12 @@ import csv
 import re
 import time
 
-from io import StringIO
+from PIL import Image
+from torch import cuda
 from typing import List, Dict
+from cachetools import LRUCache
+from io import StringIO, BytesIO
+from transformers import ViTForImageClassification, ViTFeatureExtractor # type: ignore
 
 from ..utils import Kana, KanaContext
 
@@ -14,7 +18,12 @@ from ..utils import Kana, KanaContext
 class Pokemon(commands.Cog):
     def __init__(self, bot: Kana):
         self.bot = bot
+        self.device = "cuda" if cuda.is_available() else "cpu"
+        self.spawn_cache: LRUCache[int, discord.Message] = LRUCache(1000)
         self.HINT_REGEX = re.compile(r'The pokémon is (?P<pokemon>[^"]+).')
+        self.CATCH_REGEX = re.compile(
+            r"Congratulations <@!?(?P<catcher>[0-9]+)>! You caught a level (?P<pokemon_level>[0-9]{1,2}) (?P<pokemon>[a-zA-Zé. ]+)!"
+        )
         self.flags = {
             "en": "\U0001f1ec\U0001f1e7",
             "ja": "\U0001f1ef\U0001f1f5",
@@ -27,43 +36,43 @@ class Pokemon(commands.Cog):
     @commands.group(invoke_without_command=True)
     async def hint(self, ctx: KanaContext):
         """
-        Gets a hint for a pokétwo spawn.
+        Tries to guess a pokétwo spawn.
         """
         message = ctx.message.reference
+        spawn = self.spawn_cache.get(ctx.channel.id, None)
+        if (
+            (spawn and spawn.embeds[0].image.url) and not message
+        ):  # second expression is purely for linter.
+            raw = await (await self.bot.session.get(spawn.embeds[0].image.url)).read()
+            guess = await self.bot.loop.run_in_executor(
+                None, self.guess_from_image, BytesIO(raw)
+            )
+            names = await self.get_aliases(guess)
+            return await ctx.send(names, reference=spawn)
 
         if not message:
-            return await ctx.send("You're not replying to any hints.")
+            return await ctx.send(
+                "I don't see any active spawns, Could you specify a spawn by replying to the message?"
+            )
 
         message = message.resolved
 
-        if isinstance(message, discord.DeletedReferencedMessage | None):  # linter
+        if isinstance(message, discord.DeletedReferencedMessage | None):
             return
 
-        match = self.HINT_REGEX.fullmatch(message.content)
-        if not match:
-            return await ctx.send("No matches found.")
+        if message.author.id != 716390085896962058 and not message.embeds:
+            return await ctx.send("Please reply to a p2 spawn.")
 
-        if not hasattr(self, "pokemons"):
-            await ctx.invoke(self.refresh)
+        embed = message.embeds[0]
+        if embed.title and not self.validate_p2_spawn(embed) or not embed.image.url:
+            return await ctx.send("Please reply to a p2 spawn.")
 
-        hint = match.group("pokemon").replace("\\_", "_")
-        guesses = await self.guess(hint)
-
-        if len(guesses) > 1:
-            guesses = "\n".join(f"**{guesses}**")
-            return await ctx.send(f"Multiple guesses found:\n{guesses}")
-
-        pokemon = self.pokemons.get(guesses[0])
-
-        if not pokemon:
-            return  # linter
-
-        pokemon["en"] = guesses[0]  # as its the key, i can't do much about this.
-
-        names = pokemon.items()
-        formatted: Dict[str, str] = {self.flags[k]: v for k, v in names}
-
-        await ctx.send(", ".join(f"{k} **{v}**" for k, v in formatted.items()))
+        raw = await (await self.bot.session.get(embed.image.url)).read()
+        guess = await self.bot.loop.run_in_executor(
+            None, self.guess_from_image, BytesIO(raw)
+        )
+        names = await self.get_aliases(guess)
+        await ctx.send(names)
 
     @hint.command(aliases=["build"])
     @commands.is_owner()
@@ -81,6 +90,42 @@ class Pokemon(commands.Cog):
         await message.edit(
             content=f"done building cache, and it took `{time.perf_counter() - start:.2f}` seconds."
         )
+    
+    async def get_aliases(self, name: str) -> str:
+        name = name.title()
+        if not hasattr(self, "pokemons"):
+            await self.build_pokemon_lookup_dict()
+
+        pokemon = self.pokemons.get(name)
+
+        if not pokemon:
+            return "No results" # linter
+        
+        pokemon["en"] = name
+        names = pokemon.items()
+        formatted: Dict[str, str] = {self.flags[k]: v for k, v in names}
+        return ", ".join(f"{k} **{v}**" for k, v in formatted.items() if v)
+
+
+    def prep_model(self) -> None:
+        self.model = ViTForImageClassification.from_pretrained( # type: ignore
+            "imjeffhi/pokemon_classifier"
+        ).to(self.device) # type: ignore
+        self.feature_extractor = ViTFeatureExtractor.from_pretrained( # type: ignore
+            "imjeffhi/pokemon_classifier"
+        )
+
+    def guess_from_image(self, image: BytesIO) -> str:
+        if not hasattr(self, "model") or not hasattr(self, "feature_extractor"):
+            self.prep_model()
+
+        img = Image.open(image)
+        extracted = self.feature_extractor(images=img, return_tensors="pt").to( # type: ignore
+            self.device
+        )
+        predicted_id = self.model(**extracted).logits.argmax(-1).item() # type: ignore
+        predicted_pokemon = self.model.config.id2label[predicted_id] # type: ignore
+        return predicted_pokemon # type: ignore
 
     async def build_pokemon_lookup_dict(self) -> None:
         raw_csv = await (
@@ -122,6 +167,38 @@ class Pokemon(commands.Cog):
             ]
 
         return guesses
+
+    def validate_p2_spawn(self, embed: discord.Embed) -> bool:
+        return bool(
+            embed.title
+            and "wild pokémon has appeared!" in embed.title
+            and embed.description == "Guess the pokémon and type `pcatch <pokémon>` to catch it!"
+        )
+
+    @commands.Cog.listener("on_message")
+    async def spawn(self, message: discord.Message):
+        if message.author.id != 716390085896962058:
+            return
+
+        if not message.embeds:
+            return
+
+        embed = message.embeds[0]
+        if embed.title and self.validate_p2_spawn(embed):
+            self.spawn_cache[message.channel.id] = message
+
+    @commands.Cog.listener("on_message")
+    async def catch(self, message: discord.Message):
+        if message.author.id != 716390085896962058:
+            return
+
+        match = self.CATCH_REGEX.search(message.content)
+        if match:
+            self.spawn_cache.pop(message.channel.id, None)
+            catcher, pokemon_level, pokemon = match.groups()
+            print(
+                f"{catcher} caught a level {pokemon_level} {pokemon}!"
+            )  # no particular reason.
 
 
 async def setup(bot: Kana):
