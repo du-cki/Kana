@@ -10,7 +10,7 @@ from torch import cuda
 from typing import List, Dict
 from cachetools import LRUCache
 from io import StringIO, BytesIO
-from transformers import ViTForImageClassification, ViTFeatureExtractor # type: ignore
+from transformers import ViTForImageClassification, ViTFeatureExtractor  # type: ignore
 
 from ..utils import Kana, KanaContext
 
@@ -41,8 +41,8 @@ class Pokemon(commands.Cog):
         message = ctx.message.reference
         spawn = self.spawn_cache.get(ctx.channel.id, None)
         if (
-            (spawn and spawn.embeds[0].image.url) and not message
-        ):  # second expression is purely for linter.
+            spawn and spawn.embeds[0].image.url
+        ) and not message:  # second expression is purely for linter.
             raw = await (await self.bot.session.get(spawn.embeds[0].image.url)).read()
             guess = await self.bot.loop.run_in_executor(
                 None, self.guess_from_image, BytesIO(raw)
@@ -90,7 +90,7 @@ class Pokemon(commands.Cog):
         await message.edit(
             content=f"done building cache, and it took `{time.perf_counter() - start:.2f}` seconds."
         )
-    
+
     async def get_aliases(self, name: str) -> str:
         name = name.title()
         if not hasattr(self, "pokemons"):
@@ -99,19 +99,20 @@ class Pokemon(commands.Cog):
         pokemon = self.pokemons.get(name)
 
         if not pokemon:
-            return "No results" # linter
-        
+            return "No results"  # linter
+
         pokemon["en"] = name
         names = pokemon.items()
         formatted: Dict[str, str] = {self.flags[k]: v for k, v in names}
         return ", ".join(f"{k} **{v}**" for k, v in formatted.items() if v)
 
-
     def prep_model(self) -> None:
-        self.model = ViTForImageClassification.from_pretrained( # type: ignore
+        self.model = ViTForImageClassification.from_pretrained(  # type: ignore
             "imjeffhi/pokemon_classifier"
-        ).to(self.device) # type: ignore
-        self.feature_extractor = ViTFeatureExtractor.from_pretrained( # type: ignore
+        ).to(
+            self.device
+        )  # type: ignore
+        self.feature_extractor = ViTFeatureExtractor.from_pretrained(  # type: ignore
             "imjeffhi/pokemon_classifier"
         )
 
@@ -120,12 +121,12 @@ class Pokemon(commands.Cog):
             self.prep_model()
 
         img = Image.open(image)
-        extracted = self.feature_extractor(images=img, return_tensors="pt").to( # type: ignore
+        extracted = self.feature_extractor(images=img, return_tensors="pt").to(  # type: ignore
             self.device
         )
-        predicted_id = self.model(**extracted).logits.argmax(-1).item() # type: ignore
-        predicted_pokemon = self.model.config.id2label[predicted_id] # type: ignore
-        return predicted_pokemon # type: ignore
+        predicted_id = self.model(**extracted).logits.argmax(-1).item()  # type: ignore
+        predicted_pokemon = self.model.config.id2label[predicted_id]  # type: ignore
+        return predicted_pokemon  # type: ignore
 
     async def build_pokemon_lookup_dict(self) -> None:
         raw_csv = await (
@@ -172,7 +173,8 @@ class Pokemon(commands.Cog):
         return bool(
             embed.title
             and "wild pokémon has appeared!" in embed.title
-            and embed.description == "Guess the pokémon and type `pcatch <pokémon>` to catch it!"
+            and embed.description
+            == "Guess the pokémon and type `pcatch <pokémon>` to catch it!"
         )
 
     @commands.Cog.listener("on_message")
