@@ -105,4 +105,5 @@ class Username(commands.Cog):
 
 
 async def setup(bot: Kana):
-    await bot.add_cog(Username(bot))
+    ...
+    # await bot.add_cog(Username(bot))

@@ -119,7 +119,7 @@ class Kana(commands.Bot):
     async def setup_hook(self) -> None:
         self.session = ClientSession()
         self.start_time = discord.utils.utcnow()
-        self.mongo: AsyncIOMotorClient = AsyncIOMotorClient(self.mongo_uri)
+        # self.mongo: AsyncIOMotorClient = AsyncIOMotorClient(self.mongo_uri)
         self.cached_edits: TTLCache[int, int] = TTLCache(
             maxsize=2000, ttl=300.0
         )  # mapping of (command).message.id to (response).message.id
