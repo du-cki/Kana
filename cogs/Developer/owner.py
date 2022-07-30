@@ -57,7 +57,7 @@ class Owner(commands.Cog):
         """
         Deletes the last `limit` amount of messages sent by the bot, if the bot has the `Manage Messages` permission, then it will also delete the command messages.
 
-        :param limit: The number of messages to delete, defaults to 50 if none specified.
+        :param limit: The number of messages to delete, defaults to 25 if none specified.
         :type limit: int, optional
         """
         if ctx.guild is None or isinstance(
