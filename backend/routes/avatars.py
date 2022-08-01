@@ -5,7 +5,7 @@ from starlette.responses import Response
 async def avatars(request: Request) -> Response:
     userid = request.path_params["user"]
     sql = """
-    SELECT avatar_id FROM avatar_history 
+    SELECT avatar_id FROM avatar_history
         WHERE user_id = $1
         ORDER BY time_changed DESC;
     """
@@ -34,7 +34,7 @@ async def avatars(request: Request) -> Response:
 
     out = "<html>" + og + "<body>"
     for avatar in avatars:
-        out += f'<img src="/static/{avatar}" height="100px" width="100px" style="padding: 5px;"/>'
+        out += f'<img src="/static/{avatar}" height="200px" width="200px" style="padding: 5px;"/>'
     out += "</body></html>"
 
     return Response(out, media_type="text/html")

@@ -2,7 +2,8 @@ import discord
 from discord.ext import commands
 
 import asyncio
-import uvicorn  # type: ignore
+from hypercorn.asyncio import serve
+from hypercorn.config import Config
 
 from os import environ
 from dotenv import load_dotenv  # type: ignore
@@ -36,7 +37,7 @@ async def getPrefix(bot: Kana, message: discord.Message):
 
 
 bot = Kana(
-    help_command=None,  # i'm too lazy to subclass help so i'll just disable it for the time being
+    help_command=None,  # i'm too lazy to make a proper help so i'll just disable it for the time being.
     case_insensitive=True,
     strip_after_prefix=True,
     command_prefix=getPrefix,
@@ -49,12 +50,16 @@ bot = Kana(
 async def start_server() -> None:
     await bot.wait_until_ready()
     app.state.bot = bot
-
-    config = uvicorn.Config(app, port=environ.get("AVYH_PORT", 1643), log_level="info")  # type: ignore
-    server = uvicorn.Server(config)  # type: ignore
-    await server.serve()  # type: ignore
-    await bot.close()  # this is a really janky way to close the bot after pressing ctrl + c, but it works for now. and idk a better way to do it
-
+    
+    config = Config()
+    config.bind = "127.0.0.1:" + environ.get("AVYH_PORT", "1643")
+    bot.loop.create_task(
+        serve(
+            app, # type: ignore
+            config,
+            shutdown_trigger=asyncio.Future,
+        )
+    )
 
 async def main() -> None:
     async with bot:

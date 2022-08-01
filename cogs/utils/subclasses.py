@@ -11,7 +11,7 @@ import asyncpg
 from copy import deepcopy
 from aiohttp import ClientSession
 from cachetools import TTLCache
-from motor.motor_asyncio import AsyncIOMotorClient
+# from motor.motor_asyncio import AsyncIOMotorClient
 
 from .constants import STARTUP_QUERY, VALID_EDIT_KWARGS
 
@@ -162,7 +162,7 @@ class Kana(commands.Bot):
 
     async def close(self) -> None:
         await super().close()
-        self.mongo.close()
+        # self.mongo.close()
         await self.pool.close()
         self.cached_edits.clear()
         await self.session.close()
