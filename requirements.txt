@@ -50,3 +50,4 @@ typing_extensions==4.2.0
 urllib3==1.26.11
 hypercorn==0.13.2
 yarl==1.7.2
+yt-dlp==2022.7.18
