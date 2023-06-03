@@ -30,11 +30,11 @@ class Context(commands.Context["Bot"]):
     async def send(self, *args: Any, **kwargs: Any) -> discord.Message:
         embed = kwargs.get("embed")
         if embed and not embed.color:
-            kwargs["embed"].color = int(self.bot.config.DEFAULT_COLOR, 16)
+            kwargs["embed"].color = int(self.bot.config["Bot"]["DEFAULT_COLOR"], 16)
 
         for embed in kwargs.get("embeds", []):
             if not embed.color:
-                embed.color = int(self.bot.config.DEFAULT_COLOR, 16)
+                embed.color = int(self.bot.config["Bot"]["DEFAULT_COLOR"], 16)
 
         return await super().send(*args, **kwargs)
 
