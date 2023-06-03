@@ -1,6 +1,11 @@
 # dont wanna accidentally push something half made, i tend to work on multiple things at once
 tests/*
 
+# the download path for the Download cog.
+temp/*
+
+Config.toml
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

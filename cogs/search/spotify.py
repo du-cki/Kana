@@ -1,0 +1,201 @@
+import logging
+
+from enum import Enum
+from typing import TYPE_CHECKING, Any, Optional
+from cogs.search.types import Album, Playlist, Song
+
+from tests.spotifytypes import Artist
+
+if TYPE_CHECKING:
+    from aiohttp import ClientSession
+
+
+class InvalidToken(Exception):
+    ...
+
+
+logger = logging.getLogger("discord")
+
+HEADER_TEMPLATE = {
+    "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/109.0",
+    "authorization": "Bearer ...",
+    "Accept": "application/json",
+    "Accept-Encoding": "gzip, deflate, br",
+    "Accept-Language": "en",
+    "app-platform": "WebPlayer",
+    "content-type": "application/json;charset=UTF-8",
+    "Host": "api-partner.spotify.com",
+    "Origin": "https://open.spotify.com",
+    "Referer": "https://open.spotify.com/",
+    "Sec-Fetch-Mode": "cors",
+    "Sec-Fetch-Site": "same-site",
+    "Connection": "keep-alive",
+    "Sec-Fetch-Dest": "empty",
+    "TE": "trailers",
+    "spotify-app-version": "1.2.5.522.g838c1197",
+    # "client-token": "" # idk how to get one of these, but it doesn't seem to required so i don't care.
+}
+
+# fmt: off
+class SearchType(Enum):
+    tracksV2  = {"operationName": "searchTracks",       "sha256Hash": "1d021289df50166c61630e02f002ec91182b518e56bcd681ac6b0640390c0245"}
+    artists   = {"operationName": "searchArtists",      "sha256Hash": "4e7cdd33163874d9db5e08e6fabc51ac3a1c7f3588f4190fc04c5b863f6b82bd"}
+    albums    = {"operationName": "searchAlbums",       "sha256Hash": "37197f541586fe988541bb1784390832f0bb27e541cfe57a1fc63db3598f4ffd"}
+    playlists = {"operationName": "searchPlaylists",    "sha256Hash": "87b755d95fd29046c72b8c236dd2d7e5768cca596812551032240f36a29be704"}
+    podcasts  = {"operationName": "searchFullEpisodes", "sha256Hash": "37bd1a4d1ebd2b34c26fa656b73229b6264a9aa9092db02d860eb3583e25ecb5"}
+# fmt: on
+
+
+def parse_url(raw: str) -> Optional[str]:
+    cnt = raw.split(":")
+    if len(cnt) > 2:
+        domain, *rest = cnt
+        return f"https://open.{domain}.com/{'/'.join(rest)}"
+
+
+def parse_artist_obj(payload: dict[str, Any]) -> Optional[Artist]:
+    if payload:
+        return { # type: ignore
+            "name": payload.get("profile", {}).get("name"),
+            "url": parse_url(payload.get("uri", "")),
+            "is_verified": payload.get("profile", {}).get("verified", None),
+        }
+
+
+def parse_album_obj(payload: dict[str, Any]) -> Optional[Album]:
+    if payload:
+        return {
+            "name": payload.get("name", "N/A"),
+            "url": parse_url(payload.get("uri", "")),
+            "artists": list(
+                map(
+                    parse_artist_obj,
+                    payload.get("artists", {}).get("items", []),  # type: ignore
+                )
+            ),
+        }
+
+
+def parse_playlist_obj(payload: dict[str, Any]) -> Optional[Playlist]:
+    if payload:
+        data = {
+            "name": payload.get("name"),
+            "url": parse_url(payload.get("uri", "")),
+            "description": payload.get("description", ""),
+        }
+
+        owner = payload.get("ownerV2", {}).get("data")
+        if owner:
+            data["owner"] = {
+                "username": owner.get("username"),
+                "display_name": owner.get("name"),
+                "url": parse_url(owner.get("uri", "")),
+            }
+
+        return data  # type: ignore
+
+
+def parse_songs(payload: dict[str, Any]) -> Optional[Song]:
+    track: dict[str, Any] = payload.get("item", {}).get("data", {})
+    if track:
+        return {
+            "track_name": track.get("name"),
+            "track_url": parse_url(track.get("uri", "")),
+            "album": parse_album_obj(track.get("albumOfTrack", {})),  # type: ignore
+            "artists": list(
+                map(
+                    parse_artist_obj,
+                    track.get("artists", {}).get("items", []),  # type: ignore
+                )
+            ),
+        }
+
+
+def parse_artists(payload: dict[str, Any]):
+    artist = payload.get("data")
+    if artist:
+        return parse_artist_obj(artist)
+
+
+def parse_albums(payload: dict[str, Any]):
+    album = payload.get("data")
+    if album:
+        return parse_album_obj(album)
+
+
+def parse_playlists(payload: dict[str, Any]):
+    playlist = payload.get("data")
+    if playlist:
+        return parse_playlist_obj(playlist)
+
+
+strategy = {
+    SearchType.tracksV2: parse_songs,
+    SearchType.artists: parse_artists,
+    SearchType.albums: parse_albums,
+    SearchType.playlists: parse_playlists,
+}
+
+
+async def search(
+    session: "ClientSession",
+    token: str,
+    query: str,
+    *,
+    search_type: SearchType = SearchType.tracksV2,
+    offset: int = 0,
+    limit: int = 10,
+) -> list[dict[str, Any]]:
+    async with session.get(
+        "https://api-partner.spotify.com/pathfinder/v1/query",
+        params={
+            "operationName": search_type.value["operationName"],
+            "variables": '{"searchTerm": "%s", "offset": %s, "limit": %s}'
+            % (query, offset, limit),
+            "extensions": '{"persistedQuery": {"version": 1, "sha256Hash": "%s"}}'
+            % (search_type.value["sha256Hash"]),
+        },
+        headers={
+            **HEADER_TEMPLATE,
+            "authorization": f"Bearer {token}",
+            # "User-Agent": "...",
+        },
+    ) as req:
+        if req.status == 401:
+            raise InvalidToken(await req.text())
+        elif req.status != 200:
+            raise Exception(await req.text())
+
+        raw_data = await req.json()
+        if raw_data.get(
+            "errors"
+        ):  # for some reason spotify still returns a 200 for errors.
+            logger.error(f"Spotify returned an error: {raw_data}")
+            raise Exception(raw_data)
+
+        # logger.info(raw_data)
+        data = raw_data.get("data", {}).get("searchV2", {}).get(search_type.name, {})
+        if not data:
+            logger.info(f"No data found for the query: '{query}' ({search_type}).")
+            return []
+
+        strat = strategy.get(search_type)
+        if not strat:
+            raise NotImplementedError
+
+        return list(map(strat, data.get("items", {})))  # type: ignore
+
+
+async def get_token(
+    session: "ClientSession",
+):
+    async with session.get("https://open.spotify.com/get_access_token") as req:
+        if req.status == 401:
+            raise InvalidToken(await req.text())
+        elif req.status != 200:
+            logger.error(
+                f"Tried to get Spotify access token but it failed with a response of: ({req.status}) {await req.text()}"
+            )
+            raise Exception
+
+        return await req.json()
