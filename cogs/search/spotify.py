@@ -2,9 +2,8 @@ import logging
 
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Optional
-from cogs.search.types import Album, Playlist, Song
+from cogs.search.types import Album, Playlist, Song, Artist
 
-from tests.spotifytypes import Artist
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -44,7 +43,6 @@ class SearchType(Enum):
     playlists = {"operationName": "searchPlaylists",    "sha256Hash": "87b755d95fd29046c72b8c236dd2d7e5768cca596812551032240f36a29be704"}
     podcasts  = {"operationName": "searchFullEpisodes", "sha256Hash": "37bd1a4d1ebd2b34c26fa656b73229b6264a9aa9092db02d860eb3583e25ecb5"}
 # fmt: on
-
 
 def parse_url(raw: str) -> Optional[str]:
     cnt = raw.split(":")
