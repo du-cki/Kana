@@ -36,10 +36,12 @@ class RotatingWebhook:
 
 
 class Logger(BaseCog):
-    async def cog_load(self) -> None:
+    def __init__(self, bot: "Bot"):
+        super().__init__(bot)
+
         if not self.bot.is_dev:
             logger.warning("Please disable the cog `Logger`, this cog isn't intended in an development enviroment.")
-            return
+            raise
 
         self.webhooks = RotatingWebhook(
             [
