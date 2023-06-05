@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import discord
 from discord import ui
-from discord.ext import commands, tasks
+from discord.ext import commands
 
 import asyncio
 
