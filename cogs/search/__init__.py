@@ -82,9 +82,6 @@ class Search(BaseCog):
 
         await self.renew_spotify_token()
 
-    async def cog_unload(self):
-        self.renew_spotify_token.cancel()
-
     async def spotify_search(self, *args: Any, **kwargs: Any) -> Any:
         if (self.spotify_auth is None) or \
            (self.spotify_auth["accessTokenExpirationTimestampMs"] < discord.utils.utcnow().timestamp()):
