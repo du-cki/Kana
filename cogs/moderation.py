@@ -4,7 +4,7 @@ from discord.ext import commands
 
 from . import BaseCog
 
-from typing import TYPE_CHECKING, Annotated, Optional
+from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from ._utils.subclasses import Bot, Context
 

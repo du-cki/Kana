@@ -73,15 +73,6 @@ class Search(BaseCog):
         self.SPOTIFY_EMOJI = self.CONFIG["Emojis"]["SPOTIFY"]
         self.spotify_auth: Optional[AccessToken] = None
 
-    async def cog_load(self):
-        if self.bot.is_dev:
-            logger.warning(
-                "Not starting task `restart_spotify_token_task` due to it being a development enviroment. Please manually flick it on."
-            )
-            return
-
-        await self.renew_spotify_token()
-
     async def spotify_search(self, *args: Any, **kwargs: Any) -> Any:
         if (self.spotify_auth is None) or \
            (self.spotify_auth["accessTokenExpirationTimestampMs"] < discord.utils.utcnow().timestamp()):
@@ -97,7 +88,6 @@ class Search(BaseCog):
             return await self.spotify_search(*args, **kwargs)
         else:
             return resp
-
 
     async def renew_spotify_token(self):
         logger.info("Renewing token...")

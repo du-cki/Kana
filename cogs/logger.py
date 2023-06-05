@@ -39,9 +39,9 @@ class Logger(BaseCog):
     def __init__(self, bot: "Bot"):
         super().__init__(bot)
 
-        if not self.bot.is_dev:
+        if self.bot.is_dev:
             logger.warning("Please disable the cog `Logger`, this cog isn't intended in an development enviroment.")
-            raise
+            raise Exception
 
         self.webhooks = RotatingWebhook(
             [
