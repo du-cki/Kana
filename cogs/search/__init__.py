@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from .._utils.subclasses import Bot, Context
 
 from .. import BaseCog, logger
-from cogs.search.types import Album, Artist, Playlist, Song
+from cogs.search.types import AccessToken, Album, Artist, Playlist, Song
 from .spotify import InvalidToken, SearchType, search, get_token
 
 
@@ -71,7 +71,7 @@ class Search(BaseCog):
     def __init__(self, bot: "Bot") -> None:
         super().__init__(bot)
         self.SPOTIFY_EMOJI = self.CONFIG["Emojis"]["SPOTIFY"]
-        self.spotify_token = ""
+        self.spotify_auth: Optional[AccessToken] = None
 
     async def cog_load(self):
         if self.bot.is_dev:
@@ -80,49 +80,40 @@ class Search(BaseCog):
             )
             return
 
-        await self.restart_spotify_token_task()
+        await self.renew_spotify_token()
 
     async def cog_unload(self):
         self.renew_spotify_token.cancel()
 
     async def spotify_search(self, *args: Any, **kwargs: Any) -> Any:
+        if (self.spotify_auth is None) or \
+           (self.spotify_auth["accessTokenExpirationTimestampMs"] < discord.utils.utcnow().timestamp()):
+                await self.renew_spotify_token()
+
+        assert self.spotify_auth # won't ever be None but linter is mad.
+
         try:
+            kwargs["token"] = self.spotify_auth["accessToken"]
             resp = await search(*args, **kwargs)
         except InvalidToken:
-            await self.restart_spotify_token_task()  # because the token timesout when due to insctivity
+            await self.renew_spotify_token()  # because the token timesout when due to inactivity
             return await self.spotify_search(*args, **kwargs)
         else:
             return resp
 
-    async def restart_spotify_token_task(self):
-        task = self.renew_spotify_token
-        if not task.is_running():
-            return task.start()
 
-        task.cancel()
-        task.start()
-
-    @tasks.loop()
     async def renew_spotify_token(self):
         logger.info("Renewing token...")
-        self.spotify_token = ""
 
         try:
             resp = await get_token(self.bot.session)
         except:
             logger.error("Could not renew token, trying again in 5 seconds...")
             await asyncio.sleep(5)  # wait 5 seconds before trying again.
+            await self.renew_spotify_token()
         else:
-            logger.info(f"Renewed token: {resp['accessToken']}")
-            self.spotify_token = resp["accessToken"]
-            await asyncio.sleep(
-                resp["accessTokenExpirationTimestampMs"]
-                - discord.utils.utcnow().timestamp()
-            )
-
-    @renew_spotify_token.before_loop
-    async def before_rewnew(self):
-        await self.bot.wait_until_ready()
+            logger.info(f"Succesfully renewed spotify token.")
+            self.spotify_auth = resp
 
     @commands.group(name="spotify", aliases=["sp"], invoke_without_command=True)
     @commands.cooldown(3, 1, commands.BucketType.user)
@@ -152,7 +143,7 @@ class Search(BaseCog):
         session = self.bot.session
 
         resp: list[Song] = await self.spotify_search(
-            session, self.spotify_token, query
+            session, query
         )
 
         if not resp:
@@ -188,7 +179,7 @@ class Search(BaseCog):
         session = self.bot.session
 
         resp: list[Artist] = await self.spotify_search(
-            session, self.spotify_token, query, search_type=SearchType.artists
+            session, query, search_type=SearchType.artists
         )
         if not resp:
             return await ctx.send("No results.")
@@ -220,7 +211,7 @@ class Search(BaseCog):
         session = self.bot.session
 
         resp: list[Playlist] = await self.spotify_search(  # type: ignore
-            session, self.spotify_token, query, search_type=SearchType.playlists
+            session, query, search_type=SearchType.playlists
         )
         if not resp:
             return await ctx.send("No results.")
@@ -252,7 +243,7 @@ class Search(BaseCog):
         session = self.bot.session
 
         resp: list[Album] = await self.spotify_search(
-            session, self.spotify_token, query, search_type=SearchType.playlists
+            session, query, search_type=SearchType.playlists
         )
         if not resp:
             return await ctx.send("No results.")

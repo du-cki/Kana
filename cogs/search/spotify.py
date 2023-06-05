@@ -2,7 +2,7 @@ import logging
 
 from enum import Enum
 from typing import TYPE_CHECKING, Any, Optional
-from cogs.search.types import Album, Playlist, Song, Artist
+from cogs.search.types import AccessToken, Album, Playlist, Song, Artist
 
 
 if TYPE_CHECKING:
@@ -137,9 +137,9 @@ strategy = {
 
 async def search(
     session: "ClientSession",
-    token: str,
     query: str,
     *,
+    token: str,
     search_type: SearchType = SearchType.tracksV2,
     offset: int = 0,
     limit: int = 10,
@@ -186,7 +186,7 @@ async def search(
 
 async def get_token(
     session: "ClientSession",
-):
+) -> AccessToken:
     async with session.get("https://open.spotify.com/get_access_token") as req:
         if req.status == 401:
             raise InvalidToken(await req.text())

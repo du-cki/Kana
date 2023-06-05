@@ -12,6 +12,11 @@ class Album(TypedDict):
     url: str
     artist: list[Artist]
 
+class AccessToken(TypedDict):
+    clientId: str
+    accessToken: str
+    accessTokenExpirationTimestampMs: int
+    isAnonymous: bool
 
 class Song(TypedDict):
     track_name: str
