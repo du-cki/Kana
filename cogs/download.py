@@ -1,8 +1,6 @@
 import discord
 from discord.ext import commands
 
-from jishaku.features.root_command import natural_size as ns
-
 import re
 import yt_dlp # pyright: ignore[reportMissingTypeStubs] # stubs when
 import asyncio
@@ -156,17 +154,6 @@ class Download(BaseCog):
             raise err
         finally:
             path.unlink(missing_ok=True)  # boop
-
-    @download.error
-    async def download_error(self, ctx: "Context", error: commands.CommandError):
-        error = getattr(error, "original", error)
-
-        if isinstance(error, FileTooLarge):
-            return await error.original_message.edit(
-                content=f"Sorry, the file is too large to upload. I can only send `{ns(error.limit)}` worth of files here."
-            )
-
-        raise error
 
 
 async def setup(bot: "Bot"):
