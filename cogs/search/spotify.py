@@ -1,7 +1,9 @@
-import logging
+import discord
+import json
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any, Literal, Optional, overload
+
 from cogs.search.types import AccessToken, Album, Playlist, Song, Artist
 
 
@@ -9,15 +11,16 @@ if TYPE_CHECKING:
     from aiohttp import ClientSession
 
 
+import logging
+logger = logging.getLogger("discord")
+
+
 class InvalidToken(Exception):
     ...
 
 
-logger = logging.getLogger("discord")
-
 HEADER_TEMPLATE = {
     "User-Agent": "Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/109.0",
-    "authorization": "Bearer ...",
     "Accept": "application/json",
     "Accept-Encoding": "gzip, deflate, br",
     "Accept-Language": "en",
@@ -31,8 +34,8 @@ HEADER_TEMPLATE = {
     "Connection": "keep-alive",
     "Sec-Fetch-Dest": "empty",
     "TE": "trailers",
-    "spotify-app-version": "1.2.5.522.g838c1197",
-    # "client-token": "" # idk how to get one of these, but it doesn't seem to required so i don't care.
+    "spotify-app-version": "1.2.18.326.g686ebe89",
+    # "client-token": "" # it doesn't seem to required so I don't care.
 }
 
 # fmt: off
@@ -134,66 +137,107 @@ strategy = {
     SearchType.playlists: parse_playlists,
 }
 
+class SpotifyClient:
+    def __init__(self, session: "ClientSession"):
+        self.session = session
+        self.token: Optional[AccessToken] = None
 
-async def search(
-    session: "ClientSession",
-    query: str,
-    *,
-    token: str,
-    search_type: SearchType = SearchType.tracksV2,
-    offset: int = 0,
-    limit: int = 10,
-) -> list[dict[str, Any]]:
-    async with session.get(
-        "https://api-partner.spotify.com/pathfinder/v1/query",
-        params={
-            "operationName": search_type.value["operationName"],
-            "variables": '{"searchTerm": "%s", "offset": %s, "limit": %s}'
-            % (query, offset, limit),
-            "extensions": '{"persistedQuery": {"version": 1, "sha256Hash": "%s"}}'
-            % (search_type.value["sha256Hash"]),
-        },
-        headers={
-            **HEADER_TEMPLATE,
-            "authorization": f"Bearer {token}",
-            # "User-Agent": "...",
-        },
-    ) as req:
-        if req.status == 401:
-            raise InvalidToken(await req.text())
-        elif req.status != 200:
-            raise Exception(await req.text())
+    @overload
+    async def search(self, query: str, *, search_type: Literal[SearchType.tracksV2]) -> list[Song]: ...
 
-        raw_data = await req.json()
-        if raw_data.get(
-            "errors"
-        ):  # for some reason spotify still returns a 200 for errors.
-            logger.error(f"Spotify returned an error: {raw_data}")
-            raise Exception(raw_data)
+    @overload
+    async def search(self, query: str, *, search_type: Literal[SearchType.artists]) -> list[Artist]: ...
 
-        # logger.info(raw_data)
-        data = raw_data.get("data", {}).get("searchV2", {}).get(search_type.name, {})
-        if not data:
-            logger.info(f"No data found for the query: '{query}' ({search_type}).")
-            return []
+    @overload
+    async def search(self, query: str, *, search_type: Literal[SearchType.albums]) -> list[Album]: ...
 
-        strat = strategy.get(search_type)
-        if not strat:
-            raise NotImplementedError
+    @overload
+    async def search(self, query: str, *, search_type: Literal[SearchType.playlists]) -> list[Playlist]: ...
 
-        return list(map(strat, data.get("items", {})))  # type: ignore
+    async def search(
+        self,
+        query: str,
+        *,
+        search_type: SearchType,
+        offset: int = 0,
+        limit: int = 10
+    ) -> Any:
+        if (self.token is None) or \
+           (self.token["accessTokenExpirationTimestampMs"] < discord.utils.utcnow().timestamp()):
+                await self.renew_token()
+        try:
+            resp = await self._search(query, search_type=search_type, offset=offset, limit=limit)
+        except InvalidToken:
+            await self.renew_token()  # because the token timesout when due to inactivity
+            return await self._search(query, search_type=search_type, offset=offset, limit=limit)
+        else:
+            return resp
 
 
-async def get_token(
-    session: "ClientSession",
-) -> AccessToken:
-    async with session.get("https://open.spotify.com/get_access_token") as req:
-        if req.status == 401:
-            raise InvalidToken(await req.text())
-        elif req.status != 200:
-            logger.error(
-                f"Tried to get Spotify access token but it failed with a response of: ({req.status}) {await req.text()}"
-            )
-            raise Exception
+    async def _search(
+        self,
+        query: str,
+        *,
+        search_type: SearchType = SearchType.tracksV2,
+        offset: int = 0,
+        limit: int = 10
+    ) -> Any:
+        async with self.session.get(
+            "https://api-partner.spotify.com/pathfinder/v1/query",
+            params = {
+                "operationName": search_type.value["operationName"],
+                "variables": json.dumps({
+                    "searchTerm": query,
+                    "offset": offset,
+                    "limit": limit
+                }),
+                "extensions": json.dumps({
+                    "persistedQuery": {
+                        "version": 1,
+                        "sha256Hash": search_type.value["sha256Hash"]
+                    }
+                })
+            },
+            headers={
+                **HEADER_TEMPLATE,
+                "authorization": f"Bearer {self.token['accessToken']}", # type: ignore
+            },
+        ) as req:
+            if req.status == 401:
+                raise InvalidToken(
+                    await req.text()
+                )
+            elif req.status != 200:
+                raise Exception(
+                    await req.text()
+                )
 
-        return await req.json()
+            raw_data = await req.json()
+            if raw_data.get(
+                    "errors"
+            ):  # for some reason spotify still returns a 200 for errors.
+                logger.error(f"Spotify returned an error: {raw_data}")
+                raise Exception(raw_data)
+
+            data = raw_data.get("data", {}).get("searchV2", {}).get(search_type.name, {})
+            if not data:
+                logger.info(f"No data found for the query: '{query}' ({search_type}).")
+                return []
+
+            strat = strategy.get(search_type)
+            if not strat:
+                raise NotImplementedError
+
+            return list(map(strat, data.get("items", {})))  # type: ignore
+
+    async def renew_token(self) -> None:
+        async with self.session.get("https://open.spotify.com/get_access_token") as req:
+            if req.status == 401:
+                raise InvalidToken(await req.text())
+            elif req.status != 200:
+                logger.error(
+                    f"Tried to get Spotify access token but it failed with a response of: ({req.status}) {await req.text()}"
+                )
+                raise Exception
+
+            self.token = await req.json()
