@@ -2,10 +2,9 @@ import discord
 import json
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Literal, Optional, overload
+from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, overload
 
-from cogs.search.types import AccessToken, Album, Playlist, Song, Artist
-
+from cogs.search.types import AccessToken, Album, Playlist, Podcast, Song, Artist, Topic
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
@@ -39,12 +38,14 @@ HEADER_TEMPLATE = {
 }
 
 # fmt: off
+
 class SearchType(Enum):
     tracksV2  = {"operationName": "searchTracks",       "sha256Hash": "1d021289df50166c61630e02f002ec91182b518e56bcd681ac6b0640390c0245"}
     artists   = {"operationName": "searchArtists",      "sha256Hash": "4e7cdd33163874d9db5e08e6fabc51ac3a1c7f3588f4190fc04c5b863f6b82bd"}
     albums    = {"operationName": "searchAlbums",       "sha256Hash": "37197f541586fe988541bb1784390832f0bb27e541cfe57a1fc63db3598f4ffd"}
     playlists = {"operationName": "searchPlaylists",    "sha256Hash": "87b755d95fd29046c72b8c236dd2d7e5768cca596812551032240f36a29be704"}
-    podcasts  = {"operationName": "searchFullEpisodes", "sha256Hash": "37bd1a4d1ebd2b34c26fa656b73229b6264a9aa9092db02d860eb3583e25ecb5"}
+    podcasts  = {"operationName": "searchPodcasts",     "sha256Hash": "86fd462d46e3bfd7d37fdf5409176196af720c2d3d3eb60307e6490781d8d184"}
+
 # fmt: on
 
 def parse_url(raw: str) -> Optional[str]:
@@ -96,6 +97,16 @@ def parse_playlist_obj(payload: dict[str, Any]) -> Optional[Playlist]:
         return data  # type: ignore
 
 
+def parse_podcast_obj(payload: dict[str, Any]) -> Optional[Podcast]:
+    p = payload["data"]
+
+    return {
+        "name": p["name"],
+        "url": parse_url(p["uri"]),
+        "publisher": p.get("publisher", {}).get("name", "UNKNOWN"),
+        "topics": map(parse_topic, p.get('topics', {}).get("items", []))
+    }
+
 def parse_songs(payload: dict[str, Any]) -> Optional[Song]:
     track: dict[str, Any] = payload.get("item", {}).get("data", {})
     if track:
@@ -109,6 +120,14 @@ def parse_songs(payload: dict[str, Any]) -> Optional[Song]:
                     track.get("artists", {}).get("items", []),  # type: ignore
                 )
             ),
+        }
+
+
+def parse_topic(payload: dict[str, Any]) -> Optional[Topic]:
+    if payload:
+        return { # type: ignore
+            "title": payload["title"],
+            "url": parse_url(payload["uri"])
         }
 
 
@@ -130,11 +149,16 @@ def parse_playlists(payload: dict[str, Any]):
         return parse_playlist_obj(playlist)
 
 
+def parse_podcast(payload: dict[str, Any]) -> Optional[Podcast]:
+    if payload:
+        return parse_podcast_obj(payload) # type: ignore
+
 strategy = {
     SearchType.tracksV2: parse_songs,
     SearchType.artists: parse_artists,
     SearchType.albums: parse_albums,
     SearchType.playlists: parse_playlists,
+    SearchType.podcasts: parse_podcast,
 }
 
 class SpotifyClient:
@@ -153,6 +177,9 @@ class SpotifyClient:
 
     @overload
     async def search(self, query: str, *, search_type: Literal[SearchType.playlists]) -> list[Playlist]: ...
+
+    @overload
+    async def search(self, query: str, *, search_type: Literal[SearchType.podcasts]) -> list[Podcast]: ...
 
     async def search(
         self,
@@ -228,7 +255,7 @@ class SpotifyClient:
             if not strat:
                 raise NotImplementedError
 
-            return list(map(strat, data.get("items", {})))  # type: ignore
+            return list(map(strat, data.get("items")))  # type: ignore
 
     async def renew_token(self) -> None:
         async with self.session.get("https://open.spotify.com/get_access_token") as req:

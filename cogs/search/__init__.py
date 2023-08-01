@@ -222,6 +222,39 @@ class SpotifySearch(BaseCog):
         view = ResultView(items, ctx.author.id)
         view.original_message = await ctx.send(resp[0]["url"], view=view)
 
+    @_spotify.command(name="podcast", aliases=["podcasts", "p", "pd", "pod"])
+    @commands.cooldown(3, 1, commands.BucketType.user)
+    async def _spotify_podcast(self, ctx: Context, *, query: str):
+        """
+        Searches podcasts on Spotify.
+
+        Parameters
+        ----------
+        query: str
+            The podcast search query.
+        """
+
+        resp = await self.spotify.search(
+            query,
+            search_type=SearchType.podcasts
+        )
+
+        if not resp:
+            return await ctx.send("No results.")
+
+        items: list[dict[str, str]] = []
+        for item in resp:
+            items.append(
+                {
+                    "label": item["name"],
+                    "value": item["url"],
+                    "emoji": self.SPOTIFY_EMOJI,
+                }
+            )
+
+        view = ResultView(items, ctx.author.id)
+        view.original_message = await ctx.send(resp[0]["url"], view=view)
+
 
 
 class Search(SpotifySearch):
