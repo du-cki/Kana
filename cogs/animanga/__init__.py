@@ -81,7 +81,9 @@ class AniManga(BaseCog):
         if result["studios"]:
             embed.add_field(
                 name="Studio",
-                value=result["studios"][0]["formatted"] # always going to be the main studio
+                value=result["studios"][0][
+                    "formatted"
+                ],  # always going to be the main studio
             )
 
         view = None

@@ -17,14 +17,16 @@ from typing import Any, Dict, Generator, Type, Union
 from .constants import STARTUP_QUERY
 
 queue: Queue[logging.LogRecord] = Queue()
-log_handler = QueueHandler(queue) # type: ignore
+log_handler = QueueHandler(queue)  # type: ignore
 
 logger = logging.getLogger("discord")  # TODO: do logging properly
 logger.addHandler(log_handler)
 
+
 def as_chunks(n: int, text: str) -> Generator[str, None, None]:
     for i in range(0, len(text), n):
-        yield text[i:i+n]
+        yield text[i : i + n]
+
 
 class Context(commands.Context["Bot"]):
     async def send(self, *args: Any, **kwargs: Any) -> discord.Message:
@@ -83,7 +85,7 @@ class Bot(commands.Bot):
         async with self.config_lock:
             with open("Config.toml") as f:
                 toml.dump(self.config, f)
-        
+
         logging.info("dumped config.")
 
     async def get_context(
@@ -108,7 +110,6 @@ class Bot(commands.Bot):
         else:
             self.guild = self.get_guild(GUILD_ID) or await self.fetch_guild(GUILD_ID)
 
-
     async def send_output(self):
         avatar = lambda avatar_id: f"https://cdn.discordapp.com/embed/avatars/{avatar_id}.png"  # type: ignore
 
@@ -131,11 +132,9 @@ class Bot(commands.Bot):
 
             for chunk in as_chunks(2000, message):
                 await self.stdout_webhook.send(
-                    content=chunk,
-                    username=name,
-                    avatar_url=avatar_url
+                    content=chunk, username=name, avatar_url=avatar_url
                 )
-            
+
     async def setup_hook(self):
         # called before the bot starts
         self.session = ClientSession()

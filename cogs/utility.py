@@ -4,7 +4,7 @@ from discord.ext import commands
 import os
 import time
 import psutil
-import pygit2 # pyright: ignore[reportMissingTypeStubs]
+import pygit2  # pyright: ignore[reportMissingTypeStubs]
 import inspect
 
 from datetime import datetime
@@ -18,18 +18,21 @@ from . import BaseCog
 if TYPE_CHECKING:
     from ._utils.subclasses import Bot, Context
 
+
 def get_latest_commits(source_url: str, count: int = 3) -> str:
     try:
         repo = pygit2.Repository(".git")
         commits = [
             commit
-                for commit in repo.walk(repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL)
+            for commit in repo.walk(repo.head.target, pygit2.GIT_SORT_TOPOLOGICAL)
         ][:count]
 
         final: str = ""
         for commit in commits:
             if len(commit.message) > 40:
-                final += f"\n[ [`{commit.hex[:6]}`]({source_url}/commit/{commit.hex}) ] "
+                final += (
+                    f"\n[ [`{commit.hex[:6]}`]({source_url}/commit/{commit.hex}) ] "
+                )
                 final += commit.message[:42].replace("\n", "")
                 final += "..."
                 final += " (<t:" + str(commit.commit_time) + ":R>)"
@@ -46,21 +49,21 @@ def get_latest_commits(source_url: str, count: int = 3) -> str:
 
 def format_ping(ping: float) -> str:
     if ping in range(0, 150):
-        color = 32 # green
+        color = 32  # green
     elif ping in range(150, 200):
-        color = 33 # yellow
+        color = 33  # yellow
     else:
-        color = 31 # red
+        color = 31  # red
 
-    return f"```ansi\n\u001b[1;{color}m" + str(round(ping, 2)).ljust(30) + "\u001b[0m```"
+    return (
+        f"```ansi\n\u001b[1;{color}m" + str(round(ping, 2)).ljust(30) + "\u001b[0m```"
+    )
 
 
 def format_time(time: datetime, **kwargs: Any):
     return deltaconv(
-        int(discord.utils.utcnow().timestamp() - time.timestamp()),
-        **kwargs
+        int(discord.utils.utcnow().timestamp() - time.timestamp()), **kwargs
     )
-
 
 
 class Utility(BaseCog):
@@ -68,8 +71,7 @@ class Utility(BaseCog):
         super().__init__(bot)
         self.emojis = self.bot.config["Bot"]["Emojis"]
 
-
-    @commands.hybrid_command() # only hybrid to safe a few extra lines of code, i generally don't like slashies.
+    @commands.hybrid_command()  # only hybrid to safe a few extra lines of code, i generally don't like slashies.
     async def ping(self, ctx: "Context"):
         """
         Retrieves the bot's ping.
@@ -89,12 +91,23 @@ class Utility(BaseCog):
 
         em = (
             discord.Embed(color=0xE59F9F)
-                .add_field(name=f"{self.emojis['WEBSOCKET']} Websocket", value=websocket, inline=True)
-                .add_field(name=f"{self.emojis['CHAT_BOX']} Message", value=message_ping, inline=True)
-                .add_field(name=f"{self.emojis['POSTGRES']} Database", value=postgres_ping, inline=False)
+            .add_field(
+                name=f"{self.emojis['WEBSOCKET']} Websocket",
+                value=websocket,
+                inline=True,
+            )
+            .add_field(
+                name=f"{self.emojis['CHAT_BOX']} Message",
+                value=message_ping,
+                inline=True,
+            )
+            .add_field(
+                name=f"{self.emojis['POSTGRES']} Database",
+                value=postgres_ping,
+                inline=False,
+            )
         )
         await mes.edit(content=None, embed=em)
-
 
     @commands.command()
     async def source(self, ctx: "Context", *, command: Optional[str]):
@@ -117,12 +130,12 @@ class Utility(BaseCog):
 
         branch = ctx.bot.config["Bot"]["BRANCH"]
         if obj.cog.__class__.__name__ == "Jishaku":
-            branch = "master" # TODO: somehow get the commit hash jishaku is on.
+            branch = "master"  # TODO: somehow get the commit hash jishaku is on.
             source = "https://github.com/Gorialis/jishaku"
 
         if obj.__class__.__name__ == "_HelpCommandImpl":
             return await ctx.send(
-                f"no help for help yet" # TODO: replace this when custom help is implemented.
+                f"no help for help yet"  # TODO: replace this when custom help is implemented.
             )
 
         src = obj.callback.__code__
@@ -145,14 +158,13 @@ class Utility(BaseCog):
         )
         await ctx.send(view=view)
 
-
     @commands.command()
     async def about(self, ctx: "Context"):
         """
         Gets the current status of the bot.
         """
         source = ctx.bot.config["Bot"]["SOURCE_URL"]
-        appinfo = await ctx.bot.application_info() # TODO: cache this
+        appinfo = await ctx.bot.application_info()  # TODO: cache this
 
         mem = psutil.Process().memory_full_info().uss / 1024**2
         cpu = psutil.Process().cpu_percent() / psutil.cpu_count()

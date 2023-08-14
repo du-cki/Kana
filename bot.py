@@ -1,7 +1,7 @@
 import toml
 import discord
 
-import cogs._utils.library_override # pyright: ignore[reportUnusedImport]
+import cogs._utils.library_override  # pyright: ignore[reportUnusedImport]
 from cogs._utils.subclasses import Bot
 
 

@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     from ._utils.subclasses import Bot
 
 
-GUILD_FILESIZE_LIMIT = (25 * 1024 * 1024)  # as that's what basic guilds get.
+GUILD_FILESIZE_LIMIT = 25 * 1024 * 1024  # as that's what basic guilds get.
 
 
 class RotatingWebhook:
@@ -40,7 +40,9 @@ class Logger(BaseCog):
         super().__init__(bot)
 
         if self.bot.is_dev:
-            logger.warning("Please disable the cog `Logger`, this cog isn't intended in an development enviroment.")
+            logger.warning(
+                "Please disable the cog `Logger`, this cog isn't intended in an development enviroment."
+            )
             raise Exception
 
         self.webhooks = RotatingWebhook(
@@ -62,16 +64,12 @@ class Logger(BaseCog):
         self,
         member: discord.Member,
         file: discord.Asset,
-        changed_at: datetime = discord.utils.utcnow()
+        changed_at: datetime = discord.utils.utcnow(),
     ):
-        retry = self.ratelimit_cooldown.update_rate_limit(file) # type: ignore
+        retry = self.ratelimit_cooldown.update_rate_limit(file)  # type: ignore
         if retry:
             await asyncio.sleep(retry)
-            await self.upload_avatar(
-                member,
-                file,
-                changed_at
-            )
+            await self.upload_avatar(member, file, changed_at)
 
         async with self.bot.session.get(file.url) as req:
             if req.status != 200:
@@ -84,7 +82,9 @@ class Logger(BaseCog):
 
             data = BytesIO(resp)
             if data.getbuffer().nbytes > GUILD_FILESIZE_LIMIT:
-                logger.error(f"AVATAR LIMIT EXCEEDED, avatar size: {data.getbuffer().nbytes}")
+                logger.error(
+                    f"AVATAR LIMIT EXCEEDED, avatar size: {data.getbuffer().nbytes}"
+                )
                 return
 
             file_ext = content_type.partition("/")[-1:][
@@ -111,7 +111,6 @@ class Logger(BaseCog):
                     resp.attachments[0].url,
                 )
 
-
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
         members = await guild.chunk() if not guild.chunked else guild.members
@@ -122,13 +121,12 @@ class Logger(BaseCog):
 
             await self.upload_avatar(member, member.display_avatar)
 
-
     @commands.Cog.listener()
     async def on_member_avatar_update(
         self, before: discord.Member, after: discord.Member
     ):
         avatar = None
-        if isinstance(before, discord.Member) and before.guild_avatar != after.guild_avatar: # type: ignore # for some reason its a User(?) sometimes
+        if isinstance(before, discord.Member) and before.guild_avatar != after.guild_avatar:  # type: ignore # for some reason its a User(?) sometimes
             avatar = after.guild_avatar
         elif before.avatar != after.avatar:
             avatar = after.avatar

@@ -9,7 +9,14 @@ from datetime import timedelta
 from typing import Any, Optional
 
 from .. import logger
-from .types import FetchResult, FetchRequestResult, StudioEdge, Trailer, SEARCH_TYPE, Node
+from .types import (
+    FetchResult,
+    FetchRequestResult,
+    StudioEdge,
+    Trailer,
+    SEARCH_TYPE,
+    Node,
+)
 
 SEARCH_QUERY = """
 query ($search: String, $type: MediaType) {
@@ -116,6 +123,7 @@ def parse_schedule_time(schedule: Node):
     )
     return schedule
 
+
 def parse_studios(edge: StudioEdge):
     name = edge.get("node", {}).get("name")
     url = edge.get("node", {}).get("siteUrl")
@@ -123,7 +131,7 @@ def parse_studios(edge: StudioEdge):
         "name": name,
         "url": url,
         "formatted": f"[{name}]({url})",
-        "main": edge.get("isMain", False)
+        "main": edge.get("isMain", False),
     }
 
 
@@ -264,7 +272,7 @@ async def fetch(
         logger.error(data)
         return None
 
-    return { # type: ignore
+    return {  # type: ignore
         **data,
         "type": search_type,
         "title": data.get("title", {}).get("romaji", "N/A"),
@@ -273,12 +281,10 @@ async def fetch(
         "description": cleanup_html(data["description"]),
         "status": STATUS_MAPPING.get(data["status"], data["status"]),
         "trailer": create_trailer_url(data["trailer"]) if data["trailer"] else None,
-        "airingSchedule": list(map(
-            parse_schedule_time, data.get("airingSchedule", {}).get("nodes", [])
-        )),
-        "studios": list(map(
-            parse_studios, data.get("studios", {}).get("edges")
-        ))
+        "airingSchedule": list(
+            map(parse_schedule_time, data.get("airingSchedule", {}).get("nodes", []))
+        ),
+        "studios": list(map(parse_studios, data.get("studios", {}).get("edges"))),
     }
 
 

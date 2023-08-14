@@ -64,14 +64,11 @@ class ResultView(ui.View):
             await self.original_message.edit(view=self)
 
 
-
 class SpotifySearch(BaseCog):
     def __init__(self, bot: "Bot") -> None:
         super().__init__(bot)
         self.SPOTIFY_EMOJI = self.CONFIG["Emojis"]["SPOTIFY"]
-        self.spotify = SpotifyClient(
-            self.bot.session
-        )
+        self.spotify = SpotifyClient(self.bot.session)
 
     @commands.group(name="spotify", aliases=["sp"], invoke_without_command=True)
     @commands.cooldown(3, 1, commands.BucketType.user)
@@ -99,10 +96,7 @@ class SpotifySearch(BaseCog):
             The song search query.
         """
 
-        resp = await self.spotify.search(
-            query,
-            search_type=SearchType.tracksV2
-        )
+        resp = await self.spotify.search(query, search_type=SearchType.tracksV2)
 
         if not resp:
             return await ctx.send("No results.")
@@ -135,10 +129,7 @@ class SpotifySearch(BaseCog):
             The artist search query.
         """
 
-        resp = await self.spotify.search(
-            query,
-            search_type=SearchType.artists
-        )
+        resp = await self.spotify.search(query, search_type=SearchType.artists)
 
         if not resp:
             return await ctx.send("No results.")
@@ -168,10 +159,7 @@ class SpotifySearch(BaseCog):
             The playlist search query.
         """
 
-        resp = await self.spotify.search(
-            query,
-            search_type=SearchType.playlists
-        )
+        resp = await self.spotify.search(query, search_type=SearchType.playlists)
 
         if not resp:
             return await ctx.send("No results.")
@@ -201,10 +189,7 @@ class SpotifySearch(BaseCog):
             The album search query.
         """
 
-        resp = await self.spotify.search(
-            query,
-            search_type=SearchType.albums
-        )
+        resp = await self.spotify.search(query, search_type=SearchType.albums)
 
         if not resp:
             return await ctx.send("No results.")
@@ -234,10 +219,7 @@ class SpotifySearch(BaseCog):
             The podcast search query.
         """
 
-        resp = await self.spotify.search(
-            query,
-            search_type=SearchType.podcasts
-        )
+        resp = await self.spotify.search(query, search_type=SearchType.podcasts)
 
         if not resp:
             return await ctx.send("No results.")
@@ -256,9 +238,9 @@ class SpotifySearch(BaseCog):
         view.original_message = await ctx.send(resp[0]["url"], view=view)
 
 
-
 class Search(SpotifySearch):
     ...
+
 
 async def setup(bot: "Bot"):
     await bot.add_cog(Search(bot))

@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 
 import logging
+
 logger = logging.getLogger("discord")
 
 
@@ -48,6 +49,7 @@ class SearchType(Enum):
 
 # fmt: on
 
+
 def parse_url(raw: str) -> Optional[str]:
     cnt = raw.split(":")
     if len(cnt) > 2:
@@ -57,7 +59,7 @@ def parse_url(raw: str) -> Optional[str]:
 
 def parse_artist_obj(payload: dict[str, Any]) -> Optional[Artist]:
     if payload:
-        return { # type: ignore
+        return {  # type: ignore
             "name": payload.get("profile", {}).get("name"),
             "url": parse_url(payload.get("uri", "")),
             "is_verified": payload.get("profile", {}).get("verified", None),
@@ -104,8 +106,9 @@ def parse_podcast_obj(payload: dict[str, Any]) -> Optional[Podcast]:
         "name": p["name"],
         "url": parse_url(p["uri"]),
         "publisher": p.get("publisher", {}).get("name", "UNKNOWN"),
-        "topics": map(parse_topic, p.get('topics', {}).get("items", []))
+        "topics": map(parse_topic, p.get("topics", {}).get("items", [])),
     }
+
 
 def parse_songs(payload: dict[str, Any]) -> Optional[Song]:
     track: dict[str, Any] = payload.get("item", {}).get("data", {})
@@ -125,9 +128,9 @@ def parse_songs(payload: dict[str, Any]) -> Optional[Song]:
 
 def parse_topic(payload: dict[str, Any]) -> Optional[Topic]:
     if payload:
-        return { # type: ignore
+        return {  # type: ignore
             "title": payload["title"],
-            "url": parse_url(payload["uri"])
+            "url": parse_url(payload["uri"]),
         }
 
 
@@ -151,7 +154,8 @@ def parse_playlists(payload: dict[str, Any]):
 
 def parse_podcast(payload: dict[str, Any]) -> Optional[Podcast]:
     if payload:
-        return parse_podcast_obj(payload) # type: ignore
+        return parse_podcast_obj(payload)  # type: ignore
+
 
 strategy = {
     SearchType.tracksV2: parse_songs,
@@ -161,45 +165,61 @@ strategy = {
     SearchType.podcasts: parse_podcast,
 }
 
+
 class SpotifyClient:
     def __init__(self, session: "ClientSession"):
         self.session = session
         self.token: Optional[AccessToken] = None
 
     @overload
-    async def search(self, query: str, *, search_type: Literal[SearchType.tracksV2]) -> list[Song]: ...
+    async def search(
+        self, query: str, *, search_type: Literal[SearchType.tracksV2]
+    ) -> list[Song]:
+        ...
 
     @overload
-    async def search(self, query: str, *, search_type: Literal[SearchType.artists]) -> list[Artist]: ...
+    async def search(
+        self, query: str, *, search_type: Literal[SearchType.artists]
+    ) -> list[Artist]:
+        ...
 
     @overload
-    async def search(self, query: str, *, search_type: Literal[SearchType.albums]) -> list[Album]: ...
+    async def search(
+        self, query: str, *, search_type: Literal[SearchType.albums]
+    ) -> list[Album]:
+        ...
 
     @overload
-    async def search(self, query: str, *, search_type: Literal[SearchType.playlists]) -> list[Playlist]: ...
+    async def search(
+        self, query: str, *, search_type: Literal[SearchType.playlists]
+    ) -> list[Playlist]:
+        ...
 
     @overload
-    async def search(self, query: str, *, search_type: Literal[SearchType.podcasts]) -> list[Podcast]: ...
+    async def search(
+        self, query: str, *, search_type: Literal[SearchType.podcasts]
+    ) -> list[Podcast]:
+        ...
 
     async def search(
-        self,
-        query: str,
-        *,
-        search_type: SearchType,
-        offset: int = 0,
-        limit: int = 10
+        self, query: str, *, search_type: SearchType, offset: int = 0, limit: int = 10
     ) -> Any:
-        if (self.token is None) or \
-           (self.token["accessTokenExpirationTimestampMs"] < discord.utils.utcnow().timestamp()):
-                await self.renew_token()
+        if (self.token is None) or (
+            self.token["accessTokenExpirationTimestampMs"]
+            < discord.utils.utcnow().timestamp()
+        ):
+            await self.renew_token()
         try:
-            resp = await self._search(query, search_type=search_type, offset=offset, limit=limit)
+            resp = await self._search(
+                query, search_type=search_type, offset=offset, limit=limit
+            )
         except InvalidToken:
             await self.renew_token()  # because the token timesout when due to inactivity
-            return await self._search(query, search_type=search_type, offset=offset, limit=limit)
+            return await self._search(
+                query, search_type=search_type, offset=offset, limit=limit
+            )
         else:
             return resp
-
 
     async def _search(
         self,
@@ -207,46 +227,44 @@ class SpotifyClient:
         *,
         search_type: SearchType = SearchType.tracksV2,
         offset: int = 0,
-        limit: int = 10
+        limit: int = 10,
     ) -> Any:
         async with self.session.get(
             "https://api-partner.spotify.com/pathfinder/v1/query",
-            params = {
+            params={
                 "operationName": search_type.value["operationName"],
-                "variables": json.dumps({
-                    "searchTerm": query,
-                    "offset": offset,
-                    "limit": limit
-                }),
-                "extensions": json.dumps({
-                    "persistedQuery": {
-                        "version": 1,
-                        "sha256Hash": search_type.value["sha256Hash"]
+                "variables": json.dumps(
+                    {"searchTerm": query, "offset": offset, "limit": limit}
+                ),
+                "extensions": json.dumps(
+                    {
+                        "persistedQuery": {
+                            "version": 1,
+                            "sha256Hash": search_type.value["sha256Hash"],
+                        }
                     }
-                })
+                ),
             },
             headers={
                 **HEADER_TEMPLATE,
-                "authorization": f"Bearer {self.token['accessToken']}", # type: ignore
+                "authorization": f"Bearer {self.token['accessToken']}",  # type: ignore
             },
         ) as req:
             if req.status == 401:
-                raise InvalidToken(
-                    await req.text()
-                )
+                raise InvalidToken(await req.text())
             elif req.status != 200:
-                raise Exception(
-                    await req.text()
-                )
+                raise Exception(await req.text())
 
             raw_data = await req.json()
             if raw_data.get(
-                    "errors"
+                "errors"
             ):  # for some reason spotify still returns a 200 for errors.
                 logger.error(f"Spotify returned an error: {raw_data}")
                 raise Exception(raw_data)
 
-            data = raw_data.get("data", {}).get("searchV2", {}).get(search_type.name, {})
+            data = (
+                raw_data.get("data", {}).get("searchV2", {}).get(search_type.name, {})
+            )
             if not data:
                 logger.info(f"No data found for the query: '{query}' ({search_type}).")
                 return []

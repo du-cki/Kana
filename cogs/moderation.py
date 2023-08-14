@@ -5,8 +5,10 @@ from discord.ext import commands
 from . import BaseCog
 
 from typing import TYPE_CHECKING, Optional
+
 if TYPE_CHECKING:
     from ._utils.subclasses import Bot, Context
+
 
 class Moderation(BaseCog):
     def __init__(self, bot: "Bot"):
@@ -24,7 +26,7 @@ class Moderation(BaseCog):
         ctx: "Context",
         bot: discord.Member,
         prefix: str,
-        amount: commands.Range[int, 30, 100]
+        amount: commands.Range[int, 30, 100],
     ):
         """
         Purges a set of bot commands along with their invokee commands.
@@ -51,9 +53,7 @@ class Moderation(BaseCog):
         results: dict[str, int] = {}
 
         def check(message: discord.Message):
-            if message.author.id == bot.id or message.content.startswith(
-                prefix
-            ):
+            if message.author.id == bot.id or message.content.startswith(prefix):
                 if not results.get(message.author.name):
                     results[message.author.name] = 1
                 else:
@@ -84,9 +84,9 @@ class Moderation(BaseCog):
         """
         await ctx.invoke(
             self.botpurge,
-            discord.Object(id=432610292342587392), # type: ignore
+            discord.Object(id=432610292342587392),  # type: ignore
             "$",
-            amount
+            amount,
         )
 
     @commands.command()

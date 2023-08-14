@@ -7,14 +7,14 @@ from ._utils import deltaconv
 from .download import FileTooLarge
 
 from typing import TYPE_CHECKING
+
 if TYPE_CHECKING:
     from ._utils.subclasses import Bot, Context
 
 
 def format_errors(perms: list[str]) -> str:
     missing = [
-        perm.replace("_", " ").replace("guild", "server").title()
-        for perm in perms
+        perm.replace("_", " ").replace("guild", "server").title() for perm in perms
     ]
 
     if len(missing) > 2:
@@ -55,11 +55,14 @@ class Errors(BaseCog):
         if isinstance(error, commands.errors.CommandOnCooldown):
             formatted_time = deltaconv(round(error.retry_after))
             return await ctx.reply(
-                f"You're under cooldown for `{formatted_time}`.", delete_after=error.retry_after
+                f"You're under cooldown for `{formatted_time}`.",
+                delete_after=error.retry_after,
             )
 
         if isinstance(error, commands.BadArgument):
-            return await ctx.reply(error.args[0]) # these errors are usually raised by me, so i can do this.
+            return await ctx.reply(
+                error.args[0]
+            )  # these errors are usually raised by me, so i can do this.
 
         if isinstance(error, FileTooLarge):
             return await error.original_message.edit(
@@ -68,6 +71,7 @@ class Errors(BaseCog):
 
         await ctx.send("Something went wrong, this incident will be reported.")
         raise error
+
 
 async def setup(bot: "Bot"):
     await bot.add_cog(Errors(bot))

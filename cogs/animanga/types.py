@@ -22,11 +22,13 @@ class StudioEdge(TypedDict):
 class RawStudios(TypedDict):
     edges: list[StudioEdge]
 
+
 class Studios(TypedDict):
     name: str
     url: str
     formatted: str
     main: bool
+
 
 class Trailer(TypedDict):
     site: Literal["youtube", "dailymotion"]
