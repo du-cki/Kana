@@ -1,11 +1,21 @@
+import random
 import discord
 from discord.ext import commands
 
 import re
-import yt_dlp # pyright: ignore[reportMissingTypeStubs] # stubs when
 import asyncio
 
-from yt_dlp.extractor.pinterest import PinterestIE # pyright: ignore[reportMissingTypeStubs]
+import yt_dlp  # pyright: ignore[reportMissingTypeStubs] # stubs when
+
+# fmt: off
+from yt_dlp.extractor.youtube import YoutubeIE, YoutubeClipIE     # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.pinterest import PinterestIE                # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.twitter import TwitterIE                    # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.instagram import InstagramIE                # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.tiktok import TikTokIE                      # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.reddit import RedditIE                      # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.twitch import TwitchClipsIE                 # pyright: ignore[reportMissingTypeStubs]
+# fmt: on
 
 from pathlib import Path
 from time import perf_counter
@@ -17,19 +27,72 @@ from typing import TYPE_CHECKING, Any, Optional, Annotated
 if TYPE_CHECKING:
     from ._utils.subclasses import Bot, Context
 
+DEFAULT_UPLOAD_LIMIT = 25 * 1024 * 1024
+
+
+class Source:
+    def __init__(self, sources: list[str] = []):
+        self.sources: list[str] = []
+
+        # this is an internal counter, as I'm re-using the regexes from yt-dlp,
+        # which could cause conflicts for the same IDs, so I'll be replacing it with
+        # this counter, this won't affect anything so its fine.
+        self.__counter = 0
+        self._flags: set[str] = set()
+
+        for source in sources:
+            self.add_source(source)
+
+    def __str__(self):
+        return rf"(?{''.join(self._flags)})^({'|'.join(self.sources)})"
+
+    def __increment_and_return(self, _: re.Match[str]) -> str:
+        self.__counter += 1
+
+        return f"?P<id_{self.__counter}>"
+
+    def __remove_flag(self, match: re.Match[str]) -> str:
+        data = match.groupdict()
+        self._flags.update(set(data["flags"]))
+        return ""
+
+    def add_source(self, source: str) -> None:
+        src = re.sub(
+            r"\?P\<[a-zA-Z_0-9]+\>",  # change IDs
+            self.__increment_and_return,
+            source.replace("/", r"\/"),
+        )
+
+        src = re.sub(
+            r"\(\?(?P<flags>[a-z]+)\)\^?",  # take away the flags and put it in a set.
+            self.__remove_flag,
+            src,
+        )
+
+        self.sources.append(src)
+
+    def match(self, other: str) -> Optional[re.Match[str]]:
+        return re.match(
+            str(self),
+            other,
+        )
+
+
 # fmt: off
-SOURCE_REGEX = re.compile(
-    r"("
-        r"^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|v\/)?)([\w\-]+)(\S+)?$|" # https://stackoverflow.com/a/37704433
-        r"https?:\/\/(?P<subdomain>[^/]+\.)?reddit(?:media)?\.com\/r\/(?P<slug>[^/]+\/comments\/(?P<reddit_id>[^\/?#&]+))|"
-        r"https?:\/\/(?:m|www|vm)\.tiktok\.com\/\S*?\b(?:(?:(?:usr|v|embed|user|video)\/|\?shareId=|\&item_id=)(\d+)|(?=\w{7})(\w*?[A-Z\d]\w*)(?=\s|\/$))\b|"
-        r"https?://(?:(?:www|m(?:obile)?)\.)?twitter\.com/(?:(?:i/web|[^/]+)/status|statuses)/(?P<twitter_id>\d+)|"
-        r"(?P<url>https?://(?:www\.)?instagram\.com(?:/[^/]+)?/(?:p|tv|reel)/(?P<insta_id>[^/?#&]+))"
-        f"{PinterestIE._VALID_URL[4:]}" # to satisfy python. # pyright: ignore[reportPrivateUsage]
-    r")",
-    re.IGNORECASE | re.MULTILINE
+sources = Source(
+    [
+        YoutubeIE._VALID_URL,      # pyright: ignore[reportPrivateUsage]
+        YoutubeClipIE._VALID_URL,  # pyright: ignore[reportPrivateUsage]
+        TwitterIE._VALID_URL,      # pyright: ignore[reportPrivateUsage]
+        PinterestIE._VALID_URL,    # pyright: ignore[reportPrivateUsage]
+        TikTokIE._VALID_URL,       # pyright: ignore[reportPrivateUsage]
+        InstagramIE._VALID_URL,    # pyright: ignore[reportPrivateUsage]
+        RedditIE._VALID_URL,       # pyright: ignore[reportPrivateUsage]
+        TwitchClipsIE._VALID_URL,  # pyright: ignore[reportPrivateUsage]
+    ]
 )
 # fmt: on
+
 
 class FileTooLarge(Exception):
     def __init__(self, limit: int, message: discord.Message, *args: object) -> None:
@@ -47,11 +110,11 @@ class LinkConverter(commands.Converter["Bot"]):
 
         argument = argument.lstrip("<").rstrip(">")
 
-        match = SOURCE_REGEX.match(argument)
+        match = sources.match(argument)
 
         if not match:
             raise commands.BadArgument(
-                "No URL found, sources I support are `YouTube`, `Reddit`, `TikTok`, `Twitter`, `Instagram` or `Pinterest`."
+                "No URL found, sources I support are `YouTube`, `Reddit`, `TikTok`, `Twitter`, `Instagram`, `Twitch` or `Pinterest`."
             )
 
         return match.group()
@@ -79,30 +142,31 @@ class Download(BaseCog):
         self,
         URL: str,
         *,
-        max_filesize: int = (25 * 1024 * 1024),
+        max_filesize: int = DEFAULT_UPLOAD_LIMIT,
     ) -> Optional[Path]:
+        _id = random.randint(0, 1000)
+
         ydl_opts = {
             "quiet": not self.bot.config["Bot"]["IS_DEV"],
-            "outtmpl": self.DOWNLOAD_PATH + "%(id)s.%(ext)s",
+            "outtmpl": self.DOWNLOAD_PATH + f"{_id}_%(id)s.%(ext)s",
             "merge_output_format": "mp4",
             "max_filesize": max_filesize,
             "format_sort": ["vcodec:h264"],
             "format": f"(bestvideo+bestaudio/best)[filesize<?{max_filesize}]",
-            # "match_filter": fs_filter(max_filesize), # clips dont go well with this.
+            "match_filter": fs_filter(max_filesize), # clips dont go well with this.
         }
 
         with yt_dlp.YoutubeDL(  # pyright: ignore[reportUnknownMemberType]
             ydl_opts
-        ) as ydl:  # pyright: ignore[reportUnknownVariableType]
+        ) as ydl:
             info: dict[str, Any] = ydl.extract_info(URL)  # type: ignore
 
-        path = Path(f"{self.DOWNLOAD_PATH}{info['id']}.{info['ext']}")
+        path = Path(f"{self.DOWNLOAD_PATH}{_id}_{info['id']}.{info['ext']}")
         if path.exists():
-            if path.stat().st_size > max_filesize:
-                path.unlink(missing_ok=True)
-                return None
+            if path.stat().st_size < max_filesize:
+                return path
 
-            return path
+            path.unlink(missing_ok=True)
 
     @commands.cooldown(1, 10, commands.BucketType.user)
     @commands.command()
@@ -114,17 +178,17 @@ class Download(BaseCog):
         url: Annotated[str, LinkConverter],
     ):
         """
-        Downloads the provided URL and send it to the current channel,
-        Allowed sources are `YouTube`, `Reddit`, `TikTok`, `Twitter` or `Instagram`.
+        Downloads the provided video and send it to the current channel,
+        Allowed sources are `YouTube`, `Reddit`, `TikTok`, `Twitter`, `Pinterest`, `Twitch` or `Instagram`.
 
         Parameters
         -----------
         url: str
-            The URL to download.
+            The video to download.
         """
         msg = await ctx.send("downloading...")
 
-        limit = ctx.guild.filesize_limit if ctx.guild else (25 * 1024 * 1024)
+        limit = ctx.guild.filesize_limit if ctx.guild else DEFAULT_UPLOAD_LIMIT
 
         try:
             start = perf_counter()
@@ -148,7 +212,7 @@ class Download(BaseCog):
         except discord.HTTPException as err:
             if (
                 err.code == 40005
-            ):  # if discord somehow still doesn't like my 8MB files (happens alot), i'd like to let the user know.
+            ):  # if discord somehow still doesn't like my 25MB files, i'd like to let the user know.
                 raise FileTooLarge(limit, msg)
 
             raise err
