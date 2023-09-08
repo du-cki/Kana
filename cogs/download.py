@@ -149,6 +149,7 @@ class Download(BaseCog):
         ydl_opts = {
             "quiet": not self.bot.config["Bot"]["IS_DEV"],
             "outtmpl": self.DOWNLOAD_PATH + f"{_id}_%(id)s.%(ext)s",
+            "merge_output_format": "mp4",
             "max_filesize": max_filesize,
             "format_sort": ["vcodec:h264"],
             "format": f"(bestvideo+bestaudio/best)",
