@@ -31,16 +31,16 @@ def create_embed(data: FetchResult) -> discord.Embed:
 
 
 async def check_nsfw(interaction: discord.Interaction, result: FetchResult):
-    assert interaction.channel, "`Interaction.channel` seems to be `None`."
+    assert interaction.channel
 
     if result["isAdult"] and not (
-        isinstance(interaction.channel, discord.DMChannel | discord.PartialMessageable)
+        isinstance(interaction.channel, discord.DMChannel | discord.PartialMessageable | discord.GroupChannel)
         or interaction.channel.is_nsfw()
     ):
         show_type = interaction.command.parent.name.lower()  # type: ignore # the errors shown should not be an issue.
         return await interaction.edit_original_response(
             content=(
-                f"The requested {show_type} has been marked as NSFW. To view it, "
+                f"The requested `{show_type}` has been marked as NSFW. To view it, "
                 "please switch to an NSFW channel or re-use the command in my DMs."
             )
         )
@@ -48,8 +48,9 @@ async def check_nsfw(interaction: discord.Interaction, result: FetchResult):
 
 class AniManga(BaseCog):
     anime = app_commands.Group(
-        name="anime",
+        name="animee",
         description="...",
+        guild_ids=[1004727020229505024]
     )
 
     @anime.command(name="search")
@@ -63,7 +64,7 @@ class AniManga(BaseCog):
         query: str
             The Anime to search for.
         """
-        await interaction.response.defer(thinking=False)
+        await interaction.response.defer()
 
         result = await fetch(self.bot.session, query, SEARCH_TYPE.ANIME)
         if not result:
@@ -114,7 +115,7 @@ class AniManga(BaseCog):
 
         assert interaction.channel, "`Interaction.channel` seems to be `None`."
 
-        await interaction.response.defer(thinking=False)
+        await interaction.response.defer()
 
         result = await fetch(self.bot.session, query, SEARCH_TYPE.MANGA)
         if not result:

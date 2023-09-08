@@ -6,7 +6,7 @@ from discord.utils import utcnow
 from aiohttp import ClientSession
 from datetime import timedelta
 
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from .. import logger
 from .types import (
@@ -22,6 +22,7 @@ SEARCH_QUERY = """
 query ($search: String, $type: MediaType) {
   Page(perPage: 10) {
     media(search: $search, type: $type, sort: POPULARITY_DESC) {
+      id
       title {
         romaji
       }
@@ -30,23 +31,9 @@ query ($search: String, $type: MediaType) {
 }
 """
 
-REMINDER_QUERY = """
-query ($id: Int) {
-  Media(id: $id) {
-    airingSchedule {
-      nodes {
-        timeUntilAiring
-        episode
-        mediaId
-      }
-    }
-  }
-}
-"""
-
 FETCH_QUERY = """
-query ($search: String, $type: MediaType) {
-  Media(search: $search, type: $type) {
+query ($search: %s, $type: MediaType) {
+  Media(%s: $search, type: $type) {
     title {
       romaji
     }
@@ -99,14 +86,18 @@ TAG_MAPPING = {
     "i": "*",
     "p": "",
 }
-STATUS_MAPPING = {
-    "FINISHED": "Finished",
-    "RELEASING": "Releasing",
-    "NOT_YET_RELEASED": "Not Released",
-    "CANCELLED": "Cancelled",
-    "HIATUS": "Hiatus",
-}
 
+def format_query(query: str) -> str:
+    if query.startswith("SERIES_") and query[7:].isdigit():
+        return FETCH_QUERY % (
+            "Int",
+            "id"
+        )
+
+    return FETCH_QUERY % (
+        "String",
+        "search"
+    )
 
 def formatter(obj: re.Match[Any]) -> str:
     group = obj.groups()
@@ -150,8 +141,10 @@ def create_trailer_url(data: Trailer) -> str:
 
 
 async def search(
-    session: ClientSession, search: str, search_type: SEARCH_TYPE
-) -> list[str]:
+    session: ClientSession,
+    search: str,
+    search_type: SEARCH_TYPE
+) -> list[tuple[int, str]]:
     """
     Searches for a Series, this won't return any information but rather titles.
 
@@ -187,7 +180,10 @@ async def search(
 
     data = resp.get("data", {}).get("Page", {}).get("media", [])
 
-    return [result["title"]["romaji"] for result in data]
+    return [
+        (result["id"], result["title"]["romaji"])
+        for result in data
+    ]
 
 
 async def search_auto_complete(
@@ -211,7 +207,7 @@ async def search_auto_complete(
     )
 
     SEARCH_TYPE_MAPPING = {
-        "anime": SEARCH_TYPE.ANIME,
+        "animee": SEARCH_TYPE.ANIME,
         "manga": SEARCH_TYPE.MANGA,
     }
 
@@ -223,16 +219,24 @@ async def search_auto_complete(
         return []
 
     results = await search(
-        interaction.client.session, current, search_type  # type: ignore
+        interaction.client.session, # type: ignore
+        current,
+        search_type
     )
 
-    # TODO: cache the results
-
-    return [app_commands.Choice(name=result, value=result) for result in results]
+    return [
+        app_commands.Choice(
+            name=name,
+            value=f"SERIES_{series_id}"
+        )
+        for series_id, name in results
+    ]
 
 
 async def fetch(
-    session: ClientSession, search: str, search_type: SEARCH_TYPE
+    session: ClientSession,
+    search: str,
+    search_type: SEARCH_TYPE
 ) -> Optional[FetchResult]:
     """
     Fetches information about a Series.
@@ -249,12 +253,14 @@ async def fetch(
         An Enum of either ANIME or MANGA.
     """
 
+    query = format_query(search)
+
     req = await session.post(
         "https://graphql.anilist.co/",
         json={
-            "query": FETCH_QUERY,
+            "query": query,
             "variables": {
-                "search": search if search else None,
+                "search": search[7:] if search.startswith("SERIES_") else search,
                 "type": search_type.name,
             },
         },
@@ -266,6 +272,8 @@ async def fetch(
             f"Fetch result {search!r} ({search_type}) yielded an error: \n{resp}"
         )
         return None
+
+    logger.info(resp)
 
     data: Optional[FetchRequestResult] = resp.get("data", {}).get("Media")
     if not data:
@@ -279,7 +287,7 @@ async def fetch(
         "coverImage": data["coverImage"]["extraLarge"],
         "color": data["coverImage"]["color"],
         "description": cleanup_html(data["description"]),
-        "status": STATUS_MAPPING.get(data["status"], data["status"]),
+        "status": data["status"].title().replace("_", " "),
         "trailer": create_trailer_url(data["trailer"]) if data["trailer"] else None,
         "airingSchedule": list(
             map(parse_schedule_time, data.get("airingSchedule", {}).get("nodes", []))
