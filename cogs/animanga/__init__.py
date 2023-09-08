@@ -48,9 +48,8 @@ async def check_nsfw(interaction: discord.Interaction, result: FetchResult):
 
 class AniManga(BaseCog):
     anime = app_commands.Group(
-        name="animee",
+        name="anime",
         description="...",
-        guild_ids=[1004727020229505024]
     )
 
     @anime.command(name="search")

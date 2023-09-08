@@ -207,7 +207,7 @@ async def search_auto_complete(
     )
 
     SEARCH_TYPE_MAPPING = {
-        "animee": SEARCH_TYPE.ANIME,
+        "anime": SEARCH_TYPE.ANIME,
         "manga": SEARCH_TYPE.MANGA,
     }
 
@@ -272,8 +272,6 @@ async def fetch(
             f"Fetch result {search!r} ({search_type}) yielded an error: \n{resp}"
         )
         return None
-
-    logger.info(resp)
 
     data: Optional[FetchRequestResult] = resp.get("data", {}).get("Media")
     if not data:
