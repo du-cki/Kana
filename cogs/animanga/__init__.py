@@ -4,8 +4,8 @@ from discord import app_commands
 
 from .. import BaseCog
 
-from .anilist import fetch, search_auto_complete
-from .types import FetchResult, SEARCH_TYPE
+from .anilist import AniList
+from .types import FetchResult, SearchType
 
 from typing import TYPE_CHECKING
 
@@ -47,13 +47,17 @@ async def check_nsfw(interaction: discord.Interaction, result: FetchResult):
 
 
 class AniManga(BaseCog):
+    def __init__(self, bot: "Bot"):
+        super().__init__(bot)
+        self.anilist = AniList(bot.session)
+
     anime = app_commands.Group(
         name="anime",
         description="...",
     )
 
     @anime.command(name="search")
-    @app_commands.autocomplete(query=search_auto_complete)
+    @app_commands.autocomplete(query=AniList.search_auto_complete)
     async def anime_search(self, interaction: discord.Interaction, query: str):
         """
         Search for an Anime.
@@ -65,7 +69,10 @@ class AniManga(BaseCog):
         """
         await interaction.response.defer()
 
-        result = await fetch(self.bot.session, query, SEARCH_TYPE.ANIME)
+        result = await self.anilist.fetch(
+            query,
+            search_type=SearchType.ANIME
+        )
         if not result:
             return await interaction.edit_original_response(content="No anime found.")
 
@@ -101,7 +108,7 @@ class AniManga(BaseCog):
     )
 
     @manga.command(name="search")
-    @app_commands.autocomplete(query=search_auto_complete)
+    @app_commands.autocomplete(query=AniList.search_auto_complete)
     async def manga_search(self, interaction: discord.Interaction, query: str):
         """
         Search for a Manga.
@@ -116,7 +123,10 @@ class AniManga(BaseCog):
 
         await interaction.response.defer()
 
-        result = await fetch(self.bot.session, query, SEARCH_TYPE.MANGA)
+        result = await self.anilist.fetch(
+            query,
+            search_type=SearchType.MANGA
+        )
         if not result:
             return await interaction.edit_original_response(content="No Manga found.")
 

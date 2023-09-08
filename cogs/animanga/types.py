@@ -4,7 +4,7 @@ from typing import TypedDict, Literal, Optional
 from enum import Enum
 
 
-class SEARCH_TYPE(Enum):
+class SearchType(Enum):
     ANIME = 1
     MANGA = 2
 
@@ -92,5 +92,5 @@ class FetchResult(TypedDict):
     title: str
     trailer: Optional[str]
     airingSchedule: list[ParsedNode]
-    type: SEARCH_TYPE
+    type: SearchType
     studios: list[Studios]

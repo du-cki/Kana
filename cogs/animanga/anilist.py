@@ -6,17 +6,20 @@ from discord.utils import utcnow
 from aiohttp import ClientSession
 from datetime import timedelta
 
-from typing import Any, Literal, Optional
+from typing import Any, Optional, TYPE_CHECKING
 
 from .. import logger
 from .types import (
     FetchResult,
     FetchRequestResult,
+    SearchType,
     StudioEdge,
     Trailer,
-    SEARCH_TYPE,
     Node,
 )
+
+if TYPE_CHECKING:
+    from .._utils.subclasses import Bot
 
 SEARCH_QUERY = """
 query ($search: String, $type: MediaType) {
@@ -139,193 +142,167 @@ def create_trailer_url(data: Trailer) -> str:
     logger.error(f"Found a different trailer site, data: {data}")
     return ""
 
+class AniList:
+    def __init__(self, session: ClientSession):
+        self.session = session
 
-async def search(
-    session: ClientSession,
-    search: str,
-    search_type: SEARCH_TYPE
-) -> list[tuple[int, str]]:
-    """
-    Searches for a Series, this won't return any information but rather titles.
+    @classmethod
+    async def search(
+        cls,
+        session: ClientSession,
+        search: str,
+        search_type: SearchType
+    ) -> list[tuple[int, str]]:
+        """
+        Searches for a Series, this won't return any information but rather titles.
 
-    Parameteres
-    ------------
-    session: ClientSession
-        A `aiohttp.ClientSession` object to do the request with.
+        Parameteres
+        ------------
+        session: ClientSession
+            A `aiohttp.ClientSession` object to do the request with.
 
-    search: str
-        The search query.
+        search: str
+            The search query.
 
-    search_type: SEARCH_TYPE
-        An Enum of either ANIME or MANGA.
-    """
+        search_type: SEARCH_TYPE
+            An Enum of either ANIME or MANGA.
+        """
 
-    req = await session.post(
-        "https://graphql.anilist.co/",
-        json={
-            "query": SEARCH_QUERY,
-            "variables": {
-                "search": search if search else None,
-                "type": search_type.name,
+        req = await session.post(
+            "https://graphql.anilist.co/",
+            json={
+                "query": SEARCH_QUERY,
+                "variables": {
+                    "search": search if search else None,
+                    "type": search_type.name,
+                },
             },
-        },
-    )
-
-    resp = await req.json()
-    if resp.get("errors"):
-        logger.error(
-            f"Search result {search!r} ({search_type.name}) yielded an error: \n{resp}"
         )
-        return []
 
-    data = resp.get("data", {}).get("Page", {}).get("media", [])
+        resp = await req.json()
+        if resp.get("errors"):
+            logger.error(
+                f"Search result {search!r} ({search_type.name}) yielded an error: \n{resp}"
+            )
+            return []
 
-    return [
-        (result["id"], result["title"]["romaji"])
-        for result in data
-    ]
+        data = resp.get("data", {}).get("Page", {}).get("media", [])
+
+        return [
+            (result["id"], result["title"]["romaji"])
+            for result in data
+        ]
 
 
-async def search_auto_complete(
-    interaction: Interaction, current: str
-) -> list[app_commands.Choice[str]]:
-    """
-    A wrapper around the `search` function for auto-completes.
+    @classmethod
+    async def search_auto_complete(
+        cls,
+        interaction: Interaction["Bot"],
+        current: str
+    ) -> list[app_commands.Choice[str]]:
+        """
+        A wrapper around the `search` function for auto-completes.
 
-    Parameteres
-    ------------
-    interaction: discord.Interaction
-        The Interaction instance.
+        Parameteres
+        ------------
+        interaction: discord.Interaction
+            The Interaction instance.
 
-    current: str
-        The search query.
-    """
+        current: str
+            The search query.
+        """
 
-    assert (
-        isinstance(interaction.command, app_commands.Command)
-        and interaction.command.parent
-    )
-
-    SEARCH_TYPE_MAPPING = {
-        "anime": SEARCH_TYPE.ANIME,
-        "manga": SEARCH_TYPE.MANGA,
-    }
-
-    search_type = SEARCH_TYPE_MAPPING.get(interaction.command.parent.name)
-    if search_type is None:
-        logger.error(
-            "'search_auto_complete' was called outside designated area it was designed for, Please use the function `search` instead."
+        assert (
+            isinstance(interaction.command, app_commands.Command)
+            and interaction.command.parent
         )
-        return []
 
-    results = await search(
-        interaction.client.session, # type: ignore
-        current,
-        search_type
-    )
+        SEARCH_TYPE_MAPPING = {
+            "anime": SearchType.ANIME,
+            "manga": SearchType.MANGA,
+        }
 
-    return [
-        app_commands.Choice(
-            name=name,
-            value=f"SERIES_{series_id}"
+        search_type = SEARCH_TYPE_MAPPING.get(interaction.command.parent.name)
+        if search_type is None:
+            logger.error(
+                "'search_auto_complete' was called outside designated area it was designed for, Please use the function `search` instead."
+            )
+            return []
+
+        results = await cls.search(
+            interaction.client.session,
+            current,
+            search_type
         )
-        for series_id, name in results
-    ]
+
+        return [
+            app_commands.Choice(
+                name=name,
+                value=f"SERIES_{series_id}"
+            )
+            for series_id, name in results
+        ]
 
 
-async def fetch(
-    session: ClientSession,
-    search: str,
-    search_type: SEARCH_TYPE
-) -> Optional[FetchResult]:
-    """
-    Fetches information about a Series.
+    async def fetch(
+        self,
+        search: str,
+        *,
+        search_type: SearchType
+    ) -> Optional[FetchResult]:
+        """
+        Fetches information about a Series.
 
-    Parameteres
-    ------------
-    session: ClientSession
-        A `aiohttp.ClientSession` object to do the request with.
+        Parameteres
+        ------------
+        session: ClientSession
+            A `aiohttp.ClientSession` object to do the request with.
 
-    search: str
-        The search query.
+        search: str
+            The search query.
 
-    search_type: SEARCH_TYPE
-        An Enum of either ANIME or MANGA.
-    """
+        search_type: SearchType
+            An Enum of either ANIME or MANGA.
+        """
 
-    query = format_query(search)
+        query = format_query(search)
 
-    req = await session.post(
-        "https://graphql.anilist.co/",
-        json={
-            "query": query,
-            "variables": {
-                "search": search[7:] if search.startswith("SERIES_") else search,
-                "type": search_type.name,
+        req = await self.session.post(
+            "https://graphql.anilist.co/",
+            json={
+                "query": query,
+                "variables": {
+                    "search": search[7:] if search.startswith("SERIES_") else search,
+                    "type": search_type.name,
+                },
             },
-        },
-    )
-
-    resp = await req.json()
-    if resp.get("errors"):
-        logger.error(
-            f"Fetch result {search!r} ({search_type}) yielded an error: \n{resp}"
         )
-        return None
 
-    data: Optional[FetchRequestResult] = resp.get("data", {}).get("Media")
-    if not data:
-        logger.error(data)
-        return None
+        resp = await req.json()
+        if resp.get("errors"):
+            logger.error(
+                f"Fetch result {search!r} ({search_type}) yielded an error: \n{resp}"
+            )
+            return None
 
-    return {  # type: ignore
-        **data,
-        "type": search_type,
-        "title": data.get("title", {}).get("romaji", "N/A"),
-        "coverImage": data["coverImage"]["extraLarge"],
-        "color": data["coverImage"]["color"],
-        "description": cleanup_html(data["description"]),
-        "status": data["status"].title().replace("_", " "),
-        "trailer": create_trailer_url(data["trailer"]) if data["trailer"] else None,
-        "airingSchedule": list(
-            map(parse_schedule_time, data.get("airingSchedule", {}).get("nodes", []))
-        ),
-        "studios": list(map(parse_studios, data.get("studios", {}).get("edges"))),
-    }
+        data: Optional[FetchRequestResult] = resp.get("data", {}).get("Media")
+        if not data:
+            logger.error(data)
+            return None
+
+        return {  # type: ignore
+            **data,
+            "type": search_type,
+            "title": data.get("title", {}).get("romaji", "N/A"),
+            "coverImage": data["coverImage"]["extraLarge"],
+            "color": data["coverImage"]["color"],
+            "description": cleanup_html(data["description"]),
+            "status": data["status"].title().replace("_", " "),
+            "trailer": create_trailer_url(data["trailer"]) if data["trailer"] else None,
+            "airingSchedule": list(
+                map(parse_schedule_time, data.get("airingSchedule", {}).get("nodes", []))
+            ),
+            "studios": list(map(parse_studios, data.get("studios", {}).get("edges"))),
+        }
 
 
-async def fetch_schedules(session: ClientSession, search: int) -> Optional[list[Node]]:
-    """
-    Fetches schedules about an AniManga.
-
-    Parameteres
-    ------------
-    session: ClientSession
-        A `aiohttp.ClientSession` object to do the request with.
-
-    search: str
-        The AniList AniManga ID.
-    """
-
-    req = await session.post(
-        "https://graphql.anilist.co/",
-        json={
-            "query": REMINDER_QUERY,
-            "variables": {
-                "id": search,
-            },
-        },
-    )
-
-    resp = await req.json()
-    if resp.get("errors"):
-        logger.error(f"fetch_schedules {search!r} yielded an error: \n{resp}")
-        return None
-
-    data: Optional[FetchRequestResult] = resp.get("data", {}).get("Media")
-    if not data:
-        return None
-
-    return list(
-        map(parse_schedule_time, data.get("airingSchedule", {}).get("nodes", []))
-    )
