@@ -71,7 +71,7 @@ class Utility(BaseCog):
         super().__init__(bot)
         self.emojis = self.bot.config["Bot"]["Emojis"]
 
-    @commands.hybrid_command()  # only hybrid to safe a few extra lines of code, i generally don't like slashies.
+    @commands.hybrid_command()
     async def ping(self, ctx: "Context"):
         """
         Retrieves the bot's ping.
@@ -109,6 +109,7 @@ class Utility(BaseCog):
         )
         await mes.edit(content=None, embed=em)
 
+
     @commands.command()
     async def source(self, ctx: "Context", *, command: Optional[str]):
         """
@@ -135,19 +136,15 @@ class Utility(BaseCog):
 
         if obj.__class__.__name__ == "_HelpCommandImpl":
             return await ctx.send(
-                f"no help for help yet"  # TODO: replace this when custom help is implemented.
+                f"no source for help yet"  # TODO: replace this when custom help is implemented.
             )
 
         src = obj.callback.__code__
-        module = obj.callback.__module__
         filename = src.co_filename
 
         lines, firstlineno = inspect.getsourcelines(src)
-        if module.startswith("discord"):
-            return
 
         location = os.path.relpath(filename).replace("\\", "/")
-        location = module.replace(".", "/") + ".py"
 
         view = discord.ui.View()
         view.add_item(
