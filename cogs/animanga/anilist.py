@@ -79,6 +79,9 @@ query ($search: %s, $type: MediaType) {
 }
 """
 
+QUERY_PATTERN = re.compile(
+    r".* \(ID: ([0-9]+)\)"
+)
 TAG_PATTERN = re.compile(
     r'<(?P<double>(br><br)+)>|<\/?(?P<tag>(br|i|b|p)+)>|<a href="(?P<link>[^"]+)">(?P<title>[^"]+)<\/a>'
 )
@@ -90,16 +93,23 @@ TAG_MAPPING = {
     "p": "",
 }
 
-def format_query(query: str) -> str:
-    if query.startswith("SERIES_") and query[7:].isdigit():
-        return FETCH_QUERY % (
-            "Int",
-            "id"
+def format_query(query: str) -> tuple[str, Optional[int]]:
+    match = QUERY_PATTERN.fullmatch(query)
+    if match and match.groups()[0].isdigit():
+        return (
+            FETCH_QUERY % (
+                "Int",
+                "id"
+            ),
+            match.groups()[0] # type: ignore
         )
 
-    return FETCH_QUERY % (
-        "String",
-        "search"
+    return (
+        FETCH_QUERY % (
+            "String",
+            "search"
+        ),
+        None
     )
 
 def formatter(obj: re.Match[Any]) -> str:
@@ -238,7 +248,7 @@ class AniList:
         return [
             app_commands.Choice(
                 name=name,
-                value=f"SERIES_{series_id}"
+                value=f"{name} (ID: {series_id})" # so it looks a bit better on the client.
             )
             for series_id, name in results
         ]
@@ -265,14 +275,14 @@ class AniList:
             An Enum of either ANIME or MANGA.
         """
 
-        query = format_query(search)
+        query, animanga_id = format_query(search)
 
         req = await self.session.post(
             "https://graphql.anilist.co/",
             json={
                 "query": query,
                 "variables": {
-                    "search": search[7:] if search.startswith("SERIES_") else search,
+                    "search": animanga_id or search,
                     "type": search_type.name,
                 },
             },
