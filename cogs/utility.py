@@ -48,9 +48,9 @@ def get_latest_commits(source_url: str, count: int = 3) -> str:
 
 
 def format_ping(ping: float) -> str:
-    if ping in range(0, 150):
+    if ping > 0 and ping < 150:
         color = 32  # green
-    elif ping in range(150, 200):
+    elif ping > 150 and ping < 200:
         color = 33  # yellow
     else:
         color = 31  # red
