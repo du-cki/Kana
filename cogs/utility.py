@@ -110,7 +110,7 @@ class Utility(BaseCog):
         await mes.edit(content=None, embed=em)
 
 
-    @commands.command()
+    @commands.command(aliases=["src"])
     async def source(self, ctx: "Context", *, command: Optional[str]):
         """
         Gets the source of a command. or send the source of the bot.
