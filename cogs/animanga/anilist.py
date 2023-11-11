@@ -83,25 +83,18 @@ QUERY_PATTERN = re.compile(
     r".* \(ID: ([0-9]+)\)"
 )
 TAG_PATTERN = re.compile(
-    r'<(?P<double>(br><br)+)>|<\/?(?P<tag>(br|i|b|p)+)>|<a href="(?P<link>[^"]+)">(?P<title>[^"]+)<\/a>'
+    r'\<(?P<tag>[a-zA-Z]+)(?: href=\"(?P<url>.*)\")?\>(?:(?P<text>.*?)\<\/[a-zA-Z]+\>)?'
 )
-TAG_MAPPING = {
-    "br": "\n",
-    "br><br": "\n",  # merge two break lines into one, because anilist is ruthless on the break lines
-    "b": "**",
-    "i": "*",
-    "p": "",
-}
 
-def format_query(query: str) -> tuple[str, Optional[int]]:
+def format_query(query: str) -> tuple[str, Optional[str]]:
     match = QUERY_PATTERN.fullmatch(query)
-    if match and match.groups()[0].isdigit():
+    if match:
         return (
             FETCH_QUERY % (
                 "Int",
                 "id"
             ),
-            match.groups()[0] # type: ignore
+            match.groups()[0]
         )
 
     return (
@@ -112,13 +105,19 @@ def format_query(query: str) -> tuple[str, Optional[int]]:
         None
     )
 
-def formatter(obj: re.Match[Any]) -> str:
-    group = obj.groups()
-    if len(group) == 2:
-        # strategy: hyperlink
-        return f"[{group[0]}]({group[1]})"
-    # strategy: replace markup
-    return TAG_MAPPING.get(group[0], "")
+
+def formatter(match: re.Match[Any]) -> str:
+    items = match.groupdict()
+    if items["tag"] == "a":
+        return f"[{items['text']}]({items['url']})"
+    elif items["tag"] == "br":
+        return "\n"
+    elif items["tag"] == "i":
+        return f"*{items['text']}*"
+    elif items["tag"] == "b":
+        return f"**{items['text']}**"
+
+    return f"{items['text']}"
 
 
 def parse_schedule_time(schedule: Node):
@@ -140,7 +139,7 @@ def parse_studios(edge: StudioEdge):
 
 
 def cleanup_html(description: str) -> str:
-    return TAG_PATTERN.sub(formatter, description)
+    return TAG_PATTERN.sub(formatter, description).replace('\n\n', '\n')
 
 
 def create_trailer_url(data: Trailer) -> str:
@@ -232,23 +231,16 @@ class AniList:
             "manga": SearchType.MANGA,
         }
 
-        search_type = SEARCH_TYPE_MAPPING.get(interaction.command.parent.name)
-        if search_type is None:
-            logger.error(
-                "'search_auto_complete' was called outside designated area it was designed for, Please use the function `search` instead."
-            )
-            return []
-
         results = await cls.search(
             interaction.client.session,
             current,
-            search_type
+            SEARCH_TYPE_MAPPING[interaction.command.parent.name]
         )
 
         return [
             app_commands.Choice(
                 name=name,
-                value=f"{name} (ID: {series_id})" # so it looks a bit better on the client.
+                value=f"{name} (ID: {series_id})"
             )
             for series_id, name in results
         ]
@@ -290,15 +282,13 @@ class AniList:
 
         resp = await req.json()
         if resp.get("errors"):
-            logger.error(
+            return logger.error(
                 f"Fetch result {search!r} ({search_type}) yielded an error: \n{resp}"
             )
-            return None
 
         data: Optional[FetchRequestResult] = resp.get("data", {}).get("Media")
         if not data:
-            logger.error(data)
-            return None
+            return logger.error(data)
 
         return {  # type: ignore
             **data,
