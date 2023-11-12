@@ -83,7 +83,7 @@ QUERY_PATTERN = re.compile(
     r".* \(ID: ([0-9]+)\)"
 )
 TAG_PATTERN = re.compile(
-    r'\<(?P<tag>[a-zA-Z]+)(?: href=\"(?P<url>.*)\")?\>(?:(?P<text>.*?)\<\/[a-zA-Z]+\>)?'
+    r'\<(?P<tag>[a-zA-Z]+)(?: href=\"(?P<url>.*)\")?\>(?:(?P<text>.*?)\<\/\1\>)?'
 )
 
 def format_query(query: str) -> tuple[str, Optional[str]]:
