@@ -36,7 +36,7 @@ query ($search: String, $type: MediaType) {
 
 FETCH_QUERY = """
 query ($search: %s, $type: MediaType) {
-  Media(%s: $search, type: $type) {
+  Media(%s: $search, type: $type, sort: POPULARITY_DESC) {
     title {
       romaji
     }
