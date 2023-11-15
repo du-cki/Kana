@@ -83,7 +83,8 @@ QUERY_PATTERN = re.compile(
     r".* \(ID: ([0-9]+)\)"
 )
 TAG_PATTERN = re.compile(
-    r'\<(?P<tag>[a-zA-Z]+)(?: href=\"(?P<url>.*)\")?\>(?:(?P<text>.*?)\<\/\1\>)?'
+    r'\<(?P<tag>[a-zA-Z]+)(?: href=\"(?P<url>.*)\")?\>(?:(?P<text>[\s\S]+?)\<\/\1\>)?',
+    flags=re.M | re.S | re.U
 )
 
 def format_query(query: str) -> tuple[str, Optional[str]]:
@@ -117,7 +118,7 @@ def formatter(match: re.Match[Any]) -> str:
     elif items["tag"] == "b":
         return f"**{items['text']}**"
 
-    return f"{items['text']}"
+    return items['text']
 
 
 def parse_schedule_time(schedule: Node):
