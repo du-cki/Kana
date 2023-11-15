@@ -121,6 +121,13 @@ def formatter(match: re.Match[Any]) -> str:
     return items['text']
 
 
+def cleanup_html(description: str) -> str:
+    final, no = TAG_PATTERN.subn(formatter, description)
+    if no > 0:
+        return cleanup_html(final)
+
+    return final.replace('\n\n', '\n')
+
 def parse_schedule_time(schedule: Node):
     schedule["timeUntilAiring"] = utcnow() + timedelta(  # type: ignore
         seconds=schedule["timeUntilAiring"]
@@ -138,9 +145,6 @@ def parse_studios(edge: StudioEdge):
         "main": edge.get("isMain", False),
     }
 
-
-def cleanup_html(description: str) -> str:
-    return TAG_PATTERN.sub(formatter, description).replace('\n\n', '\n')
 
 
 def create_trailer_url(data: Trailer) -> str:
