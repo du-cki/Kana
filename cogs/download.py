@@ -20,11 +20,9 @@ from yt_dlp.extractor.twitch import TwitchClipsIE              # pyright: ignore
 from pathlib import Path
 from time import perf_counter
 
-from cogs import logger
-
 from . import BaseCog
 
-from typing import TYPE_CHECKING, Any, Optional, Annotated, TypedDict
+from typing import TYPE_CHECKING, Any, Literal, Optional, Annotated, TypedDict
 
 if TYPE_CHECKING:
     from ._utils.subclasses import Bot, Context
@@ -122,16 +120,26 @@ class FileTooLarge(Exception):
 
 class LinkConverter(commands.Converter["Bot"]):
     async def convert(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, _: "Context", argument: str
+        self, ctx: "Context", argument: str
     ):
         match = sources.match(argument)
-        if not match:
+        if match:
+            return match
+        elif "-dev" in ctx.message.content and await ctx.bot.is_owner(ctx.author):
+            return { "source": "unknown", "url": argument }
+        else:
             raise commands.BadArgument(
                 f"No URL found, sources I support are {sources.source_names()}."
             )
 
-        return match
 
+class DownloadCommandFlags(commands.FlagConverter, delimiter=" ", prefix="-"):
+    fmt: Literal["mp4", "mp3", "webm"] = commands.flag(
+        description="Video format the downloaded video should be downloaded as.",
+        default="mp4",
+        aliases=["format", "f"]
+    )
+    dev: bool = commands.flag(default=False)
 
 class Download(BaseCog):
     def __init__(self, bot: "Bot") -> None:
@@ -141,18 +149,18 @@ class Download(BaseCog):
     def _download(
         self,
         data: Match,
+        flags: DownloadCommandFlags,
         *,
-        fmt: str = "mp4",
         max_filesize: int = DEFAULT_UPLOAD_LIMIT,
     ) -> Optional[Path]:
         _id = random.randint(0, 1000)
+        isAudio = flags.fmt in ("mp3",)
 
         options = {
             "outtmpl": self.DOWNLOAD_PATH + f"{_id}_%(id)s.%(ext)s",
             "quiet": not self.bot.config["Bot"]["IS_DEV"],
-            "merge_output_format": fmt,
+            "merge_output_format": flags.fmt,
             "max_filesize": max_filesize,
-            "format": f"bestvideo+bestaudio[ext={fmt}]/best",
         }
 
         if data["source"] == "tiktok":
@@ -160,24 +168,32 @@ class Download(BaseCog):
 
         if data["source"] == "twitter":
             options["cookies"] = "cookies.txt"
-            options["postprocessors"] = [
-                {
-                    "key": "Exec",
-                    "exec_cmd": [
-                        "mv %(filename)q %(filename)q.temp",
-                        "ffmpeg -y -i %(filename)q.temp -c copy -map 0 -brand mp42 %(filename)q",
-                        "rm %(filename)q.temp",
-                    ],
-                    "when": "after_move",
-                }
-            ]
+            options["postprocessors"] = [{
+                "key": "Exec",
+                "exec_cmd": [
+                    "mv %(filename)q %(filename)q.temp",
+                    "ffmpeg -y -i %(filename)q.temp -c copy -map 0 -brand mp42 %(filename)q",
+                    "rm %(filename)q.temp",
+                ],
+                "when": "after_move",
+            }]
+
+        if isAudio:
+            options["format"] = "bestaudio/best"
+            options.setdefault("postprocessors", []).append({
+                "key": "FFmpegExtractAudio",
+                "preferredcodec": flags.fmt,
+                "preferredquality": "192",
+            })
+        else:
+            options["format"] = f"bestvideo+bestaudio[ext={flags.fmt}]/best"
 
         with yt_dlp.YoutubeDL(  # pyright: ignore[reportUnknownMemberType]
             options
         ) as ydl:
-            info: dict[str, Any] = ydl.extract_info(data["url"])  # type: ignore
+            info: dict[str, Any] = ydl.extract_info(data["url"])  # pyright: ignore
 
-        path = Path(f"{self.DOWNLOAD_PATH}{_id}_{info['id']}.{info['ext']}")
+        path = Path(f"{self.DOWNLOAD_PATH}{_id}_{info['id']}.{flags.fmt if isAudio else info['ext']}")
         if path.exists():
             if path.stat().st_size < max_filesize:
                 return path
@@ -190,8 +206,9 @@ class Download(BaseCog):
     async def download(
         self,
         ctx: "Context",
-        *,
         url: Annotated[Match, LinkConverter],
+        *,
+        flags: DownloadCommandFlags
     ):
         """
         Downloads the provided video and send it to the current channel,
@@ -207,7 +224,7 @@ class Download(BaseCog):
 
         try:
             start = perf_counter()
-            path = await asyncio.to_thread(self._download, url, max_filesize=limit)
+            path = await asyncio.to_thread(self._download, url, flags, max_filesize=limit)
             end = perf_counter()
         except yt_dlp.utils.DownloadError:  # pyright: ignore[reportUnknownMemberType]
             return await msg.edit(
