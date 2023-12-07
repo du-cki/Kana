@@ -8,21 +8,23 @@ import asyncio
 import yt_dlp  # pyright: ignore[reportMissingTypeStubs] # stubs when
 
 # fmt: off
-from yt_dlp.extractor.youtube import YoutubeIE, YoutubeClipIE     # pyright: ignore[reportMissingTypeStubs]
-from yt_dlp.extractor.pinterest import PinterestIE                # pyright: ignore[reportMissingTypeStubs]
-from yt_dlp.extractor.twitter import TwitterIE                    # pyright: ignore[reportMissingTypeStubs]
-from yt_dlp.extractor.instagram import InstagramIE                # pyright: ignore[reportMissingTypeStubs]
-from yt_dlp.extractor.tiktok import TikTokIE                      # pyright: ignore[reportMissingTypeStubs]
-from yt_dlp.extractor.reddit import RedditIE                      # pyright: ignore[reportMissingTypeStubs]
-from yt_dlp.extractor.twitch import TwitchClipsIE                 # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.youtube import YoutubeIE, YoutubeClipIE  # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.pinterest import PinterestIE             # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.twitter import TwitterIE                 # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.instagram import InstagramIE             # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.tiktok import TikTokIE                   # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.reddit import RedditIE                   # pyright: ignore[reportMissingTypeStubs]
+from yt_dlp.extractor.twitch import TwitchClipsIE              # pyright: ignore[reportMissingTypeStubs]
 # fmt: on
 
 from pathlib import Path
 from time import perf_counter
 
+from cogs import logger
+
 from . import BaseCog
 
-from typing import TYPE_CHECKING, Any, Optional, Annotated
+from typing import TYPE_CHECKING, Any, Optional, Annotated, TypedDict
 
 if TYPE_CHECKING:
     from ._utils.subclasses import Bot, Context
@@ -30,67 +32,84 @@ if TYPE_CHECKING:
 DEFAULT_UPLOAD_LIMIT = 25 * 1024 * 1024
 
 
-class Source:
-    def __init__(self, sources: list[str] = []):
-        self.sources: list[str] = []
+class Match(TypedDict):
+    url: str
+    source: str
 
-        # this is an internal counter, as I'm re-using the regexes from yt-dlp,
-        # which could cause conflicts for the same IDs, so I'll be replacing it with
-        # this counter, this won't affect anything so its fine.
-        self.__counter = 0
+
+class Source:
+    def __init__(self, sources: dict[str, str] = {}):
+        # All the flags from the regexes would be put in this set,
+        # then is going to be added on to the `final_re`.
         self._flags: set[str] = set()
 
-        for source in sources:
-            self.add_source(source)
+        self.sources = {k: self.cleanse_re(v) for k, v in sources.items()}
+        self.final_regex = self.construct_re()
 
-    def __str__(self):
-        return rf"(?{''.join(self._flags)})^({'|'.join(self.sources)})"
+    def _fmt_name(self, name: str) -> str:
+        return f"`{name.replace('_', ' ').title()}`"
 
-    def __increment_and_return(self, _: re.Match[str]) -> str:
-        self.__counter += 1
+    def source_names(self):
+        sources = list(self.sources.keys())
 
-        return f"?P<id_{self.__counter}>"
+        if len(sources) > 1:
+            return ", ".join(
+                self._fmt_name(k) for k in sources[:-1]
+            ) + f" or {self._fmt_name(sources[-1])}"
+        else:
+            return self._fmt_name(sources[0])
+
+    def construct_re(self):
+        return (
+            rf"(?{''.join(self._flags)})^"
+            rf"({ '|'.join(f'(?P<{k}>{v})' for k, v in self.sources.items()) })"
+        )
 
     def __remove_flag(self, match: re.Match[str]) -> str:
         data = match.groupdict()
         self._flags.update(set(data["flags"]))
         return ""
 
-    def add_source(self, source: str) -> None:
-        src = re.sub(
-            r"\?P\<[a-zA-Z_0-9]+\>",  # change IDs
-            self.__increment_and_return,
-            source.replace("/", r"\/"),
+    def cleanse_re(self, regex: str) -> str:
+        regex = re.sub(
+            r"\?P\<\w+\>",  # remove IDs
+            "",
+            regex.replace("/", r"\/"),
         )
 
-        src = re.sub(
-            r"\(\?(?P<flags>[a-z]+)\)\^?",  # take away the flags and put it in a set.
+        # take away the regex flags and put it in a set, to output it at the end of the final regex.
+        regex = re.sub(
+            r"\(\?(?P<flags>[a-z]+)\)\^?",
             self.__remove_flag,
-            src,
+            regex,
         )
 
-        self.sources.append(src)
+        return regex
 
-    def match(self, other: str) -> Optional[re.Match[str]]:
-        return re.match(
-            str(self),
-            other,
-        )
+    def match(self, other: str) -> Optional[Match]:
+        if other.startswith("<"):
+            other = other[1:]
+
+        if other.endswith(">"):
+            other = other[:-1]
+
+        if match := re.match(self.final_regex, other):
+            for (k, v) in match.groupdict().items():  # bit jank, but don't have a work around for now.
+                if v:
+                    return {"url": match.groups()[0], "source": k}
 
 
 # fmt: off
-sources = Source(
-    [
-        YoutubeIE._VALID_URL,      # pyright: ignore[reportPrivateUsage]
-        YoutubeClipIE._VALID_URL,  # pyright: ignore[reportPrivateUsage]
-        TwitterIE._VALID_URL,      # pyright: ignore[reportPrivateUsage]
-        PinterestIE._VALID_URL,    # pyright: ignore[reportPrivateUsage]
-        TikTokIE._VALID_URL,       # pyright: ignore[reportPrivateUsage]
-        InstagramIE._VALID_URL,    # pyright: ignore[reportPrivateUsage]
-        RedditIE._VALID_URL,       # pyright: ignore[reportPrivateUsage]
-        TwitchClipsIE._VALID_URL,  # pyright: ignore[reportPrivateUsage]
-    ]
-)
+sources = Source({
+    "youtube":       YoutubeIE._VALID_URL,     # pyright: ignore[reportPrivateUsage]
+    "youtube_clips": YoutubeClipIE._VALID_URL, # pyright: ignore[reportPrivateUsage]
+    "twitter":       TwitterIE._VALID_URL,     # pyright: ignore[reportPrivateUsage]
+    "pinterest":     PinterestIE._VALID_URL,   # pyright: ignore[reportPrivateUsage]
+    "tiktok":        TikTokIE._VALID_URL,      # pyright: ignore[reportPrivateUsage]
+    "instagram":     InstagramIE._VALID_URL,   # pyright: ignore[reportPrivateUsage]
+    "reddit":        RedditIE._VALID_URL,      # pyright: ignore[reportPrivateUsage]
+    "twitch_clips":  TwitchClipsIE._VALID_URL, # pyright: ignore[reportPrivateUsage]
+})
 # fmt: on
 
 
@@ -103,34 +122,15 @@ class FileTooLarge(Exception):
 
 class LinkConverter(commands.Converter["Bot"]):
     async def convert(  # pyright: ignore[reportIncompatibleMethodOverride]
-        self, ctx: "Context", argument: str
+        self, _: "Context", argument: str
     ):
-        if "-dev" in ctx.message.content and await ctx.bot.is_owner(ctx.author):
-            return argument.lstrip("-dev").rstrip("-dev").lstrip("<").rstrip(">")
-
-        argument = argument.lstrip("<").rstrip(">")
-
         match = sources.match(argument)
-
         if not match:
             raise commands.BadArgument(
-                "No URL found, sources I support are `YouTube`, `Reddit`, `TikTok`, `Twitter`, `Instagram`, `Twitch` or `Pinterest`."
+                f"No URL found, sources I support are {sources.source_names()}."
             )
 
-        return match.group()
-
-
-def fs_filter(limit: int):
-    def inner(info: dict[str, Any], **kwargs: Any):
-        max_fs = info.get("max_filesize")
-        if max_fs and max_fs > limit:
-            return "The video is too big"
-
-        fs_approx = info.get("filesize_approx")
-        if fs_approx and fs_approx > limit:
-            return "The video is too big"
-
-    return inner
+        return match
 
 
 class Download(BaseCog):
@@ -140,26 +140,42 @@ class Download(BaseCog):
 
     def _download(
         self,
-        URL: str,
+        data: Match,
         *,
+        fmt: str = "mp4",
         max_filesize: int = DEFAULT_UPLOAD_LIMIT,
     ) -> Optional[Path]:
         _id = random.randint(0, 1000)
 
-        ydl_opts = {
-            "quiet": not self.bot.config["Bot"]["IS_DEV"],
+        options = {
             "outtmpl": self.DOWNLOAD_PATH + f"{_id}_%(id)s.%(ext)s",
-            "merge_output_format": "mp4",
+            "quiet": not self.bot.config["Bot"]["IS_DEV"],
+            "merge_output_format": fmt,
             "max_filesize": max_filesize,
-            "format_sort": ["vcodec:h264"],
-            "format": f"(bestvideo+bestaudio/best)",
-            "match_filter": fs_filter(max_filesize), # clips dont go well with this.
+            "format": f"bestvideo+bestaudio[ext={fmt}]/best",
         }
 
+        if data["source"] == "tiktok":
+            options["format_sort"] = ["vcodec:h264"]
+
+        if data["source"] == "twitter":
+            options["cookies"] = "cookies.txt"
+            options["postprocessors"] = [
+                {
+                    "key": "Exec",
+                    "exec_cmd": [
+                        "mv %(filename)q %(filename)q.temp",
+                        "ffmpeg -y -i %(filename)q.temp -c copy -map 0 -brand mp42 %(filename)q",
+                        "rm %(filename)q.temp",
+                    ],
+                    "when": "after_move",
+                }
+            ]
+
         with yt_dlp.YoutubeDL(  # pyright: ignore[reportUnknownMemberType]
-            ydl_opts
+            options
         ) as ydl:
-            info: dict[str, Any] = ydl.extract_info(URL)  # type: ignore
+            info: dict[str, Any] = ydl.extract_info(data["url"])  # type: ignore
 
         path = Path(f"{self.DOWNLOAD_PATH}{_id}_{info['id']}.{info['ext']}")
         if path.exists():
@@ -175,7 +191,7 @@ class Download(BaseCog):
         self,
         ctx: "Context",
         *,
-        url: Annotated[str, LinkConverter],
+        url: Annotated[Match, LinkConverter],
     ):
         """
         Downloads the provided video and send it to the current channel,
@@ -187,7 +203,6 @@ class Download(BaseCog):
             The video to download.
         """
         msg = await ctx.send("downloading...")
-
         limit = ctx.guild.filesize_limit if ctx.guild else DEFAULT_UPLOAD_LIMIT
 
         try:
