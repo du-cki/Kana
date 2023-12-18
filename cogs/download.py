@@ -139,6 +139,11 @@ class DownloadCommandFlags(commands.FlagConverter, delimiter=" ", prefix="-"):
         default="mp4",
         aliases=["format", "f"]
     )
+    spoiler: bool = commands.flag(
+        description="Spoilers the sent video.",
+        default=False,
+        aliases=["s", "sp"]
+    )
     dev: bool = commands.flag(default=False)
 
 class Download(BaseCog):
@@ -168,15 +173,20 @@ class Download(BaseCog):
 
         if data["source"] == "twitter":
             options["cookies"] = "cookies.txt"
-            options["postprocessors"] = [{
-                "key": "Exec",
-                "exec_cmd": [
-                    "mv %(filename)q %(filename)q.temp",
-                    "ffmpeg -y -i %(filename)q.temp -c copy -map 0 -brand mp42 %(filename)q",
-                    "rm %(filename)q.temp",
-                ],
-                "when": "after_move",
-            }]
+
+            # because of a bug with yt_dlp, the `filename` would be different
+            # but the `%(filename)q` template string won't update, and would
+            # have a different file extension.
+            if not isAudio:
+                options["postprocessors"] = [{
+                    "key": "Exec",
+                    "exec_cmd": [
+                        "mv %(filename)q %(filename)q.temp",
+                        "ffmpeg -y -i %(filename)q.temp -c copy -map 0 -brand mp42 %(filename)q",
+                        "rm %(filename)q.temp",
+                    ],
+                    "when": "after_move",
+                }]
 
         if isAudio:
             options["format"] = "bestaudio/best"
@@ -239,7 +249,7 @@ class Download(BaseCog):
         try:
             await msg.edit(
                 content=f"took: `{round(end - start, 2)}s`",
-                attachments=[discord.File(path)],
+                attachments=[discord.File(path, spoiler=flags.spoiler)],
             )
         except discord.HTTPException as err:
             if (
