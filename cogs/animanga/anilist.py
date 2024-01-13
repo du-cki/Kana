@@ -301,7 +301,7 @@ class AniList:
             "title": data.get("title", {}).get("romaji", "N/A"),
             "coverImage": data["coverImage"]["extraLarge"],
             "color": data["coverImage"]["color"],
-            "description": cleanup_html(data["description"]),
+            "description": cleanup_html(data["description"] or ''),
             "status": data["status"].title().replace("_", " "),
             "trailer": create_trailer_url(data["trailer"]) if data["trailer"] else None,
             "airingSchedule": list(

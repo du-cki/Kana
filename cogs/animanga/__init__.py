@@ -2,33 +2,48 @@ import discord
 from discord import ui
 from discord import app_commands
 
-from .. import BaseCog
+from urllib.parse import quote
+
+from .. imp
 
 from .anilist import AniList
 from .types import FetchResult, SearchType
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Self
 
 if TYPE_CHECKING:
     from .._utils.subclasses import Bot
 
 
-def create_embed(data: FetchResult) -> discord.Embed:
-    embed = discord.Embed(
-        title=data["title"],
-        description=data["description"],
-        color=discord.Color.from_str(data["color"]) if data["color"] else 0xE6E6E6,
-        url=data["siteUrl"],
-    )
+class AnimangaEmbed(discord.Embed):
+    @classmethod
+    def from_data(cls, data: FetchResult) -> Self:
+        embed = cls(
+            title=data["title"],
+            description=data["description"],
+            color=discord.Color.from_str(data["color"]) if data["color"] else 0xE6E6E6,
+            url=data["siteUrl"],
+        )
 
-    embed.set_thumbnail(url=data["coverImage"])
-    embed.set_image(url=data["bannerImage"])
-    embed.add_field(name="Genres", value=", ".join(data["genres"]))
-    embed.add_field(name="Score", value=f"{data['averageScore']}/100")
-    embed.add_field(name="Status", value=data["status"])
+        embed.set_thumbnail(url=data["coverImage"])
+        embed.set_image(url=data["bannerImage"])
 
-    return embed
+        embed.add_field(name="Genres", value=", ".join(
+            f"[{genre}](https://anilist.co/search/{data['type'].name.lower()}?genres={quote(genre)})"
+            for genre in data["genres"]
+        ))
+        embed.add_field(
+            name="Score",
+            value=f"{data['averageScore']}/100"
+            if data['averageScore']
+            else 'NaN'
+        )
+        embed.add_field(
+            name="Status",
+            value=data["status"]
+        )
 
+        return embed
 
 async def check_nsfw(interaction: discord.Interaction, result: FetchResult):
     assert interaction.channel
@@ -80,7 +95,7 @@ class AniManga(BaseCog):
         if nsfw:
             return
 
-        embed = create_embed(result)
+        embed = AnimangaEmbed.from_data(result)
 
         if result["episodes"]:
             embed.add_field(name="Episodes", value=result["episodes"])
@@ -134,7 +149,7 @@ class AniManga(BaseCog):
         if nsfw:
             return
 
-        embed = create_embed(result)
+        embed = AnimangaEmbed.from_data(result)
 
         if result["chapters"]:
             embed.add_field(name="Chapters", value=result["chapters"])
