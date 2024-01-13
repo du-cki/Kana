@@ -1,18 +1,116 @@
 import discord
-from discord import ui
-from discord import app_commands
+from discord import ui, app_commands
 
 from urllib.parse import quote
 
 from .. import BaseCog
 
 from .anilist import AniList
-from .types import FetchResult, SearchType
+from .types import FetchResult, Relation, SearchType
 
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Any, Optional, Self
 
 if TYPE_CHECKING:
     from .._utils.subclasses import Bot
+
+
+NSFW_ERROR_MSG = (
+    "The requested **%s** has been marked as NSFW. "
+    "Switch to an NSFW channel or re-run the command in my DMs."
+)
+
+
+class PrivateView(ui.View):
+    message: discord.InteractionMessage
+
+    def __init__(self, author: int, *args: Any, **kwargs: Any):
+        super().__init__(*args, **kwargs)
+        self.author = author
+
+    async def interaction_check(self, itx: discord.Interaction) -> bool:
+        if not itx.user.id == self.author:
+            await itx.response.send_message(
+                f"This search belongs to `<@{self.author}>`, run the command yourself to use this.",
+                ephemeral=True,
+            )
+            return False
+
+        return True
+
+    async def on_timeout(self):
+        for child in self.children:
+            if hasattr(child, "disabled"):
+                child.disabled = True  # type: ignore
+
+        await self.message.edit(view=self)
+
+
+class RelationSelect(ui.Select[ui.View]):
+    def __init__(self, relations: list[Relation], *args: Any, **kwargs: Any):
+        super().__init__(
+            options=self._to_options(relations),
+            placeholder="Related Media",
+            *args,
+            **kwargs,
+        )
+
+    def _to_options(self, relations: list[Relation]) -> list[discord.SelectOption]:
+        return [
+            discord.SelectOption(
+                label=relation["title"],
+                description=relation["relation_type"].replace("_", " ").title(),
+                emoji="\U0001f4d6" if relation["type"] == "MANGA" else "\U0001f3a5",
+                value=f"{relation['type']}_{relation['id']}",
+            )
+            for relation in relations
+        ][:25]
+
+    async def _query_anilist(
+        self,
+        interaction: discord.Interaction["Bot"],
+        search_id: str,
+        search_type: str,
+        *,
+        attempt: int = 0,
+    ) -> Optional[FetchResult]:
+        result = await interaction.client.anilist.fetch(
+            f"x (ID: {search_id})",  # bit jank but who is gonna stop me
+            search_type=SearchType.ANIME
+            if search_type == "ANIME"
+            else SearchType.MANGA,
+        )
+
+        if not result and attempt < 3:
+            return await self._query_anilist(
+                interaction, search_id, search_type, attempt=attempt
+            )
+
+        return result
+
+    async def callback(self, interaction: discord.Interaction["Bot"]):  # type: ignore
+        await interaction.response.defer()
+        search_type, search_id = self.values[0].split("_")
+
+        result = await self._query_anilist(interaction, search_id, search_type)
+
+        if not result:
+            return await interaction.edit_original_response(view=self.view)
+
+        self.options = (
+            self._to_options(result["relations"]) if result["relations"] else []
+        )
+
+        assert self.view
+
+        self.view.clear_items()
+        self.view.add_item(self)
+
+        if result["trailer"]:
+            self.view.add_item(
+                ui.Button(label="Trailer", url=result["trailer"].strip())
+            )
+
+        await interaction.edit_original_response(embed=AnimangaEmbed.from_data(result))
 
 
 class AnimangaEmbed(discord.Embed):
@@ -28,43 +126,55 @@ class AnimangaEmbed(discord.Embed):
         embed.set_thumbnail(url=data["coverImage"])
         embed.set_image(url=data["bannerImage"])
 
-        embed.add_field(name="Genres", value=", ".join(
-            f"[{genre}](https://anilist.co/search/{data['type'].name.lower()}?genres={quote(genre)})"
-            for genre in data["genres"]
-        ))
+        embed.add_field(
+            name="Genres",
+            value=", ".join(
+                f"[{genre}](https://anilist.co/search/{data['type'].name.lower()}?genres={quote(genre)})"
+                for genre in data["genres"]
+            ),
+        )
         embed.add_field(
             name="Score",
-            value=f"{data['averageScore']}/100"
-            if data['averageScore']
-            else 'NaN'
+            value=f"{data['averageScore']}/100" if data["averageScore"] else "NaN",
         )
-        embed.add_field(
-            name="Status",
-            value=data["status"]
-        )
+        embed.add_field(name="Status", value=data["status"])
+
+        if data["episodes"]:
+            embed.add_field(name="Episodes", value=data["episodes"])
+
+        if data["studios"]:
+            embed.add_field(
+                name="Studio",
+                value=data["studios"][0][
+                    "formatted"
+                ],  # always going to be the main studio
+            )
+
+        if data["chapters"]:
+            embed.add_field(name="Chapters", value=data["chapters"])
 
         return embed
 
-async def check_nsfw(interaction: discord.Interaction, result: FetchResult):
+
+def is_nsfw(interaction: discord.Interaction, result: FetchResult) -> bool:
     assert interaction.channel
 
     if result["isAdult"] and not (
-        isinstance(interaction.channel, discord.DMChannel | discord.PartialMessageable | discord.GroupChannel)
+        isinstance(
+            interaction.channel,
+            discord.DMChannel | discord.PartialMessageable | discord.GroupChannel,
+        )
         or interaction.channel.is_nsfw()
     ):
-        show_type = interaction.command.parent.name.lower()  # type: ignore # the errors shown should not be an issue.
-        return await interaction.edit_original_response(
-            content=(
-                f"The requested `{show_type}` has been marked as NSFW. To view it, "
-                "please switch to an NSFW channel or re-use the command in my DMs."
-            )
-        )
+        return True
+
+    return False
 
 
 class AniManga(BaseCog):
     def __init__(self, bot: "Bot"):
         super().__init__(bot)
-        self.anilist = AniList(bot.session)
+        self.anilist = self.bot.anilist
 
     anime = app_commands.Group(
         name="anime",
@@ -84,38 +194,30 @@ class AniManga(BaseCog):
         """
         await interaction.response.defer()
 
-        result = await self.anilist.fetch(
-            query,
-            search_type=SearchType.ANIME
-        )
+        result = await self.anilist.fetch(query, search_type=SearchType.ANIME)
         if not result:
             return await interaction.edit_original_response(content="No anime found.")
 
-        nsfw = await check_nsfw(interaction, result)
-        if nsfw:
-            return
+        if is_nsfw(interaction, result):
+            return await interaction.edit_original_response(
+                content=NSFW_ERROR_MSG % "anime"
+            )
 
         embed = AnimangaEmbed.from_data(result)
 
-        if result["episodes"]:
-            embed.add_field(name="Episodes", value=result["episodes"])
-
-        if result["studios"]:
-            embed.add_field(
-                name="Studio",
-                value=result["studios"][0][
-                    "formatted"
-                ],  # always going to be the main studio
-            )
-
         view = None
+        if result["relations"]:
+            view = view or PrivateView(interaction.user.id)
+            view.add_item(RelationSelect(result["relations"]))
 
-        trailer = result["trailer"]
-        if trailer:
-            view = view or ui.View()
-            view.add_item(ui.Button(label="Trailer", url=trailer.strip()))
+        if result["trailer"]:
+            view = view or PrivateView(interaction.user.id)
+            view.add_item(ui.Button(label="Trailer", url=result["trailer"].strip()))
 
-        await interaction.edit_original_response(embed=embed, view=view)
+        if not view:
+            return await interaction.edit_original_response(embed=embed)
+
+        view.message = await interaction.edit_original_response(embed=embed, view=view)
 
     manga = app_commands.Group(
         name="manga",
@@ -133,27 +235,18 @@ class AniManga(BaseCog):
         query: str
             The Manga to search for.
         """
-
-        assert interaction.channel, "`Interaction.channel` seems to be `None`."
-
         await interaction.response.defer()
 
-        result = await self.anilist.fetch(
-            query,
-            search_type=SearchType.MANGA
-        )
+        result = await self.anilist.fetch(query, search_type=SearchType.MANGA)
         if not result:
             return await interaction.edit_original_response(content="No Manga found.")
 
-        nsfw = await check_nsfw(interaction, result)
-        if nsfw:
-            return
+        if is_nsfw(interaction, result):
+            return await interaction.edit_original_response(
+                content=NSFW_ERROR_MSG % "manga"
+            )
 
         embed = AnimangaEmbed.from_data(result)
-
-        if result["chapters"]:
-            embed.add_field(name="Chapters", value=result["chapters"])
-
         await interaction.edit_original_response(embed=embed)
 
 

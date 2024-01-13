@@ -23,6 +23,21 @@ class RawStudios(TypedDict):
     edges: list[StudioEdge]
 
 
+class RawRelationNode(TypedDict):
+    id: int
+    title: dict[Literal["romaji"], str]
+    type: Literal["ANIME"] | Literal["MANGA"]
+
+
+class RawRelationEdge(TypedDict):
+    relationType: str
+    node: RawRelationNode
+
+
+class RawRelations(TypedDict):
+    edges: list[RawRelationEdge]
+
+
 class Studios(TypedDict):
     name: str
     url: str
@@ -40,20 +55,17 @@ class CoverImage(TypedDict):
     color: str
 
 
-class Node(TypedDict):
-    timeUntilAiring: int
-    episode: int
-    mediaId: int
-
-
 class ParsedNode(TypedDict):
     timeUntilAiring: datetime
     episode: int
     mediaId: int
 
 
-class AiringSchedule(TypedDict):
-    nodes: list[Node]
+class Relation(TypedDict):
+    id: int
+    type: Literal["ANIME"] | Literal["MANGA"]
+    title: str
+    relation_type: str
 
 
 class FetchRequestResult(TypedDict):
@@ -71,8 +83,8 @@ class FetchRequestResult(TypedDict):
     bannerImage: str
     siteUrl: str
     isAdult: bool
-    airingSchedule: AiringSchedule
     studios: RawStudios
+    relations: RawRelations
 
 
 class FetchResult(TypedDict):
@@ -91,6 +103,6 @@ class FetchResult(TypedDict):
     status: str
     title: str
     trailer: Optional[str]
-    airingSchedule: list[ParsedNode]
     type: SearchType
     studios: list[Studios]
+    relations: list[Relation]

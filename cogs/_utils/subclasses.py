@@ -12,7 +12,9 @@ from logging.handlers import QueueHandler
 from asyncio import Queue, Lock
 from aiohttp import ClientSession
 
-from typing import Any, Dict, Generator, Type, Union
+from typing import Any, Dict, Generator, Optional, Type, Union
+
+from cogs.animanga.anilist import AniList
 
 from .constants import STARTUP_QUERY
 
@@ -73,6 +75,7 @@ async def get_prefix(bot: "Bot", message: discord.Message):
 
 class Bot(commands.Bot):
     queue: Queue[logging.LogRecord]
+    anilist: AniList
 
     def __init__(self, *args: Any, **kwargs: Any):
         kwargs.setdefault("command_prefix", get_prefix)
@@ -135,9 +138,11 @@ class Bot(commands.Bot):
                     content=chunk, username=name, avatar_url=avatar_url
                 )
 
+
     async def setup_hook(self):
         # called before the bot starts
         self.session = ClientSession()
+        self.anilist = AniList(self.session)
         self.start_time = discord.utils.utcnow()
         self.is_dev = self.config["Bot"]["IS_DEV"]
 

@@ -1,10 +1,7 @@
 import re
 
 from discord import Interaction, app_commands
-from discord.utils import utcnow
-
 from aiohttp import ClientSession
-from datetime import timedelta
 
 from typing import Any, Optional, TYPE_CHECKING
 
@@ -12,10 +9,11 @@ from .. import logger
 from .types import (
     FetchResult,
     FetchRequestResult,
+    RawRelationEdge,
+    Relation,
     SearchType,
     StudioEdge,
     Trailer,
-    Node,
 )
 
 if TYPE_CHECKING:
@@ -59,11 +57,16 @@ query ($search: %s, $type: MediaType) {
     bannerImage
     siteUrl
     isAdult
-    airingSchedule {
-      nodes {
-        timeUntilAiring
-        episode
-        mediaId
+    relations {
+      edges {
+        relationType(version: 2)
+        node {
+          id
+          title {
+            romaji
+          }
+          type
+        }
       }
     }
     studios {
@@ -79,32 +82,19 @@ query ($search: %s, $type: MediaType) {
 }
 """
 
-QUERY_PATTERN = re.compile(
-    r".* \(ID: ([0-9]+)\)"
-)
+QUERY_PATTERN = re.compile(r".* \(ID: ([0-9]+)\)")
 TAG_PATTERN = re.compile(
-    r'\<(?P<tag>[a-zA-Z]+)(?: href=\"(?P<url>.*)\")?\>(?:(?P<text>[\s\S]+?)\<\/\1\>)?',
-    flags=re.M | re.S | re.U
+    r"\<(?P<tag>[a-zA-Z]+)(?: href=\"(?P<url>.*)\")?\>(?:(?P<text>[\s\S]+?)\<\/\1\>)?",
+    flags=re.M | re.S | re.U,
 )
+
 
 def format_query(query: str) -> tuple[str, Optional[str]]:
     match = QUERY_PATTERN.fullmatch(query)
     if match:
-        return (
-            FETCH_QUERY % (
-                "Int",
-                "id"
-            ),
-            match.groups()[0]
-        )
+        return (FETCH_QUERY % ("Int", "id"), match.groups()[0])
 
-    return (
-        FETCH_QUERY % (
-            "String",
-            "search"
-        ),
-        None
-    )
+    return (FETCH_QUERY % ("String", "search"), None)
 
 
 def formatter(match: re.Match[Any]) -> str:
@@ -118,7 +108,7 @@ def formatter(match: re.Match[Any]) -> str:
     elif items["tag"] == "b":
         return f"**{items['text']}**"
 
-    return items['text']
+    return items["text"]
 
 
 def cleanup_html(description: str) -> str:
@@ -126,13 +116,7 @@ def cleanup_html(description: str) -> str:
     if no > 0:
         return cleanup_html(final)
 
-    return final.replace('\n\n', '\n')
-
-def parse_schedule_time(schedule: Node):
-    schedule["timeUntilAiring"] = utcnow() + timedelta(  # type: ignore
-        seconds=schedule["timeUntilAiring"]
-    )
-    return schedule
+    return final.replace("\n\n", "\n")
 
 
 def parse_studios(edge: StudioEdge):
@@ -146,6 +130,14 @@ def parse_studios(edge: StudioEdge):
     }
 
 
+def parse_relation_edges(edge: RawRelationEdge) -> Relation:
+    return {
+        "id": edge["node"]["id"],
+        "title": edge["node"]["title"]["romaji"],
+        "relation_type": edge["relationType"],
+        "type": edge["node"]["type"],
+    }
+
 
 def create_trailer_url(data: Trailer) -> str:
     if data["site"] == "youtube":
@@ -156,16 +148,14 @@ def create_trailer_url(data: Trailer) -> str:
     logger.error(f"Found a different trailer site, data: {data}")
     return ""
 
+
 class AniList:
     def __init__(self, session: ClientSession):
         self.session = session
 
     @classmethod
     async def search(
-        cls,
-        session: ClientSession,
-        search: str,
-        search_type: SearchType
+        cls, session: ClientSession, search: str, search_type: SearchType
     ) -> list[tuple[int, str]]:
         """
         Searches for a Series, this won't return any information but rather titles.
@@ -202,17 +192,11 @@ class AniList:
 
         data = resp.get("data", {}).get("Page", {}).get("media", [])
 
-        return [
-            (result["id"], result["title"]["romaji"])
-            for result in data
-        ]
-
+        return [(result["id"], result["title"]["romaji"]) for result in data]
 
     @classmethod
     async def search_auto_complete(
-        cls,
-        interaction: Interaction["Bot"],
-        current: str
+        cls, interaction: Interaction["Bot"], current: str
     ) -> list[app_commands.Choice[str]]:
         """
         A wrapper around the `search` function for auto-completes.
@@ -239,32 +223,22 @@ class AniList:
         results = await cls.search(
             interaction.client.session,
             current,
-            SEARCH_TYPE_MAPPING[interaction.command.parent.name]
+            SEARCH_TYPE_MAPPING[interaction.command.parent.name],
         )
 
         return [
-            app_commands.Choice(
-                name=name,
-                value=f"{name} (ID: {series_id})"
-            )
+            app_commands.Choice(name=name, value=f"{name} (ID: {series_id})")
             for series_id, name in results
         ]
 
-
     async def fetch(
-        self,
-        search: str,
-        *,
-        search_type: SearchType
+        self, search: str, *, search_type: SearchType
     ) -> Optional[FetchResult]:
         """
         Fetches information about a Series.
 
         Parameteres
         ------------
-        session: ClientSession
-            A `aiohttp.ClientSession` object to do the request with.
-
         search: str
             The search query.
 
@@ -301,13 +275,9 @@ class AniList:
             "title": data.get("title", {}).get("romaji", "N/A"),
             "coverImage": data["coverImage"]["extraLarge"],
             "color": data["coverImage"]["color"],
-            "description": cleanup_html(data["description"] or ''),
+            "description": cleanup_html(data["description"] or ""),
             "status": data["status"].title().replace("_", " "),
             "trailer": create_trailer_url(data["trailer"]) if data["trailer"] else None,
-            "airingSchedule": list(
-                map(parse_schedule_time, data.get("airingSchedule", {}).get("nodes", []))
-            ),
+            "relations": list(map(parse_relation_edges, data["relations"]["edges"])),
             "studios": list(map(parse_studios, data.get("studios", {}).get("edges"))),
         }
-
-
