@@ -4,7 +4,7 @@ from discord import app_commands
 
 from urllib.parse import quote
 
-from .. imp
+from .. import BaseCog
 
 from .anilist import AniList
 from .types import FetchResult, SearchType
