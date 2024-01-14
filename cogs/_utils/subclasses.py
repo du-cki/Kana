@@ -138,7 +138,6 @@ class Bot(commands.Bot):
                     content=chunk, username=name, avatar_url=avatar_url
                 )
 
-
     async def setup_hook(self):
         # called before the bot starts
         self.session = ClientSession()

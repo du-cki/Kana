@@ -51,9 +51,10 @@ class Source:
         sources = list(self.sources.keys())
 
         if len(sources) > 1:
-            return ", ".join(
-                self._fmt_name(k) for k in sources[:-1]
-            ) + f" or {self._fmt_name(sources[-1])}"
+            return (
+                ", ".join(self._fmt_name(k) for k in sources[:-1])
+                + f" or {self._fmt_name(sources[-1])}"
+            )
         else:
             return self._fmt_name(sources[0])
 
@@ -92,7 +93,12 @@ class Source:
             other = other[:-1]
 
         if match := re.match(self.final_regex, other):
-            for (k, v) in match.groupdict().items():  # bit jank, but don't have a work around for now.
+            for (
+                k,
+                v,
+            ) in (
+                match.groupdict().items()
+            ):  # bit jank, but don't have a work around for now.
                 if v:
                     return {"url": match.groups()[0], "source": k}
 
@@ -126,7 +132,7 @@ class LinkConverter(commands.Converter["Bot"]):
         if match:
             return match
         elif "-dev" in ctx.message.content and await ctx.bot.is_owner(ctx.author):
-            return { "source": "unknown", "url": argument }
+            return {"source": "unknown", "url": argument}
         else:
             raise commands.BadArgument(
                 f"No URL found, sources I support are {sources.source_names()}."
@@ -137,14 +143,13 @@ class DownloadCommandFlags(commands.FlagConverter, delimiter=" ", prefix="-"):
     fmt: Literal["mp4", "mp3", "webm"] = commands.flag(
         description="Video format the downloaded video should be downloaded as.",
         default="mp4",
-        aliases=["format", "f"]
+        aliases=["format", "f"],
     )
     spoiler: bool = commands.flag(
-        description="Spoilers the sent video.",
-        default=False,
-        aliases=["s", "sp"]
+        description="Spoilers the sent video.", default=False, aliases=["s", "sp"]
     )
     dev: bool = commands.flag(default=False)
+
 
 class Download(BaseCog):
     def __init__(self, bot: "Bot") -> None:
@@ -178,23 +183,27 @@ class Download(BaseCog):
             # but the `%(filename)q` template string won't update, and would
             # have a different file extension.
             if not isAudio:
-                options["postprocessors"] = [{
-                    "key": "Exec",
-                    "exec_cmd": [
-                        "mv %(filename)q %(filename)q.temp",
-                        "ffmpeg -y -i %(filename)q.temp -c copy -map 0 -brand mp42 %(filename)q",
-                        "rm %(filename)q.temp",
-                    ],
-                    "when": "after_move",
-                }]
+                options["postprocessors"] = [
+                    {
+                        "key": "Exec",
+                        "exec_cmd": [
+                            "mv %(filename)q %(filename)q.temp",
+                            "ffmpeg -y -i %(filename)q.temp -c copy -map 0 -brand mp42 %(filename)q",
+                            "rm %(filename)q.temp",
+                        ],
+                        "when": "after_move",
+                    }
+                ]
 
         if isAudio:
             options["format"] = "bestaudio/best"
-            options.setdefault("postprocessors", []).append({
-                "key": "FFmpegExtractAudio",
-                "preferredcodec": flags.fmt,
-                "preferredquality": "192",
-            })
+            options.setdefault("postprocessors", []).append(
+                {
+                    "key": "FFmpegExtractAudio",
+                    "preferredcodec": flags.fmt,
+                    "preferredquality": "192",
+                }
+            )
         else:
             options["format"] = f"bestvideo+bestaudio[ext={flags.fmt}]/best"
 
@@ -203,7 +212,9 @@ class Download(BaseCog):
         ) as ydl:
             info: dict[str, Any] = ydl.extract_info(data["url"])  # pyright: ignore
 
-        path = Path(f"{self.DOWNLOAD_PATH}{_id}_{info['id']}.{flags.fmt if isAudio else info['ext']}")
+        path = Path(
+            f"{self.DOWNLOAD_PATH}{_id}_{info['id']}.{flags.fmt if isAudio else info['ext']}"
+        )
         if path.exists():
             if path.stat().st_size < max_filesize:
                 return path
@@ -218,7 +229,7 @@ class Download(BaseCog):
         ctx: "Context",
         url: Annotated[Match, LinkConverter],
         *,
-        flags: DownloadCommandFlags
+        flags: DownloadCommandFlags,
     ):
         """
         Downloads the provided video and send it to the current channel,
@@ -234,7 +245,9 @@ class Download(BaseCog):
 
         try:
             start = perf_counter()
-            path = await asyncio.to_thread(self._download, url, flags, max_filesize=limit)
+            path = await asyncio.to_thread(
+                self._download, url, flags, max_filesize=limit
+            )
             end = perf_counter()
         except yt_dlp.utils.DownloadError:  # pyright: ignore[reportUnknownMemberType]
             return await msg.edit(
