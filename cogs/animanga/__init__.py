@@ -39,8 +39,10 @@ class PrivateView(ui.View):
 
     async def on_timeout(self):
         for child in self.children:
-            if hasattr(child, "disabled"):
-                child.disabled = True  # type: ignore
+            if hasattr(child, "disabled") and not (
+                isinstance(child, ui.Button) and child.url
+            ):
+                self.remove_item(child)
 
         await self.message.edit(view=self)
 
