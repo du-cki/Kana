@@ -31,8 +31,9 @@ class RotatingWebhook:
 
         return self.webhooks[self.index - 1]
 
-    async def send(self, *args: Any, **kwargs: Any) -> Optional[discord.WebhookMessage]:
-        await self.get().send(*args, **kwargs)
+    @property
+    def send(self):
+        return self.get().send
 
 
 class Logger(BaseCog):
