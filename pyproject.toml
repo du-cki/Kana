@@ -19,7 +19,7 @@ psutil = "^5.9.4"
 pynacl = "^1.5.0"
 discord-py = "^2.3.2"
 pygit2 = "^1.12.1"
-jishaku = {git = "https://github.com/Gorialis/jishaku", branch = "sql-feature"}
+jishaku = {git = "https://github.com/Gorialis/jishaku"} 
 
 [tool.poetry.group.dev.dependencies]
 black = "^22.10.0"
