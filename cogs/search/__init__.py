@@ -12,10 +12,13 @@ if TYPE_CHECKING:
 from .. import BaseCog
 from .spotify import SpotifyClient, SearchType
 
+from .._utils import cutoff
+
 
 class Dropdown(ui.Select["ResultView"]):
     def __init__(self, items: list[dict[str, str]], *args: Any, **kwargs: Any):
         self.items = items  # too lazy to type something so trivial as this.
+        self._items = [{k: cutoff(v, 100) for k, v in item.items()} for item in items]
 
         options = [
             discord.SelectOption(**item, default=True if _iter == 0 else False)

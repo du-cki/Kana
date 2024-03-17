@@ -2,9 +2,17 @@ import discord
 import json
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, Callable, Literal, Optional, overload
+from typing import TYPE_CHECKING, Any, Literal, Optional, overload
 
-from cogs.search.types import AccessToken, Album, Playlist, Podcast, Song, Artist, Topic
+from cogs.search.types import (
+    AccessToken,
+    Album,
+    Playlist,
+    Podcast,
+    Song,
+    Artist,
+    Topic,
+)
 
 if TYPE_CHECKING:
     from aiohttp import ClientSession
