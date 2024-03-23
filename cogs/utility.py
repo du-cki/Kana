@@ -70,6 +70,7 @@ class Utility(BaseCog):
     def __init__(self, bot: "Bot") -> None:
         super().__init__(bot)
         self.emojis = self.bot.config["Bot"]["Emojis"]
+        self.appinfo = None
 
     @commands.hybrid_command()
     async def ping(self, ctx: "Context"):
@@ -129,14 +130,8 @@ class Utility(BaseCog):
             return await ctx.send("Could not find command")
 
         branch = ctx.bot.config["Bot"]["BRANCH"]
-        if obj.cog.__class__.__name__ == "Jishaku":
-            branch = "master"  # TODO: somehow get the commit hash jishaku is on.
-            source = "https://github.com/Gorialis/jishaku"
-
         if obj.__class__.__name__ == "_HelpCommandImpl":
-            return await ctx.send(
-                f"no source for help yet"  # TODO: replace this when custom help is implemented.
-            )
+            return await ctx.send(f"no source for help yet")
 
         src = obj.callback.__code__
         filename = src.co_filename
@@ -144,6 +139,11 @@ class Utility(BaseCog):
         lines, firstlineno = inspect.getsourcelines(src)
 
         location = os.path.relpath(filename).replace("\\", "/")
+
+        if obj.cog.__class__.__name__ == "Jishaku":
+            branch = "master"  # TODO: somehow get the branch, commit hash of the installed jishaku version.
+            source = "https://github.com/Gorialis/jishaku"
+            location = "jishaku" + location.split("jishaku")[1]
 
         view = discord.ui.View()
         view.add_item(
@@ -160,7 +160,9 @@ class Utility(BaseCog):
         Gets the current status of the bot.
         """
         source = ctx.bot.config["Bot"]["SOURCE_URL"]
-        appinfo = await ctx.bot.application_info()  # TODO: cache this
+
+        if not self.appinfo:
+            self.appinfo = await ctx.bot.application_info()
 
         mem = psutil.Process().memory_full_info().uss / 1024**2
         cpu = psutil.Process().cpu_percent() / psutil.cpu_count()
@@ -168,15 +170,15 @@ class Utility(BaseCog):
         embed = (
             discord.Embed(
                 description=(
-                    "**Latest Changes:** "
+                    "**Latest Changes** "
                     + get_latest_commits(source)
                     + "\n".ljust(40, "\u200b")
                 ),
                 timestamp=discord.utils.utcnow(),
             )
             .set_author(
-                name=str(appinfo.owner),
-                icon_url=appinfo.owner.display_avatar.url,
+                name=str(self.appinfo.owner),
+                icon_url=self.appinfo.owner.display_avatar.url,
                 url=source,
             )
             .add_field(
