@@ -23,19 +23,8 @@ NSFW_ERROR_MSG = (
 class PrivateView(ui.View):
     message: discord.InteractionMessage
 
-    def __init__(self, author: int, *args: Any, **kwargs: Any):
+    def __init__(self, *args: Any, **kwargs: Any):
         super().__init__(*args, **kwargs)
-        self.author = author
-
-    async def interaction_check(self, itx: discord.Interaction) -> bool:
-        if not itx.user.id == self.author:
-            await itx.response.send_message(
-                f"This search belongs to `<@{self.author}>`, run the command yourself to use this.",
-                ephemeral=True,
-            )
-            return False
-
-        return True
 
     async def on_timeout(self):
         for child in self.children:
@@ -90,7 +79,7 @@ class RelationSelect(ui.Select[ui.View]):
         return result
 
     async def callback(self, interaction: discord.Interaction["Bot"]):  # type: ignore
-        await interaction.response.defer()
+        await interaction.response.defer(ephemeral=True)
         search_type, search_id = self.values[0].split("_")
 
         result = await self._query_anilist(interaction, search_id, search_type)
@@ -98,21 +87,7 @@ class RelationSelect(ui.Select[ui.View]):
         if not result:
             return await interaction.edit_original_response(view=self.view)
 
-        self.options = (
-            self._to_options(result["relations"]) if result["relations"] else []
-        )
-
-        assert self.view
-
-        self.view.clear_items()
-        self.view.add_item(self)
-
-        if result["trailer"]:
-            self.view.add_item(
-                ui.Button(label="Trailer", url=result["trailer"].strip())
-            )
-
-        await interaction.edit_original_response(embed=AnimangaEmbed.from_data(result))
+        await interaction.followup.send(embed=AnimangaEmbed.from_data(result), ephemeral=True)
 
 
 class AnimangaEmbed(discord.Embed):
@@ -209,11 +184,11 @@ class AniManga(BaseCog):
 
         view = None
         if result["relations"]:
-            view = view or PrivateView(interaction.user.id)
+            view = view or PrivateView()
             view.add_item(RelationSelect(result["relations"]))
 
         if result["trailer"]:
-            view = view or PrivateView(interaction.user.id)
+            view = view or PrivateView()
             view.add_item(ui.Button(label="Trailer", url=result["trailer"].strip()))
 
         if not view:
