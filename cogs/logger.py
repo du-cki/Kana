@@ -25,13 +25,13 @@ GUILD_FILESIZE_LIMIT = 25 * 1024 * 1024  # as that's what basic guilds get.
 class NoAvatarData(Exception):
     ...
 
+
 class AvatarData(TypedDict):
     user: discord.User
     avatars: list[tuple[str, datetime]]
     count: int  # total count of avatars
     idx: int  # current avatar of offset n
     offset: int  # current offset
-
 
 
 class SkipToPage(ui.Modal, title="Skip to page"):
@@ -41,7 +41,9 @@ class SkipToPage(ui.Modal, title="Skip to page"):
     @classmethod
     def with_data(cls, total: int) -> Self:
         inst = cls()
-        inst.page = ui.TextInput(label=f"Please enter a page within the range 1-{total}",)
+        inst.page = ui.TextInput(
+            label=f"Please enter a page within the range 1-{total}",
+        )
         inst.total = total
 
         inst.add_item(inst.page)
@@ -62,7 +64,9 @@ class SkipToPage(ui.Modal, title="Skip to page"):
 
     async def on_error(self, interaction: discord.Interaction, error: Exception):
         if isinstance(error, ValueError):
-            await interaction.response.send_message(f"Please enter a number between 1-{self.total}", ephemeral=True)
+            await interaction.response.send_message(
+                f"Please enter a number between 1-{self.total}", ephemeral=True
+            )
         else:
             return await super().on_error(interaction, error)
 
@@ -103,7 +107,6 @@ class AvatarPaginator(ui.View):
 
         return inst
 
-
     async def fetch_chunk(self, offset: int) -> list[tuple[str, datetime]]:
         records = await self.bot.pool.fetch(
             """
@@ -125,7 +128,6 @@ class AvatarPaginator(ui.View):
 
         return [(record["avatar_url"], record["changed_at"]) for record in records]
 
-
     async def get_count(self, user_id: int):
         count = await self.bot.pool.fetchval(
             """
@@ -137,11 +139,10 @@ class AvatarPaginator(ui.View):
                 AND changed_at < $2;
         """,
             user_id,
-            self.message.created_at
+            self.message.created_at,
         )
 
         return count
-
 
     async def _goto(self, page: int, itx: discord.Interaction | None = None):
         total = self.data["count"]
@@ -162,8 +163,8 @@ class AvatarPaginator(ui.View):
             offset = abs(
                 (math.ceil(page / self.PER_CHUNK) - 1) * self.PER_CHUNK,
             )
-            self.data['avatars'] = await self.fetch_chunk(offset)
-            self.data['offset'] = offset
+            self.data["avatars"] = await self.fetch_chunk(offset)
+            self.data["offset"] = offset
 
         self.update_buttons()
 
@@ -178,17 +179,14 @@ class AvatarPaginator(ui.View):
             else:
                 await itx.response.edit_message(**message)  # type: ignore
 
-
     def create_embed(self) -> discord.Embed:
-        data = self.data["avatars"][
-            self.data['idx'] % self.PER_CHUNK
-        ]
+        data = self.data["avatars"][self.data["idx"] % self.PER_CHUNK]
 
         return (
             discord.Embed(
                 title=f"{self.data['user'].name}'s Avatar History",
                 description=f"Changed At: {discord.utils.format_dt(data[1])} ({discord.utils.format_dt(data[1], 'R')})",
-                color=int(self.bot.config["Bot"]["DEFAULT_COLOR"], 16)
+                color=int(self.bot.config["Bot"]["DEFAULT_COLOR"], 16),
             )
             .set_image(url=data[0])
             .set_footer(
@@ -196,60 +194,50 @@ class AvatarPaginator(ui.View):
             )
         )
 
-
     def update_buttons(self):
         self.first.disabled = False
         self.prev.disabled = False
         self.next.disabled = False
         self.last.disabled = False
 
-        if self.data['idx'] == 0:
+        if self.data["idx"] == 0:
             self.first.disabled = True
             self.prev.disabled = True
 
-        if (self.data['idx'] + 1) == self.data['count']:
+        if (self.data["idx"] + 1) == self.data["count"]:
             self.next.disabled = True
             self.last.disabled = True
 
         self.page.label = f"{self.data['idx'] + 1}/{self.data['count']}"
 
-
     async def interaction_check(self, interaction: discord.Interaction) -> bool:
         if interaction.user == self.message.author:
             return True
 
-        await interaction.response.send_message("Please invoke the command yourself.", ephemeral=True)
-        return False # love u type-checker
-
+        await interaction.response.send_message(
+            "Please invoke the command yourself.", ephemeral=True
+        )
+        return False  # love u type-checker
 
     @ui.button(label="<<")
     async def first(self, itx: discord.Interaction, _: ui.Button[Self]):
         await self._goto(0, itx)
 
-
     @ui.button(label="<")
     async def prev(self, itx: discord.Interaction, _: ui.Button[Self]):
         await self._goto(self.data["idx"] - 1, itx)
 
-
     @ui.button(label="\u200b")
     async def page(self, itx: discord.Interaction, _: ui.Button[Self]):
-        modal = SkipToPage.with_data(
-            self.data['count']
-        )
+        modal = SkipToPage.with_data(self.data["count"])
         await itx.response.send_modal(modal)
         await modal.wait()
 
-        await self._goto(
-            int(modal.page.value) - 1,
-            itx
-        )
-
+        await self._goto(int(modal.page.value) - 1, itx)
 
     @ui.button(label=">")
     async def next(self, itx: discord.Interaction, _: ui.Button[Self]):
         await self._goto(self.data["idx"] + 1, itx)
-
 
     @ui.button(label=">>")
     async def last(self, itx: discord.Interaction, _: ui.Button[Self]):
@@ -279,7 +267,9 @@ class Logger(BaseCog):
         super().__init__(bot)
 
         if self.bot.is_dev:
-            raise Exception("Please disable the cog `Logger`, this cog isn't intended in an development enviroment.")
+            raise Exception(
+                "Please disable the cog `Logger`, this cog isn't intended in an development enviroment."
+            )
 
         self.webhooks = RotatingWebhook(
             [
@@ -295,7 +285,6 @@ class Logger(BaseCog):
                 avatar
             ),  # the docs say the ratelimits are 30 requests per 10 seconds, just to be safe i'm leaving a bit of headroom.
         )
-
 
     async def upload_avatar(
         self,
@@ -348,7 +337,6 @@ class Logger(BaseCog):
                     resp.attachments[0].url,
                 )
 
-
     @commands.Cog.listener()
     async def on_guild_join(self, guild: discord.Guild):
         members = await guild.chunk() if not guild.chunked else guild.members
@@ -358,7 +346,6 @@ class Logger(BaseCog):
                 continue
 
             await self.upload_avatar(member, member.display_avatar)
-
 
     @commands.Cog.listener()
     async def on_member_avatar_update(
@@ -375,7 +362,6 @@ class Logger(BaseCog):
 
         await self.upload_avatar(after, avatar)
 
-
     @commands.Cog.listener()
     async def on_member_name_update(self, before: discord.User, _: discord.User):
         await self.bot.pool.execute(
@@ -388,7 +374,6 @@ class Logger(BaseCog):
             before.name,
         )
 
-
     @commands.Cog.listener()
     async def on_user_update(self, before: discord.User, after: discord.User):
         if before.name != after.name:
@@ -397,17 +382,25 @@ class Logger(BaseCog):
         if before.avatar != after.avatar:
             self.bot.dispatch("member_avatar_update", before, after)
 
-
     @commands.command(aliases=["avatars", "avyh"])
     async def pfps(
-            self, ctx: commands.Context["Bot"], user: discord.User = commands.Author,
+        self,
+        ctx: commands.Context["Bot"],
+        user: discord.User = commands.Author,
     ):
         try:
-            view = await AvatarPaginator().populate_data(ctx.bot, ctx.message, user,)
+            view = await AvatarPaginator().populate_data(
+                ctx.bot,
+                ctx.message,
+                user,
+            )
         except NoAvatarData:
             await ctx.send("No avatar found")
         else:
-            await ctx.send(embed=view.create_embed(), view=view,)
+            await ctx.send(
+                embed=view.create_embed(),
+                view=view,
+            )
 
 
 async def setup(bot: Bot):

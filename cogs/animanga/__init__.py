@@ -87,7 +87,9 @@ class RelationSelect(ui.Select[ui.View]):
         if not result:
             return await interaction.edit_original_response(view=self.view)
 
-        await interaction.followup.send(embed=AnimangaEmbed.from_data(result), ephemeral=True)
+        await interaction.followup.send(
+            embed=AnimangaEmbed.from_data(result), ephemeral=True
+        )
 
 
 class AnimangaEmbed(discord.Embed):
