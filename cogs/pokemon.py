@@ -111,6 +111,7 @@ class Pokemon(BaseCog):
         return Hint(match.groups()[0].replace("\\", ""))
 
     @commands.group(name="guess", aliases=["hint"], invoke_without_command=True)
+    @commands.guild_only()
     async def _guess(self, ctx: "Context"):
         """
         Gives an estimating prediction from a `PokéTwo` hint.

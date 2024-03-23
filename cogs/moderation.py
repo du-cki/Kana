@@ -21,6 +21,7 @@ class Moderation(BaseCog):
     @commands.command(aliases=["bp", "purgebots", "purgebot"])
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
+    @commands.guild_only()
     async def botpurge(
         self,
         ctx: "Context",
@@ -73,6 +74,7 @@ class Moderation(BaseCog):
     @commands.command(aliases=["wp", "mp", "mudaepurge"])
     @commands.has_permissions(manage_messages=True)
     @commands.bot_has_permissions(manage_messages=True)
+    @commands.guild_only()
     async def waifupurge(self, ctx: "Context", amount: int = 30):
         """
         Purges a set of Mudae bot's spam along with the commands.
@@ -90,6 +92,7 @@ class Moderation(BaseCog):
         )
 
     @commands.command()
+    @commands.guild_only()
     async def prefix(self, ctx: "Context", prefix: Optional[str]):
         """
         Changes the guild specific prefix. if no prefix is given, it will show the current prefix.
@@ -100,10 +103,7 @@ class Moderation(BaseCog):
             The prefix to change.
         """
 
-        if not ctx.guild or isinstance(
-            ctx.author, discord.User
-        ):  # purely for linting purposes
-            return
+        assert ctx.guild and isinstance(ctx.author, discord.Member)
 
         if prefix is None:
             return await ctx.send(
@@ -130,6 +130,7 @@ class Moderation(BaseCog):
         aliases=["config", "configs", "modules"], invoke_without_command=True
     )
     @commands.has_permissions(manage_guild=True)
+    @commands.guild_only()
     async def module(self, ctx: "Context"):
         """
         Configure modules.
